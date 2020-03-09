@@ -483,28 +483,28 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
     private void changeVertex(Mat rsMat){
         int rsMatPosition = 0;
         int rsMatStride = 3;
-        int vertexPosition = 6;
+        int vertexPosition = 0;
         int vertexStride = 6;
         double[] vertexT1 = new double[3];
         double[] vertexT2 = new double[3];
         //计算第一条
-        double[] vertexfirst1 = new double[3];
-        double[] vertexfirst2 = new double[3];
-        vertexfirst1[0] = vertex[0];
-        vertexfirst1[1] = vertex[1];
-        vertexfirst1[2] = vertex[2];
-        vertexfirst2[0] = vertex[3];
-        vertexfirst2[1] = vertex[4];
-        vertexfirst2[2] = vertex[5];
-
-        double[] tempfirst = mul(rsMat.rowRange(rsMatPosition, rsMatPosition+3), vertexfirst1);
-        vertex[0] = (float) tempfirst[0];
-        vertex[1] = (float) tempfirst[1];
-        vertex[2] = (float) tempfirst[2];
-        tempfirst = mul(rsMat.rowRange(rsMatPosition, rsMatPosition+3), vertexfirst2);
-        vertex[3] = (float) tempfirst[0];
-        vertex[4] = (float) tempfirst[1];
-        vertex[5] = (float) tempfirst[2];
+//        double[] vertexfirst1 = new double[3];
+//        double[] vertexfirst2 = new double[3];
+//        vertexfirst1[0] = vertex[0];
+//        vertexfirst1[1] = vertex[1];
+//        vertexfirst1[2] = vertex[2];
+//        vertexfirst2[0] = vertex[3];
+//        vertexfirst2[1] = vertex[4];
+//        vertexfirst2[2] = vertex[5];
+//
+//        double[] tempfirst = mul(rsMat.rowRange(rsMatPosition, rsMatPosition+3), vertexfirst1);
+//        vertex[0] = (float) tempfirst[0];
+//        vertex[1] = (float) tempfirst[1];
+//        vertex[2] = (float) tempfirst[2];
+//        tempfirst = mul(rsMat.rowRange(rsMatPosition, rsMatPosition+3), vertexfirst2);
+//        vertex[3] = (float) tempfirst[0];
+//        vertex[4] = (float) tempfirst[1];
+//        vertex[5] = (float) tempfirst[2];
 
         for(int i = 0; i < 10; i++){
             vertexT1[0] = vertex[vertexPosition];
@@ -527,6 +527,26 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
             rsMatPosition += rsMatStride;
             vertexPosition += vertexStride;
         }
+        //计算最后一条
+        double[] vertexLast1 = new double[3];
+        double[] vertexLast2 = new double[3];
+        int tempPosition = vertexPosition;
+        for(int i = 0; i < 3; i++){
+            vertexLast1[i] = vertex[vertexPosition++];
+        }
+        for(int i = 0; i < 3; i++){
+            vertexLast2[i] = vertex[vertexPosition++];
+        }
+        Mat rsMatTemp = rsMat.rowRange(rsMatPosition-3, rsMatPosition);
+        double[] dst = mul(rsMatTemp, vertexLast1);
+        vertex[tempPosition] = (float) dst[0];
+        vertex[tempPosition+1] = (float) dst[1];
+        vertex[tempPosition+2] = (float) dst[2];
+        dst = mul(rsMatTemp, vertexLast2);
+        vertex[tempPosition+3] = (float) dst[0];
+        vertex[tempPosition+4] = (float) dst[1];
+        vertex[tempPosition+5] = (float) dst[2];
+
         Log.e(TAG, "changeVertex11111: "+ Arrays.toString(vertex));
     }
     private double[] mul(Mat src1, double[] src2){
