@@ -1,0 +1,10 @@
+# ninja log v5
+10	1118	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/MySemaphore.cc.o	1e3a0afdd9c25de6
+7	3733	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o	32f646b52e6e2f3e
+0	4121	0	CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o	37ac3ec6f9d51126
+17	4207	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o	3ecbc302badbf8e2
+14	4221	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o	d74c0977f2e2666e
+21	4248	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o	b751d4e6ddaf5d8
+26	4418	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadKlt.cc.o	f73e79f382af13f4
+4	4677	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o	23d719264ce76df7
+4677	4925	0	../../../../build/intermediates/cmake/debug/obj/x86/libnative-lib.so	603473e47c9dd42c
