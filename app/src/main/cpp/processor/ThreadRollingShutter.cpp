@@ -68,6 +68,7 @@ void ThreadRollingShutter::getRollingShutterR(){
 //        }
         Mat *rsOutTheta = new Mat[10];
         getMatInFrame(rsOutTheta, gyroInfoInFrameX, gyroInfoInFrameY, gyroInfoInFrameZ);
+        gaussSmooth(rsOutTheta);
         for(int j = 0; j < ThreadContext::rsStripNum; j++){
             ThreadContext::rsMat[index][j] = *(rsOutTheta+j);
 //            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "index:%d,RsMat:%f", index, (rsOutTheta+j)->at<double>(0,0));
@@ -183,4 +184,48 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
         outMat.copyTo(*(rsOutTheta+i));
     }
 
+}
+
+void ThreadRollingShutter::gaussSmooth(Mat *rsOutTheta){
+    Mat *temp = new Mat[10];
+    for(int i = 0 ; i < 10; i++){
+        (rsOutTheta+i)->copyTo(*(temp+i));
+    }
+
+    for(int i = 0; i < 10; i++){
+        int count = 1;
+        rsOutTheta[i] = temp[i]*ThreadContext::gaussWeight[5];
+        while (count<=5){
+            if(i-count>=0&&i+count<=9){
+                rsOutTheta[i] = rsOutTheta[i]+temp[i+count]*ThreadContext::gaussWeight[5+count]
+                        +temp[i-count]*ThreadContext::gaussWeight[5-count];
+            } else if(i-count<0){
+                rsOutTheta[i] = rsOutTheta[i]+temp[i+count]*ThreadContext::gaussWeight[5+count]
+                        +temp[abs(i-count)-1]*ThreadContext::gaussWeight[5-count];
+            } else if(i+count>9){
+                rsOutTheta[i] = rsOutTheta[i]+temp[i-count]*ThreadContext::gaussWeight[5-count]
+                        +temp[9-(i+count-9-1)]*ThreadContext::gaussWeight[5+count];
+            }
+            count++;
+        }
+    }
+
+//    for(int i = 0; i < 3; i++){
+//        for(int j = 0; j <3; j++){
+//            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "i:%d,j:%d,position--:%f", i, j, rsOutTheta[position].at<double>(i, j));
+//        }
+//    }
+
+}
+Mat ThreadRollingShutter::constantMulMat(Mat &src, double num){
+    int width = src.cols;
+    int height = src.rows;
+    Mat dst(height, width, src.type());
+    src.copyTo(dst);
+    for(int i = 0;i<height; i++){
+        for(int j = 0; j<width; j++){
+            dst.at<double>(i,j) = dst.at<double>(i, j)*num;
+        }
+    }
+    return dst;
 }

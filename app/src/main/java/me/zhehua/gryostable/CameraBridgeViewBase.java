@@ -285,6 +285,7 @@ public class CameraBridgeViewBase extends GLSurfaceView {
 //                outputMat.put(100, 1900, 0);
                 renderer.outputMat = outputMat;
                 renderer.rsMat = rsMat;
+                Log.e(TAG, "rsMat-----"+rsMat.dump());
                 if (renderer.isReady) {
                     CameraBridgeViewBase.this.requestRender();
                 }

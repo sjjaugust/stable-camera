@@ -9,6 +9,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <thread>
+#include <cmath>
 
 namespace threads{
     class ThreadRollingShutter{
@@ -17,6 +18,8 @@ namespace threads{
         thread work_thread;
         void worker();
         Mat inmat=(cv::Mat_<double>(3, 3)<<1493.9,0.0,522.0, 0.0,1494.8,982.4,0.0,0.0,1.0);
+        void gaussSmooth(Mat *rsOutTheta);
+        Mat constantMulMat(Mat &src, double num);
     public:
         Size videosize;
         void start();

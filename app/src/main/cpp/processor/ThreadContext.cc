@@ -22,6 +22,17 @@ Mat ThreadContext::rsOutTheta[ThreadContext::BUFFERSIZE];
 vector<Point2i> ThreadContext::rsList;
 MySemaphore* ThreadContext::rs_semaphore = nullptr;
 Mat ThreadContext::rsMat[ThreadContext::BUFFERSIZE][ThreadContext::rsStripNum];
+double ThreadContext::gaussWeight[];
+void ThreadContext::createGaussWeight(double *gaussWeight) {
+    int num = 0;
+    for(int i = -5; i < 6; i++){
+        double temp = -(i*i)/2.0;
+        double xishu = 1.0/sqrt(2.0*pi);
+        *(gaussWeight+num) = xishu*exp(temp);
+        num++;
+        __android_log_print(ANDROID_LOG_ERROR, "ThreadContext", "%fgaussWeight:%f",temp , *(gaussWeight+num-1));
+    }
+}
 
 void ThreadContext::Init() {
     Release();
@@ -30,6 +41,7 @@ void ThreadContext::Init() {
     out_semaphore = new MySemaphore(0);
     rs_semaphore = new MySemaphore(0);
     read_semaphore = new MySemaphore(4);
+    createGaussWeight(gaussWeight);
 }
 
 void ThreadContext::Release() {

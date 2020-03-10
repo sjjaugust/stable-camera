@@ -9,6 +9,9 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <list>
+#include <android/log.h>
+#include <cmath>
+#define pi 3.1415926
 
 
 using namespace std;
@@ -43,6 +46,8 @@ namespace threads {
         static Mat rsOutTheta[BUFFERSIZE];
         static vector<Point2i> rsList;
         static Mat rsMat[BUFFERSIZE][rsStripNum];
+        static double gaussWeight[11];
+        static void createGaussWeight(double *gaussWeight);
 
         static void Init();
         static void Release();
