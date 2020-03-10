@@ -142,7 +142,7 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
 //            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "RsMat:%f", orgMat.at<double>(i,j));
 //        }
 //    }
-//测试啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊
+//测试啊啊啊
     for(int i = 1; i < gyroInfoInFrameX.size(); i++){
         gyroInfoInFrameX[i]-=gyroInfoInFrameX[0];
         gyroInfoInFrameY[i]-=gyroInfoInFrameY[0];
