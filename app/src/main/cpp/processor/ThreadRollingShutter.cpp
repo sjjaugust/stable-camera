@@ -124,6 +124,7 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
                    gyroInfoInFrameY[0]*gyroInfoInFrameY[0]+
                    gyroInfoInFrameZ[0]*gyroInfoInFrameZ[0];
     thOrg = sqrt(thOrg);
+    __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "thOrg:%f", thOrg);
     if(thOrg == 0){
         thOrg = 1;
     }
@@ -179,13 +180,13 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
 //                __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "RsMat:%f", orgMat.at<double>(l,j));
 //            }
 //        }
-        Mat a1 = (cv::Mat_<double>(3, 3) << 0.0,1.0,0.0, -1.0,0.0,0.0, 0.0 ,0.0 ,1.0);
-        Mat a2 = (cv::Mat_<double>(3, 3) << 1,0,0, 0,-1,0, 0 ,0 ,-1);
-        Mat A=a1*a2;
-        Mat sta = orgMat.t()*cvMat;
-        Mat temp = A.t()*sta.t()*A;
-        Mat outMat = inmat*temp*inmat.inv();
-       // Mat outMat = inmat*cvMat*orgMat.inv()*inmat.inv();
+//        Mat a1 = (cv::Mat_<double>(3, 3) << 0.0,1.0,0.0, -1.0,0.0,0.0, 0.0 ,0.0 ,1.0);
+//        Mat a2 = (cv::Mat_<double>(3, 3) << 1,0,0, 0,-1,0, 0 ,0 ,-1);
+//        Mat A=a1*a2;
+//        Mat sta = cvMat.t()*orgMat;
+//        Mat temp = A.t()*sta.t()*A;
+//        Mat outMat = inmat*temp*inmat.inv();
+        Mat outMat = inmat*cvMat*orgMat.inv()*inmat.inv();
 //        __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "RsMat:%f", orgMat.at<double>(0,0));
         outMat.copyTo(*(rsOutTheta+i));
     }

@@ -60,6 +60,10 @@ private:
     //果冻效应相关
     int rsFrameIndex;
     int rsGyroIndex;
+    cv::Vec<double, 4> rsLastt;
+    double rsLastx;
+    double rsLasty;
+    double rsLastz;
 
 
 
