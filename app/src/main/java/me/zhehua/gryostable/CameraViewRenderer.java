@@ -97,6 +97,30 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
             -1f, 1f, 0f,
             -1f, -1f, 0f
     };
+    private float[] vertex1 = {
+            1f, 1f, 0f,
+            1f, -1f, 0f,
+            0.8f, 1f, 0f,
+            0.8f, -1f, 0f,
+            0.6f, 1f, 0f,
+            0.6f, -1f, 0f,
+            0.4f, 1f, 0f,
+            0.4f, -1f, 0f,
+            0.2f, 1f, 0f,
+            0.2f, -1f, 0f,
+            0f, 1f, 0f,
+            0f, -1f, 0f,
+            -0.2f, 1f, 0f,
+            -0.2f, -1f, 0f,
+            -0.4f, 1f, 0f,
+            -0.4f, -1f, 0f,
+            -0.6f, 1f, 0f,
+            -0.6f, -1f, 0f,
+            -0.8f, 1f, 0f,
+            -0.8f, -1f, 0f,
+            -1f, 1f, 0f,
+            -1f, -1f, 0f
+    };
     private float[] texCoor = {
             0f, 0f,
             1f, 0f,
@@ -481,6 +505,7 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
 
     }
     private void changeVertex(Mat rsMat){
+
         int rsMatPosition = 0;
         int rsMatStride = 3;
         int vertexPosition = 0;
@@ -489,12 +514,12 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
         double[] vertexT2 = new double[3];
 
         for(int i = 0; i < 10; i++){
-            vertexT1[0] = vertex[vertexPosition];
-            vertexT1[1] = vertex[vertexPosition+1];
-            vertexT1[2] = vertex[vertexPosition+2];
-            vertexT2[0] = vertex[vertexPosition+3];
-            vertexT2[1] = vertex[vertexPosition+4];
-            vertexT2[2] = vertex[vertexPosition+5];
+            vertexT1[0] = vertex1[vertexPosition];
+            vertexT1[1] = vertex1[vertexPosition+1];
+            vertexT1[2] = vertex1[vertexPosition+2];
+            vertexT2[0] = vertex1[vertexPosition+3];
+            vertexT2[1] = vertex1[vertexPosition+4];
+            vertexT2[2] = vertex1[vertexPosition+5];
 
             Mat rsMatTemp = rsMat.rowRange(rsMatPosition, rsMatPosition+3);
 //            Log.e(TAG, "changeVertex: "+rsMatPosition+rsMatTemp.dump() );
@@ -524,10 +549,10 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
         double[] vertexLast2 = new double[3];
         int tempPosition = vertexPosition;
         for(int i = 0; i < 3; i++){
-            vertexLast1[i] = vertex[vertexPosition++];
+            vertexLast1[i] = vertex1[vertexPosition++];
         }
         for(int i = 0; i < 3; i++){
-            vertexLast2[i] = vertex[vertexPosition++];
+            vertexLast2[i] = vertex1[vertexPosition++];
         }
         Mat rsMatTemp = rsMat.rowRange(rsMatPosition-3, rsMatPosition);
         double[] dst = mul(rsMatTemp, vertexLast1);
@@ -550,6 +575,7 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
         vertex[tempPosition+5] = (float) dst[2];
 
         Log.e(TAG, "changeVertex11111: "+ Arrays.toString(vertex));
+
     }
     private double[] mul(Mat src1, double[] src2){
         double[] dst = new double[3];
@@ -560,5 +586,6 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
 
 
     }
+
 
 }
