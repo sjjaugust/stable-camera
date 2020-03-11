@@ -57,6 +57,11 @@ void ThreadRollingShutter::getRollingShutterR(){
         gyroInfoInFrameX = interpolation(timeStampInFrame, gyroInfoOrgTime, gyroInfoX);
         gyroInfoInFrameY = interpolation(timeStampInFrame, gyroInfoOrgTime, gyroInfoY);
         gyroInfoInFrameZ = interpolation(timeStampInFrame, gyroInfoOrgTime, gyroInfoZ);
+//        for(int o = 0; o < gyroInfoInFrameX.size(); o++){
+//            gyroInfoInFrameX[o] *= 2.0;
+//            gyroInfoInFrameY[o] *= 2.0;
+//            gyroInfoInFrameZ[o] *= 2.0;
+//        }
 //        for(int l = 0; l < timeStampInFrame.size(); l++){
 //            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat timeinframe:%f", l, timeStampInFrame[l]);
 //        }
@@ -64,7 +69,7 @@ void ThreadRollingShutter::getRollingShutterR(){
 //            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat gyroInfoOrgTime:%f", l, gyroInfoOrgTime[l]);
 //        }
 //        for(int l = 0; l < gyroInfoInFrameX.size(); l++){
-//            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat gyroInfoInFrameX:%f", l, gyroInfoInFrameX[l]);
+//            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat gyroInfoInFrameX:%f", l, gyroInfoInFrameX[l]-gyroInfoInFrameX[0]);
 //        }
         Mat *rsOutTheta = new Mat[10];
         getMatInFrame(rsOutTheta, gyroInfoInFrameX, gyroInfoInFrameY, gyroInfoInFrameZ);
