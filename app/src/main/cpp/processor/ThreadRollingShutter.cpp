@@ -68,9 +68,9 @@ void ThreadRollingShutter::getRollingShutterR(){
 //        for(int l = 0; l < gyroInfoOrgTime.size(); l++){
 //            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat gyroInfoOrgTime:%f", l, gyroInfoOrgTime[l]);
 //        }
-//        for(int l = 0; l < gyroInfoInFrameX.size(); l++){
-//            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat gyroInfoInFrameX:%f", l, gyroInfoInFrameX[l]-gyroInfoInFrameX[0]);
-//        }
+        for(int l = 0; l < gyroInfoInFrameX.size(); l++){
+            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat gyroInfoInFrameX:%f", l, gyroInfoInFrameX[l]-gyroInfoInFrameX[0]);
+        }
         Mat *rsOutTheta = new Mat[10];
         getMatInFrame(rsOutTheta, gyroInfoInFrameX, gyroInfoInFrameY, gyroInfoInFrameZ);
         gaussSmooth(rsOutTheta);
