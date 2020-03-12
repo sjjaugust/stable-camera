@@ -16,3 +16,6 @@
 27	5172	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadKlt.cc.o	f73e79f382af13f4
 5	5183	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o	23d719264ce76df7
 5183	5656	0	../../../../build/intermediates/cmake/debug/obj/x86/libnative-lib.so	603473e47c9dd42c
+4	3240	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o	3ecbc302badbf8e2
+9	3330	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o	b751d4e6ddaf5d8
+3330	3607	0	../../../../build/intermediates/cmake/debug/obj/x86/libnative-lib.so	603473e47c9dd42c
