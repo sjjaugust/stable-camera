@@ -331,7 +331,7 @@ void ThetaHelper::getRsTheta(Mat *rsOutTheta, double timestamp){
             temp[3] = temp[3]+(gyroTimeNext-gyroTime)*(-angleZ);
             rsGyroTheta.push_back(temp);
             rsGyroIndex++;
-            __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "thththth:%f", (gyroTimeNext-gyroTime)*(-angleX));
+            __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "thththth:%f", (-angleY));
         } else{
             temp[0] = frameTime;
             temp[1] = temp[1]+(frameTime-gyroTime)*(-angleX);
