@@ -153,9 +153,9 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
         double tempx = gyroInfoInFrameX[i]-gyroInfoInFrameX[0];
         double tempy = gyroInfoInFrameY[i]-gyroInfoInFrameY[0];
         double tempz = gyroInfoInFrameZ[i]-gyroInfoInFrameZ[0];
-        gyroInfoInFrameX[i]-=tempx*10;
-        gyroInfoInFrameY[i]-=tempy*10;
-        gyroInfoInFrameZ[i]-=tempz*10;
+        gyroInfoInFrameX[i]-=tempx*5;
+        gyroInfoInFrameY[i]-=tempy*5;
+        gyroInfoInFrameZ[i]-=tempz*5;
         __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dtempxxxx%f", i, tempy);
     }
     for(int i = 0; i < gyroInfoInFrameX.size(); i++){
