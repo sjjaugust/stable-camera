@@ -29,7 +29,7 @@ namespace threads{
         void getMatInFrame(Mat *rsOutTheta, vector<double> gyroInfoInFrameX, vector<double> gyroInfoInFrameY,
                            vector<double> gyroInfoInFrameZ);
         ~ThreadRollingShutter();
-
+        void showMat(Mat cvMat);
 
 
     };

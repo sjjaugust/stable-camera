@@ -57,20 +57,15 @@ void ThreadRollingShutter::getRollingShutterR(){
         gyroInfoInFrameX = interpolation(timeStampInFrame, gyroInfoOrgTime, gyroInfoX);
         gyroInfoInFrameY = interpolation(timeStampInFrame, gyroInfoOrgTime, gyroInfoY);
         gyroInfoInFrameZ = interpolation(timeStampInFrame, gyroInfoOrgTime, gyroInfoZ);
-//        for(int o = 0; o < gyroInfoInFrameX.size(); o++){
-//            gyroInfoInFrameX[o] *= 100.0;
-//            gyroInfoInFrameY[o] *= 100.0;
-//            gyroInfoInFrameZ[o] *= 100.0;
-//        }
         for(int l = 0; l < gyroInfoX.size(); l++){
             __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat timeinframe:%f", l, gyroInfoX[l]);
         }
 //        for(int l = 0; l < gyroInfoOrgTime.size(); l++){
 //            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat gyroInfoOrgTime:%f", l, gyroInfoOrgTime[l]);
 //        }
-//        for(int l = 0; l < gyroInfoInFrameX.size(); l++){
-//            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat gyroInfoInFrameX:%f", l, gyroInfoInFrameX[l]-gyroInfoInFrameX[0]);
-//        }
+        for(int l = 0; l < gyroInfoInFrameX.size(); l++){
+            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dRsMat gyroInfoInFrameX:%f", l, gyroInfoInFrameX[l]);
+        }
         Mat *rsOutTheta = new Mat[10];
         getMatInFrame(rsOutTheta, gyroInfoInFrameX, gyroInfoInFrameY, gyroInfoInFrameZ);
         gaussSmooth(rsOutTheta);
@@ -122,14 +117,15 @@ vector<double> ThreadRollingShutter::interpolation (vector<double> x0, vector<do
 }
 void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInfoInFrameX, vector<double> gyroInfoInFrameY,
                    vector<double> gyroInfoInFrameZ){
+    Mat e = Mat::eye(3, 3, CV_64F);
     Mat orgMat(3, 3, CV_64F);
     Mat skewOrgMat(3, 3, CV_64F);
-    Mat e = Mat::eye(3, 3, CV_64F);
+    //计算第一条旋转矩阵
     double thOrg = gyroInfoInFrameX[0]*gyroInfoInFrameX[0]+
                    gyroInfoInFrameY[0]*gyroInfoInFrameY[0]+
                    gyroInfoInFrameZ[0]*gyroInfoInFrameZ[0];
     thOrg = sqrt(thOrg);
-    __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "thOrg:%f", thOrg);
+
     if(thOrg == 0){
         thOrg = 1;
     }
@@ -143,22 +139,17 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
     skewOrgMat.at<double>(2,1) = gyroInfoInFrameX[0]/thOrg;
     skewOrgMat.at<double>(2,2) = 0;
     orgMat = e+sin(thOrg)*skewOrgMat.t()+(1-cos(thOrg))*(skewOrgMat*skewOrgMat).t();
-//    for(int i = 0; i < 3; i++){
-//        for(int j = 0; j < 3; j++){
-//            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "RsMat:%f", orgMat.at<double>(i,j));
-//        }
-//    }
-//测试啊啊啊
-    for(int i = 1; i < gyroInfoInFrameX.size(); i++){
-        double tempx = gyroInfoInFrameX[i]-gyroInfoInFrameX[0];
-        double tempy = gyroInfoInFrameY[i]-gyroInfoInFrameY[0];
-        double tempz = gyroInfoInFrameZ[i]-gyroInfoInFrameZ[0];
-        gyroInfoInFrameX[i]-=tempx*10;
-        gyroInfoInFrameY[i]-=tempy*10;
-        gyroInfoInFrameZ[i]-=tempz*10;
-        __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dtempxxxx%f", i, tempy);
-    }
     for(int i = 0; i < gyroInfoInFrameX.size(); i++){
+//        double tempx = gyroInfoInFrameX[i]-gyroInfoInFrameX[0];
+//        double tempy = gyroInfoInFrameY[i]-gyroInfoInFrameY[0];
+//        double tempz = gyroInfoInFrameZ[i]-gyroInfoInFrameZ[0];
+//        gyroInfoInFrameX[i]-=tempx*1;
+//        gyroInfoInFrameY[i]-=tempy*1;
+//        gyroInfoInFrameZ[i]-=tempz*1;
+//        for(int k = 0; k < gyroInfoInFrameX.size(); k++){
+//            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "%dthOrg:%f", k, gyroInfoInFrameX[k]);
+//        }
+
         Mat cvMat(3, 3, CV_64F);
         Mat skewMat(3, 3, CV_64F);
         double th = gyroInfoInFrameX[i]*gyroInfoInFrameX[i]+
@@ -184,12 +175,7 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
         skewMat.at<double>(2,1) = gyroInfoInFrameX[i];
         skewMat.at<double>(2,2) = 0;
         cvMat = e+sin(th)*skewMat.t()+(1-cos(th))*(skewMat*skewMat).t();
-        __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "RsMatxxxxxxxxxxx:%f", 1-cos(th));
-//        for(int l = 0; l < 3; l++){
-//            for(int j = 0; j < 3; j++){
-//                __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "RsMat:%f", orgMat.at<double>(l,j));
-//            }
-//        }
+        __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "RsMatxxxxxxxxxxx:%f", gyroInfoInFrameX[i]-gyroInfoInFrameX[0]);
 //        cvMat = cvMat*orgMat ;
 //        Mat a1 = (cv::Mat_<double>(3, 3) << 0.0,1.0,0.0, -1.0,0.0,0.0, 0.0 ,0.0 ,1.0);
 //        Mat a2 = (cv::Mat_<double>(3, 3) << 1,0,0, 0,-1,0, 0 ,0 ,-1);
@@ -198,6 +184,7 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
 //        Mat temp = A.t()*sta.t()*A;
 //        Mat outMat = inmat*temp*inmat.inv();
         Mat outMat = inmat*cvMat*orgMat.inv()*inmat.inv();
+        showMat(outMat);
 //        __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "RsMat:%f", orgMat.at<double>(0,0));
         outMat.copyTo(*(rsOutTheta+i));
     }
@@ -246,4 +233,12 @@ Mat ThreadRollingShutter::constantMulMat(Mat &src, double num){
         }
     }
     return dst;
+}
+
+void ThreadRollingShutter::showMat(Mat cvMat) {
+    for(int i = 0; i < cvMat.rows; i++){
+        for(int j = 0; j < cvMat.cols; j++){
+            __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter", "(%d, %d):showMat:%f", i, j, cvMat.at<double>(i, j));
+        }
+    }
 }
