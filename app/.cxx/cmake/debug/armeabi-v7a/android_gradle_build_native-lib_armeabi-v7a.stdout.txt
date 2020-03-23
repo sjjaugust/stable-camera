@@ -1,1 +1,8 @@
-ninja: no work to do.
+[1/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
+[2/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o
+[3/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
+[4/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o
+[5/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o
+[6/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadKlt.cc.o
+[7/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o
+[8/8] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\armeabi-v7a\libnative-lib.so

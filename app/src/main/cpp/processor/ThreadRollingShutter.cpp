@@ -143,11 +143,11 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
 //        }
 //    }
 //测试啊啊啊
-    for(int i = 1; i < gyroInfoInFrameX.size(); i++){
-        gyroInfoInFrameX[i]-=gyroInfoInFrameX[0];
-        gyroInfoInFrameY[i]-=gyroInfoInFrameY[0];
-        gyroInfoInFrameZ[i]-=gyroInfoInFrameZ[0];
-    }
+//    for(int i = 1; i < gyroInfoInFrameX.size(); i++){
+//        gyroInfoInFrameX[i]-=gyroInfoInFrameX[0];
+//        gyroInfoInFrameY[i]-=gyroInfoInFrameY[0];
+//        gyroInfoInFrameZ[i]-=gyroInfoInFrameZ[0];
+//    }
     for(int i = 0; i < gyroInfoInFrameX.size(); i++){
         Mat cvMat(3, 3, CV_64F);
         Mat skewMat(3, 3, CV_64F);
