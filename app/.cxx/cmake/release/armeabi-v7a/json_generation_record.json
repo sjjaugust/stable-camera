@@ -5,39 +5,7 @@
   },
   {
     "level": "INFO",
-    "message": "rebuilding JSON D:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\armeabi-v7a\\android_gradle_build.json due to:"
-  },
-  {
-    "level": "INFO",
-    "message": "- command changed from previous, will remove stale json folder"
-  },
-  {
-    "level": "INFO",
-    "message": "removing stale contents from \u0027D:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\armeabi-v7a\u0027"
-  },
-  {
-    "level": "INFO",
-    "message": "created folder \u0027D:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\armeabi-v7a\u0027"
-  },
-  {
-    "level": "INFO",
-    "message": "executing cmake Executable : D:\\AndroidSDK\\cmake\\3.6.4111459\\bin\\cmake.exe\narguments : \n-HD:\\Repositories\\stable-camera\\app\n-BD:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\armeabi-v7a\n-DANDROID_ABI\u003darmeabi-v7a\n-DANDROID_PLATFORM\u003dandroid-21\n-DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003dD:\\Repositories\\stable-camera\\app\\build\\intermediates\\cmake\\release\\obj\\armeabi-v7a\n-DCMAKE_BUILD_TYPE\u003dRelease\n-DANDROID_NDK\u003dD:\\AndroidSdk\\ndk\\21.0.6113669\n-DCMAKE_CXX_FLAGS\u003d-frtti -fexceptions\n-DCMAKE_TOOLCHAIN_FILE\u003dD:\\AndroidSdk\\ndk\\21.0.6113669\\build\\cmake\\android.toolchain.cmake\n-DCMAKE_MAKE_PROGRAM\u003dD:\\AndroidSDK\\cmake\\3.6.4111459\\bin\\ninja.exe\n-GAndroid Gradle - Ninja\n-DANDROID_PLATFORM\u003dandroid-21\n-DANDROID_ARM_NEON\u003dTRUE\njvmArgs : \n\n"
-  },
-  {
-    "level": "INFO",
-    "message": "Executable : D:\\AndroidSDK\\cmake\\3.6.4111459\\bin\\cmake.exe\narguments : \n-HD:\\Repositories\\stable-camera\\app\n-BD:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\armeabi-v7a\n-DANDROID_ABI\u003darmeabi-v7a\n-DANDROID_PLATFORM\u003dandroid-21\n-DCMAKE_LIBRARY_OUTPUT_DIRECTORY\u003dD:\\Repositories\\stable-camera\\app\\build\\intermediates\\cmake\\release\\obj\\armeabi-v7a\n-DCMAKE_BUILD_TYPE\u003dRelease\n-DANDROID_NDK\u003dD:\\AndroidSdk\\ndk\\21.0.6113669\n-DCMAKE_CXX_FLAGS\u003d-frtti -fexceptions\n-DCMAKE_TOOLCHAIN_FILE\u003dD:\\AndroidSdk\\ndk\\21.0.6113669\\build\\cmake\\android.toolchain.cmake\n-DCMAKE_MAKE_PROGRAM\u003dD:\\AndroidSDK\\cmake\\3.6.4111459\\bin\\ninja.exe\n-GAndroid Gradle - Ninja\n-DANDROID_PLATFORM\u003dandroid-21\n-DANDROID_ARM_NEON\u003dTRUE\njvmArgs : \n\n"
-  },
-  {
-    "level": "INFO",
-    "message": "done executing cmake"
-  },
-  {
-    "level": "INFO",
-    "message": "write build output D:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\armeabi-v7a\\build_output.txt"
-  },
-  {
-    "level": "INFO",
-    "message": "write command file D:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\armeabi-v7a\\build_command.txt"
+    "message": "JSON \u0027D:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\armeabi-v7a\\android_gradle_build.json\u0027 was up-to-date"
   },
   {
     "level": "INFO",

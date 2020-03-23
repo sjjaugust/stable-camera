@@ -17,7 +17,7 @@ namespace threads{
         const char* TAG = "ThreadRollingShutter";
         thread work_thread;
         void worker();
-        Mat inmat=(cv::Mat_<double>(3, 3)<<1493.9,0.0,522.0, 0.0,1494.8,982.4,0.0,0.0,1.0);
+        Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);
         void gaussSmooth(Mat *rsOutTheta);
         Mat constantMulMat(Mat &src, double num);
     public:
@@ -29,7 +29,7 @@ namespace threads{
         void getMatInFrame(Mat *rsOutTheta, vector<double> gyroInfoInFrameX, vector<double> gyroInfoInFrameY,
                            vector<double> gyroInfoInFrameZ);
         ~ThreadRollingShutter();
-
+        void showMat(Mat cvMat);
 
 
     };

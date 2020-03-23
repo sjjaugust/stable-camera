@@ -425,7 +425,6 @@ public class Camera2BasicFragment extends Fragment
         seekBar.setProgress((int)(timeDelay / 1000 / 1000));
     }
 
-    public JellyEffectRectify mJellyEffectRectify = new JellyEffectRectify();
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -434,8 +433,7 @@ public class Camera2BasicFragment extends Fragment
 
         mSensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         mGyroSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        mSensorManager.registerListener(mJellyEffectRectify.gyroscopeSensorListener,
-                mGyroSensor, SensorManager.SENSOR_DELAY_GAME);
+
         mThetaHelper = new ThetaHelper();
         sharedPreferences = getActivity().getPreferences(Context.MODE_PRIVATE);
 

@@ -16,6 +16,7 @@ Mat ThetaHelper::getRR(Mat oldRotation, Mat newRotation)
     cv::Mat sta=oldRotation.t()*newRotation;
     cv::Mat temp=A.t()*sta.t()*hom.t()*A;
     cv::Mat R=inmat*temp*inmat.inv();
+    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "RRRRRR:%f", oldRotation.at<double>(0,1));
     // warpPerspective(oldImage, newImage, RR, oldImage.size(),cv::INTER_CUBIC);//INTER_LINEAR);
     return R;
 }
@@ -58,6 +59,7 @@ cv::Vec<double, 3> ThetaHelper::getTheta()
                 theta[0]=theta[0]+(-anglevx)*(gtimenext-gtime);
                 theta[1]=theta[1]+(-anglevy)*(gtimenext-gtime);
                 theta[2]=theta[2]+(-anglevz)*(gtimenext-gtime);
+//                __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "thththth:%f", theta[0]);
                 gtime=gtimenext;
                 gyindex++;
             }
@@ -148,6 +150,7 @@ cv::Mat ThetaHelper::getRotationMat(cv::Vec<double, 3> theta)
     int eq=0;
     double th=theta[0]*theta[0]+theta[1]*theta[1]+theta[2]*theta[2];
     th=sqrt(th);
+//    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "thththth:%f", th);
     if(th==0)
         eq=1;
     th=th+eq;
@@ -189,6 +192,9 @@ void ThetaHelper::init() {
     //果冻效应相关
     rsFrameIndex = 0;
     rsGyroIndex = 0;
+    rsLastx = 0;
+    rsLasty = 0;
+    rsLastz = 0;
 }
 
 bool ThetaHelper::isInside(cv::Mat cropvertex, cv::Mat newvertex)
@@ -278,8 +284,8 @@ void ThetaHelper::getR(double timestamp, Mat *matR, Mat *rsOutTheta ,bool isCrop
 
     cv::Mat oldRotation=getRotationMat(oldtheta);//[self getRotationMat:oldtheta];
     cv::Mat newRotation=getRotationMat(newtheta);//[self getRotationMat:newtheta];
-    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "old: %f",oldRotation.at<double>(0,0));
-    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "new: %f",newRotation.at<double>(0,0));
+//    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "old: %f",oldRotation.at<double>(0,0));
+//    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "new: %f",newRotation.at<double>(0,0));
     RR=getRR(oldRotation, newRotation);//[self getRR:oldRotation :newRotation];
     if (isCrop) {
         cropControl(RR);
@@ -299,11 +305,18 @@ void ThetaHelper::getRsTheta(Mat *rsOutTheta, double timestamp){
     cv::Mat gyroTheta(3, 4, CV_64F);
     vector<cv::Vec<double, 4>> rsGyroTheta;
 
-    double frameTime = timestamp;
+    double frameTime = Timeframe[rsFrameIndex];
     double gyroTime = Timeg[rsGyroIndex];
     cv::Vec<double, 4> temp;
     for(int i = 0; i < 4; i++){
         temp[i] = 0;
+    }
+    if(rsFrameIndex>0){
+        double lastftime= Timeframe[rsFrameIndex - 1];
+        temp[0]=0;
+        temp[1]=-rsLastx*(gyroTime-lastftime)+rsLastt[1];
+        temp[2]=-rsLasty*(gyroTime-lastftime)+rsLastt[2];
+        temp[3]=-rsLastz*(gyroTime-lastftime)+rsLastt[3];
     }
     while (gyroTime<frameTime){
         double angleX = roxl[rsGyroIndex];
@@ -313,18 +326,27 @@ void ThetaHelper::getRsTheta(Mat *rsOutTheta, double timestamp){
 //
         if(gyroTimeNext<frameTime){
             temp[0] = gyroTimeNext;
-            temp[1] = temp[1]+(gyroTimeNext-gyroTime)*angleX;
-            temp[2] = temp[2]+(gyroTimeNext-gyroTime)*angleY;
-            temp[3] = temp[3]+(gyroTimeNext-gyroTime)*angleZ;
+            temp[1] = temp[1]+(gyroTimeNext-gyroTime)*(-angleX);
+            temp[2] = temp[2]+(gyroTimeNext-gyroTime)*(-angleY);
+            temp[3] = temp[3]+(gyroTimeNext-gyroTime)*(-angleZ);
             rsGyroTheta.push_back(temp);
+            rsGyroIndex++;
+            __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "thththth:%f", angleX);
         } else{
             temp[0] = frameTime;
-            temp[1] = temp[1]+(frameTime-gyroTime)*angleX;
-            temp[2] = temp[2]+(frameTime-gyroTime)*angleY;
-            temp[3] = temp[3]+(frameTime-gyroTime)*angleZ;
+            temp[1] = temp[1]+(frameTime-gyroTime)*(-angleX);
+            temp[2] = temp[2]+(frameTime-gyroTime)*(-angleY);
+            temp[3] = temp[3]+(frameTime-gyroTime)*(-angleZ);
             rsGyroTheta.push_back(temp);
+
+            rsLastx = angleX;
+            rsLasty = angleY;
+            rsLastz = angleZ;
+            rsLastt = temp;
+            rsGyroIndex++;
+            break;
         }
-        rsGyroIndex++;
+//        rsGyroIndex++;
         gyroTime = Timeg[rsGyroIndex];
     }
     rsFrameIndex++;
@@ -335,7 +357,7 @@ void ThetaHelper::getRsTheta(Mat *rsOutTheta, double timestamp){
         }
     }
     gyroTheta.copyTo(*rsOutTheta);
-    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper" ,"gyroTheta: %f", gyroTheta.at<double>(0,0));
+//    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper" ,"gyroTheta: %f", gyroTheta.at<double>(0,1));
 
 }
 
