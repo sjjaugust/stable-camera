@@ -1,2 +1,13 @@
-[1/2] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o
-[2/2] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\arm64-v8a\libnative-lib.so
+[1/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
+[2/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
+[3/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o
+[4/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o
+[5/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o
+[6/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o
+[7/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadKlt.cc.o
+D:\Repositories\stable-camera\app\src\main\cpp\processor\StableProcessor.cc:102:78: warning: format specifies type 'int' but the argument has type 'unsigned long' [-Wformat]
+    __android_log_print(ANDROID_LOG_ERROR, "StableProcessor", "framevec:%d", sizeof(ThreadContext::frameVec)/
+                                                                        ~~   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                                                        %lu
+1 warning generated.
+[8/8] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\arm64-v8a\libnative-lib.so
