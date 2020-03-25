@@ -171,8 +171,7 @@ public class Camera2BasicFragment extends Fragment
     private File mFile;
     CameraBridgeViewBase mTextureView;
     StableProcessor stableProcessor;
-    boolean isimageavliable = false;
-    boolean isfirst = true;
+
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
             = new ImageReader.OnImageAvailableListener() {
         Mat curFrame;
@@ -183,7 +182,6 @@ public class Camera2BasicFragment extends Fragment
         int c = 0;
         Mat R;
         Mat rsOutTheta;
-
         @Override
         public void onImageAvailable(ImageReader reader) {
 //            Log.i(TAG, "image come");
@@ -196,23 +194,6 @@ public class Camera2BasicFragment extends Fragment
 
             final long timeStamp = image.getTimestamp() + timeDelay;
             //Log.e(TAG, "onSen: realtime"+ SystemClock.elapsedRealtimeNanos());
-//            if (isfirst){
-//                isfirst = false;
-//            }else
-//            {
-//                mJellyEffectRectify.process();
-//            }
-//            mJellyEffectRectify.ChangeRecordState();
-//            mJellyEffectRectify.pictimestamp = timeStamp;
-//            mJellyEffectRectify.timedelay = timeDelay;
-//
-//
-//            if(isimageavliable){
-//                isimageavliable = false;
-//                isimageavliable = true;
-//            }
-//            else
-//                isimageavliable = true;
 
             if (curFrame == null) {
                 curFrame = new Mat(image.getHeight() / 2 * 3, image.getWidth(), CvType.CV_8U); // TODO
@@ -220,7 +201,7 @@ public class Camera2BasicFragment extends Fragment
                 byteBuffer2 = new byte[image.getWidth() * image.getHeight() / 2];
                 lastFrame = new Mat(image.getHeight() / 2 * 3, image.getWidth(), CvType.CV_8U);
                 R = new Mat(3, 3, CvType.CV_64F);
-                rsOutTheta = new Mat(3, 4, CvType.CV_64F);
+
             }
 
             Image.Plane[] planes = image.getPlanes();
@@ -240,7 +221,11 @@ public class Camera2BasicFragment extends Fragment
             } else {
                 int idx = stableProcessor.dequeueInputBuffer();
 
-                mThetaHelper.n_getR(lastTimestamp, R.nativeObj, rsOutTheta.nativeObj, isCrop);
+                mThetaHelper.n_getR(lastTimestamp, R.nativeObj, isCrop);
+
+                rsOutTheta = new Mat(0, 4, CvType.CV_64F);
+                mThetaHelper.n_rsChangeVectorToMat(rsOutTheta.nativeObj);
+
                 Log.e(TAG, "wtf-------------"+Arrays.toString(rsOutTheta.get(0,1)));
                 double l00[]=lastFrame.get(0,0);
                 Log.e(TAG,"lastFrame: "+l00[0]);

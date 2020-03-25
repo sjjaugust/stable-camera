@@ -65,6 +65,9 @@ private:
     double rsLastx;
     double rsLasty;
     double rsLastz;
+    int rsGyroThetaRows;
+    vector<cv::Vec<double, 4>> m_RsGyroTheta;
+
 
 
 
@@ -74,11 +77,13 @@ public:
     cv::Vec<double, 3> getTheta();
     cv::Vec<double, 3> getNewTheta(cv::Vec<double, 3> oldtheta);
     cv::Mat getRotationMat(cv::Vec<double, 3> theta);
-    void getR(double timestamp, Mat *matR, Mat *rsOutTheta, bool isCrop);
+    void getR(double timestamp, Mat *matR, bool isCrop);
     void putValue(double timestamp, float x, float y, float z);
 
     //果冻效应相关
-    void getRsTheta(Mat *rsOutTheta, double timestamp);
+    vector<cv::Vec<double, 4>> getRsTheta();
+    void getRsThetaRows(int rows);
+    void rsChangeVectorToMat(cv::Mat* rsOutMat);
 };
 
 

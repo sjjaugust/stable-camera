@@ -35,11 +35,12 @@ void ThreadRollingShutter::getRollingShutterR(){
         int index = (start+i)%ThreadContext::BUFFERSIZE;
 
         Mat gyroInfo = ThreadContext::rsOutTheta[index];
+        int gyroInfoRows = gyroInfo.rows;
         double timeStart = gyroInfo.at<double>(0,0);
-        double timeEnd = gyroInfo.at<double>(2,0);
+        double timeEnd = gyroInfo.at<double>(gyroInfoRows-1,0);
 //        __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter","RsMat timeEnd:%f", timeEnd);
         vector<double> gyroInfoX, gyroInfoY, gyroInfoZ, gyroInfoOrgTime;
-        for(int j = 0; j < 3; j++){
+        for(int j = 0; j < gyroInfoRows; j++){
             gyroInfoOrgTime.push_back(gyroInfo.at<double>(j,0));
             gyroInfoX.push_back(gyroInfo.at<double>(j,1));
             gyroInfoY.push_back(gyroInfo.at<double>(j,2));

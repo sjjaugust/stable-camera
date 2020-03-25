@@ -271,7 +271,7 @@ void ThetaHelper::cropControl(Mat& transVec) {
 
 }
 
-void ThetaHelper::getR(double timestamp, Mat *matR, Mat *rsOutTheta ,bool isCrop) {
+void ThetaHelper::getR(double timestamp, Mat *matR ,bool isCrop) {
     rsGyroIndex = gyindex;
 
     Timeframe.push_back(timestamp);
@@ -295,12 +295,11 @@ void ThetaHelper::getR(double timestamp, Mat *matR, Mat *rsOutTheta ,bool isCrop
     RR.copyTo(*matR);
 
     //果冻效应相关
-    getRsTheta(rsOutTheta, timestamp);
-
-
+    m_RsGyroTheta = getRsTheta();
+    rsGyroThetaRows = m_RsGyroTheta.size();
 }
 
-void ThetaHelper::getRsTheta(Mat *rsOutTheta, double timestamp){
+vector<cv::Vec<double, 4>> ThetaHelper::getRsTheta(){
 
     cv::Mat gyroTheta(3, 4, CV_64F);
     vector<cv::Vec<double, 4>> rsGyroTheta;
@@ -331,7 +330,7 @@ void ThetaHelper::getRsTheta(Mat *rsOutTheta, double timestamp){
             temp[3] = temp[3]+(gyroTimeNext-gyroTime)*(-angleZ);
             rsGyroTheta.push_back(temp);
             rsGyroIndex++;
-            __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "thththth:%f", angleX);
+//            __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "thththth:%d %d", rsFrameIndex, rsGy);
         } else{
             temp[0] = frameTime;
             temp[1] = temp[1]+(frameTime-gyroTime)*(-angleX);
@@ -349,16 +348,27 @@ void ThetaHelper::getRsTheta(Mat *rsOutTheta, double timestamp){
 //        rsGyroIndex++;
         gyroTime = Timeg[rsGyroIndex];
     }
+//    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper" ,"gyroTheta: %d %d", rsFrameIndex, rsGyroTheta.size());
     rsFrameIndex++;
-    //将vector转化为mat
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 4; j++){
-            gyroTheta.at<double>(i, j) = rsGyroTheta[i][j];
-        }
-    }
-    gyroTheta.copyTo(*rsOutTheta);
+    return rsGyroTheta;
+
 //    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper" ,"gyroTheta: %f", gyroTheta.at<double>(0,1));
 
+}
+
+void ThetaHelper::getRsThetaRows(int rows) {
+    rows = rsGyroThetaRows;
+//    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper" ,"gyroTheta: %d", rows);
+}
+void ThetaHelper::rsChangeVectorToMat(cv::Mat* rsOutMat) {
+    //将vector转化为mat
+    cv::Mat temp(m_RsGyroTheta.size(), 4, CV_64F);
+    for(int i = 0; i < m_RsGyroTheta.size(); i++){
+        for(int j = 0; j < 4; j++){
+            temp.at<double>(i, j) = m_RsGyroTheta[i][j];
+        }
+    }
+    temp.copyTo(*rsOutMat);
 }
 
 void ThetaHelper::putValue(double timestamp, float x, float y, float z) {
