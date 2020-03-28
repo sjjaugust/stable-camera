@@ -4,7 +4,7 @@
 
 #include "ThetaHelper.h"
 #include <android/log.h>
-
+#include "TimeRecorder.h"
 
 Mat ThetaHelper::getRR(Mat oldRotation, Mat newRotation)
 {
@@ -127,7 +127,7 @@ cv::Vec<double, 3> ThetaHelper::getNewTheta(cv::Vec<double, 3> oldtheta)
         kx=ppx/(ppx+rx);
         ky=ppy/(ppy+ry);
         kz=ppz/(ppz+rz);
-        __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "rxyz: %f, %f, %f",rx,ry,rz);
+//        __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "rxyz: %f, %f, %f",rx,ry,rz);
         //计算k时刻实际值,ptheta为预测值也就是上一个角度值，k为卡尔曼增益，oldtheta为实际值
         newtheta[0]=ptheta[0]+kx*(oldtheta[0]-ptheta[0]);
         newtheta[1]=ptheta[1]+ky*(oldtheta[1]-ptheta[1]);
@@ -290,13 +290,14 @@ void ThetaHelper::getR(double timestamp, Mat *matR ,bool isCrop) {
     if (isCrop) {
         cropControl(RR);
     }
-    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "RR: %f",RR.at<double>(0,0));
+//    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "RR: %f",RR.at<double>(0,0));
 
     RR.copyTo(*matR);
 
     //果冻效应相关
     m_RsGyroTheta = getRsTheta();
     rsGyroThetaRows = m_RsGyroTheta.size();
+
 }
 
 vector<cv::Vec<double, 4>> ThetaHelper::getRsTheta(){
@@ -330,7 +331,7 @@ vector<cv::Vec<double, 4>> ThetaHelper::getRsTheta(){
             temp[3] = temp[3]+(gyroTimeNext-gyroTime)*(-angleZ);
             rsGyroTheta.push_back(temp);
             rsGyroIndex++;
-//            __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "thththth:%d %d", rsFrameIndex, rsGy);
+//            __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper", "thththth:%f", temp[3]);
         } else{
             temp[0] = frameTime;
             temp[1] = temp[1]+(frameTime-gyroTime)*(-angleX);

@@ -30,7 +30,7 @@ void ThreadContext::createGaussWeight(double *gaussWeight) {
         double xishu = 1.0/sqrt(2.0*pi);
         *(gaussWeight+num) = xishu*exp(temp);
         num++;
-        __android_log_print(ANDROID_LOG_ERROR, "ThreadContext", "%fgaussWeight:%f",temp , *(gaussWeight+num-1));
+//        __android_log_print(ANDROID_LOG_ERROR, "ThreadContext", "%fgaussWeight:%f",temp , *(gaussWeight+num-1));
     }
 }
 

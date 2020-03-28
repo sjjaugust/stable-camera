@@ -56,6 +56,7 @@ void StableProcessor::Init(Size videoSize) {
 
 void StableProcessor::enqueueInputBuffer(int buffer_index, const Mat* new_frame, const Mat* RR, const Mat* rsOutTheta) {
 
+
     if (cur_read_count_ == 0) {  // start of a group
         this_rgroup_start_ = (buffer_index_ - 1 + ThreadContext::BUFFERSIZE) % ThreadContext::BUFFERSIZE;
         this_rgroup_size_ = ThreadContext::SEGSIZE;//该组大小为5
@@ -89,6 +90,7 @@ void StableProcessor::enqueueInputBuffer(int buffer_index, const Mat* new_frame,
         //果冻效应相关
         ThreadContext::rsList.push_back(buffer_info);
         //激活klt线程
+
         ThreadContext::klt_semaphore->Signal();
         //当前读入数量归0
         cur_read_count_ = 0;
@@ -99,8 +101,8 @@ void StableProcessor::enqueueInputBuffer(int buffer_index, const Mat* new_frame,
 //    __android_log_print(ANDROID_LOG_ERROR,
 //                        "StableProcessor", "cur_read_count:%d,buffer_index:%d, this_rgroup_start:%d, isfirst:%d, this_size:%d",
 //                        cur_read_count_, buffer_index, this_rgroup_start_, is_first_read_group_ ,this_rgroup_size_);
-    __android_log_print(ANDROID_LOG_ERROR, "StableProcessor", "framevec:%d", sizeof(ThreadContext::frameVec)/
-                                                                             sizeof(ThreadContext::frameVec[0]));
+//    __android_log_print(ANDROID_LOG_ERROR, "StableProcessor", "framevec:%d", sizeof(ThreadContext::frameVec)/
+//                                                                             sizeof(ThreadContext::frameVec[0]));
 }
 
 int StableProcessor::dequeueInputBuffer() {
@@ -140,7 +142,7 @@ void StableProcessor::dequeueOutputBuffer(Mat* const stableVec, Mat* const frame
     Mat outTemp(30,3,CV_64F);
     int tempPosition = 0;
     for(int i = 0; i < ThreadContext::rsStripNum; i++){
-        __android_log_print(ANDROID_LOG_ERROR, "StableProcessor:","%drsMat111111:%f", i, ThreadContext::rsMat[index][i].at<double>(0,0));
+//        __android_log_print(ANDROID_LOG_ERROR, "StableProcessor:","%drsMat111111:%f", i, ThreadContext::rsMat[index][i].at<double>(0,0));
         Mat temp(3, 3, CV_64F);
         ThreadContext::rsMat[index][i].copyTo(temp);
         for(int j = tempPosition, l = 0; j < tempPosition+3; j++, l++){

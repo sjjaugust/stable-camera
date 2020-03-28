@@ -31,10 +31,6 @@
     },
     {
       "level": "INFO",
-      "message": "Rejected D:\\AndroidSDK\\ndk-bundle in SDK ndk-bundle folder because that location has no source.properties"
-    },
-    {
-      "level": "INFO",
       "message": "Found requested ndk.dir (D:\\AndroidSdk\\ndk\\21.0.6113669) which has version 21.0.6113669"
     }
   ]

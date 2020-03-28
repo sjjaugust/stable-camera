@@ -4,6 +4,7 @@
 
 #include "ThreadKlt.h"
 #include <android/log.h>
+
 using namespace threads;
 ThreadKlt::~ThreadKlt() {
     worker_thread_.join();
@@ -18,7 +19,9 @@ void ThreadKlt::worker() {
     while(true)
     {
         //count为0，让该线程等待，signal后，count为1，继续该线程
+
         ThreadContext::klt_semaphore->Wait();//取原始帧容器中图像资源，若无，则线程等待
+
 //        __android_log_print(ANDROID_LOG_DEBUG, "NThreadKlt", "before");
 
         if( ThreadContext::kltList[0].y < ThreadContext::SEGSIZE )
@@ -26,11 +29,10 @@ void ThreadKlt::worker() {
             ThreadContext::mc_semaphore->Signal();
             break;
         }
-
         constructTrajectory();
 
         ThreadContext::kltList.erase( ThreadContext::kltList.begin() );
-//        __android_log_print(ANDROID_LOG_DEBUG, "NThreadKlt", "after");
+//        __android_log_print(ANDROID_LOG_DEBUG, "ThreadKlt", "timespand:%f, %d",(float)(c_finish-c_start)/CLOCKS_PER_SEC, timeSpand.size());
 
         ThreadContext::mc_semaphore->Signal();//唤醒运动估计线程
     }

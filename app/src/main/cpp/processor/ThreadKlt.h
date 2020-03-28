@@ -9,6 +9,7 @@
 #include <thread>
 #include "ThreadContext.h"
 #include "MySemaphore.h"
+#include "TimeRecorder.h"
 
 using namespace std;
 using namespace cv;

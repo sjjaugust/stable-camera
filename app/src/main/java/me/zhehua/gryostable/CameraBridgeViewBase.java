@@ -86,7 +86,7 @@ public class CameraBridgeViewBase extends GLSurfaceView {
         super(context, attrs);
 
         int count = attrs.getAttributeCount();
-        Log.d(TAG, "Attr count: " + Integer.valueOf(count));
+//        Log.d(TAG, "Attr count: " + Integer.valueOf(count));
 
         TypedArray styledAttrs = getContext().obtainStyledAttributes(attrs, org.opencv.R.styleable.CameraBridgeViewBase);
 //        if (styledAttrs.getBoolean(org.opencv.R.styleable.CameraBridgeViewBase_show_fps, false))
@@ -206,7 +206,7 @@ public class CameraBridgeViewBase extends GLSurfaceView {
             if (storageCanvas != null) {
                 storageCanvas.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR);
                 if (BuildConfig.DEBUG)
-                    Log.d(TAG, "mStretch value: " + mScale);
+//                    Log.d(TAG, "mStretch value: " + mScale);
 
                 if (transformMat == null) {
                     transformMat = new Matrix();
@@ -252,7 +252,7 @@ public class CameraBridgeViewBase extends GLSurfaceView {
                 }
                 if (stableProcessor != null) {
                     stableProcessor.dequeueOutputBuffer(transVec, outputMat, rsMat);
-                    Log.e(TAG, "rsMat-------------"+rsMat.dump());
+//                    Log.e(TAG, "rsMat-------------"+rsMat.dump());
                 }
 
                 if (outputMat.empty()) {
@@ -268,9 +268,9 @@ public class CameraBridgeViewBase extends GLSurfaceView {
                     transDataF[i] = (float) transData[i];
 
                 }
-                Log.e(TAG,"transDataF: "+transDataF[0]);
+//                Log.e(TAG,"transDataF: "+transDataF[0]);
                 double o00[]=outputMat.get(0,0);
-                Log.e(TAG,"outputMat: "+o00[0]);
+//                Log.e(TAG,"outputMat: "+o00[0]);
 
 //                for (int i = 0; i < 6; i ++) {
 //                    transDataF[i] = (float)transData[i];
@@ -286,7 +286,7 @@ public class CameraBridgeViewBase extends GLSurfaceView {
 //                outputMat.put(100, 1900, 0);
                 renderer.outputMat = outputMat;
                 renderer.rsMat = rsMat;
-                Log.e(TAG, "rsMat-----"+rsMat.dump());
+//                Log.e(TAG, "rsMat-----"+rsMat.dump());
                 if (renderer.isReady) {
                     CameraBridgeViewBase.this.requestRender();
                 }

@@ -72,7 +72,6 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_ThetaHelper_n_1getR(JNIEnv *env, jobject instance, jlong timestamp,
                                               jlong matR, jboolean isCrop) {
-
     n_th.getR(timestamp / 1000000000.0, (Mat*) matR, isCrop);
 }
 

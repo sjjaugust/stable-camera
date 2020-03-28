@@ -4,6 +4,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.os.SystemClock;
+import android.util.Log;
 
 public class ThetaHelper implements SensorEventListener {
 
@@ -24,6 +25,7 @@ public class ThetaHelper implements SensorEventListener {
                 ? event.timestamp : timeConvert(event.timestamp);
 
         n_sensor_changed(timestamp, event.values[0], event.values[1], event.values[2]);
+//        Log.e("ThetaHelper", "onSensorChanged: "+event.values[0]+" "+ event.values[1] + " "+ event.values[2]);
     }
 
     @Override

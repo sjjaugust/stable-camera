@@ -4,6 +4,7 @@
 
 #include "ThreadCompensation.h"
 #include <android/log.h>
+#include "TimeRecorder.h"
 using namespace cv;
 using namespace std;
 using namespace threads;
@@ -21,7 +22,6 @@ void ThreadCompensation::worker()
     pthread_setname_np(pthread_self(), "CompensationThread"); // set the name (pthread_self() returns the pthread_t of the current thread
     while(true)
     {
-
         ThreadContext::mc_semaphore->Wait();//取已经完成特征点轨迹构造的资源，若无，线程等待
 //        __android_log_print(ANDROID_LOG_DEBUG, "NThreadMC", "before");
         if( ThreadContext::motionCompList[0].y < ThreadContext::SEGSIZE )
@@ -30,8 +30,8 @@ void ThreadCompensation::worker()
             ThreadContext::rs_semaphore->Signal();
             break;
         }
-
         frameCompensate();
+
 
         ThreadContext::motionCompList.erase( ThreadContext::motionCompList.begin() );
 //        __android_log_print(ANDROID_LOG_DEBUG, "NThreadMC", "after");
@@ -388,8 +388,8 @@ void ThreadCompensation::frameCompensate()
         transVec3.at<double>(2,0)=0;
         transVec3.at<double>(2,1)=0;
         transVec3.at<double>(2,2)=1;
-        __android_log_print(ANDROID_LOG_ERROR, "NStableProcessor", "transVec3: %f",transVec3.at<double>(0,0));
-        __android_log_print(ANDROID_LOG_ERROR, "NStableProcessor", "stableRvec: %f",ThreadContext::stableRVec[index].at<double>(0,0));
+//        __android_log_print(ANDROID_LOG_ERROR, "NStableProcessor", "transVec3: %f",transVec3.at<double>(0,0));
+//        __android_log_print(ANDROID_LOG_ERROR, "NStableProcessor", "stableRvec: %f",ThreadContext::stableRVec[index].at<double>(0,0));
 
         ThreadContext::stableTransformVec[index] = transVec3*ThreadContext::stableRVec[index];
     }

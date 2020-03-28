@@ -346,7 +346,7 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
             String vertexShaderSource = readAssets("shader.glslv");
             GLES30.glShaderSource(vertexShader, vertexShaderSource);
             GLES30.glCompileShader(vertexShader);
-            Log.e(TAG, "vert" + GLES30.glGetShaderInfoLog(vertexShader));
+//            Log.e(TAG, "vert" + GLES30.glGetShaderInfoLog(vertexShader));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -359,7 +359,7 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
             e.printStackTrace();
         }
 
-        Log.e(TAG, "frag" + GLES30.glGetShaderInfoLog(fragmentShader));
+//        Log.e(TAG, "frag" + GLES30.glGetShaderInfoLog(fragmentShader));
 
         GLES30.glAttachShader(program, vertexShader);
         GLES30.glAttachShader(program, fragmentShader);
@@ -574,7 +574,7 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
         vertex[tempPosition+4] = (float) dst[1];
         vertex[tempPosition+5] = (float) dst[2];
 
-        Log.e(TAG, "changeVertex11111: "+ Arrays.toString(vertex));
+//        Log.e(TAG, "changeVertex11111: "+ Arrays.toString(vertex));
 
     }
     private double[] mul(Mat src1, double[] src2){
