@@ -6,17 +6,12 @@
 #define GRYOSTABLE_THETAHELPER_H
 
 #include "opencv2/opencv.hpp"
-#include "ThreadContext.h"
-
 using namespace cv;
 using namespace std;
 class ThetaHelper {
 private:
 //    Mat inmat=(cv::Mat_<double>(3, 3)<<1440.0,0.0,540.0, 0.0,1440.0,960.0,0.0,0.0,1.0);
-   //Mat inmat=(cv::Mat_<double>(3, 3)<<600.0,0.0,616.0, 0.0,600.0,956.0,0.0,0.0,1.0);
-   //内参矩阵
-//    Mat inmat=(cv::Mat_<double>(3, 3)<<1493.9,0.0,522.0, 0.0,1494.8,982.4,0.0,0.0,1.0);
-    Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);
+    Mat inmat=(cv::Mat_<double>(3, 3)<<600.0,0.0,616.0, 0.0,600.0,956.0,0.0,0.0,1.0);
     Mat vertex=(cv::Mat_<double>(3, 4)<<0.0,0.0,1080.0,1080.0,0.0,1920.0,1920.0,0.0,1.0,1.0,1.0,1.0);
     Mat cropvertex=(cv::Mat_<double>(3, 4)<<108.0,108.0,972.0, 972.0, 192.0 , 1728.0, 1728.0, 192.0,1.0,1.0,1.0,1.0);
     Mat I=(cv::Mat_<double>(3, 3)<<1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0);
@@ -58,19 +53,6 @@ private:
     void cropControl(Mat& RR);
     bool isInside(cv::Mat cropvertex, cv::Mat newvertex);
 
-    //果冻效应相关
-    int rsFrameIndex;
-    int rsGyroIndex;
-    cv::Vec<double, 4> rsLastt;
-    double rsLastx;
-    double rsLasty;
-    double rsLastz;
-    int rsGyroThetaRows;
-    vector<cv::Vec<double, 4>> m_RsGyroTheta;
-
-
-
-
 public:
     void init();
     Mat getRR(Mat oldRotation, Mat newRotation);
@@ -79,11 +61,6 @@ public:
     cv::Mat getRotationMat(cv::Vec<double, 3> theta);
     void getR(double timestamp, Mat *matR, bool isCrop);
     void putValue(double timestamp, float x, float y, float z);
-
-    //果冻效应相关
-    vector<cv::Vec<double, 4>> getRsTheta();
-    void getRsThetaRows(int rows);
-    void rsChangeVectorToMat(cv::Mat* rsOutMat);
 };
 
 

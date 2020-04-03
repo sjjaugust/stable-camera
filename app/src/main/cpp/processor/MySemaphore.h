@@ -10,7 +10,7 @@
 namespace threads {
     class MySemaphore {
     public:
-        MySemaphore(int count = 1) : count_{count} {}//把count给私有变量count_
+        MySemaphore(int count = 1) : count_{count} {}
         void Wait();
         void Signal();
         bool TryWait();

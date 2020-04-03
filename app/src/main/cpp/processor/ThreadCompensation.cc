@@ -3,538 +3,740 @@
 //
 
 #include "ThreadCompensation.h"
+
 #include <android/log.h>
-#include "TimeRecorder.h"
+#include <jni.h>
+
+#define LOG_TAG    "c_ThreadCompensation"
+#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
 using namespace cv;
 using namespace std;
 using namespace threads;
 
+double point_distance(cv::Point2f p1,cv::Point2f p2)
+{
+    cv::Point2f d = p1 - p2;
+    double d_mu;
+    d_mu = sqrt(d.x * d.x + d.y * d.y);
+    return d_mu;
+}
+
+bool outOfImg(const cv::Point2f &point, const cv::Size &size)
+{
+    return (point.x <= 0 || point.y <= 0 || point.x >= size.width - 1 || point.y >= size.height - 1 );
+}
+
 ThreadCompensation::~ThreadCompensation() {
-    worker_thread_.join();//让其他线程等待知道该线程运行完成
+    worker_thread_.join();
 }
 
 void ThreadCompensation::start() {
-    worker_thread_ = thread(&ThreadCompensation::worker, this);//生成新线程
+    worker_thread_ = thread(&ThreadCompensation::worker, this);
 }
 
 void ThreadCompensation::worker()
 {
+    //LOGI("ThreadCompensation::worker");
+    filter = Filter(ThreadContext::SEGSIZE * 2 , 5, Filter::delta_T);
+    lastRot[0]=0;
+    lastRot[1]=0;
+    lastRot[2]=0;
+    //cropRation = 0.8;
     pthread_setname_np(pthread_self(), "CompensationThread"); // set the name (pthread_self() returns the pthread_t of the current thread
     while(true)
     {
+        //LOGI("loop start");
         ThreadContext::mc_semaphore->Wait();//取已经完成特征点轨迹构造的资源，若无，线程等待
 //        __android_log_print(ANDROID_LOG_DEBUG, "NThreadMC", "before");
-        if( ThreadContext::motionCompList[0].y < ThreadContext::SEGSIZE )
+        if( cm_las_index_ < 0 )
         {
-//            ThreadContext::out_semaphore->Signal();
-            ThreadContext::rs_semaphore->Signal();
+            ThreadContext::out_semaphore->Signal();
             break;
         }
+
         frameCompensate();
+        //LOGI("loop end");
 
+        ex_index_ = (ex_index_ + 1) % ThreadContext::SEGSIZE;
+        cm_las_index_ = (cm_las_index_ + 1) % ThreadContext::BUFFERSIZE;
+        cm_cur_index_ = (cm_cur_index_ + 1) % ThreadContext::BUFFERSIZE;
+        //ThreadContext::out_semaphore->Signal();//唤醒显示和保存线程
 
-        ThreadContext::motionCompList.erase( ThreadContext::motionCompList.begin() );
-//        __android_log_print(ANDROID_LOG_DEBUG, "NThreadMC", "after");
-//       ThreadContext::out_semaphore->Signal();//唤醒显示和保存线程
-        ThreadContext::rs_semaphore->Signal();
     }
 }
 
-void ThreadCompensation::computeAffine( vector<Point2f> &avgFeatPos , vector<Mat> &affineMatrix )
+void ThreadCompensation::detect_feature()
 {
-    list<list<vector<Point2f>>>::iterator Iter = ThreadContext::trj.begin();//指向第一个list<vector<point2f>>
-    if( (*Iter).size() < 3 )//计算仿射矩阵至少需要三个特征点对
-        return;
+    double quality_level = 0.1;
+    double min_distance = 8;
+    int max_corners = 8;
 
-    int trjNum = (int) (*Iter).size();//特征点个数
-    int trjLength = (int) (*(*Iter).begin()).size();//每个vector中的元素个数,即段内帧数
-    
-    for( int i = 0 ; i < trjLength ; i++ )
+    std::vector<cv::Point2f> lastFeatures_a[16], startp;
+    lastFeatures.clear();
+
+    int half_w=lastGray.cols/4 , half_h=lastGray.rows/4;
+    startp.push_back(cv::Point2f(0, 0));
+    startp.push_back(cv::Point2f(0, half_h));
+    startp.push_back(cv::Point2f(0, 2*half_h));
+    startp.push_back(cv::Point2f(0, 3*half_h));
+
+    startp.push_back(cv::Point2f(half_w, 0));
+    startp.push_back(cv::Point2f(half_w, half_h));
+    startp.push_back(cv::Point2f(half_w, 2*half_h));
+    startp.push_back(cv::Point2f(half_w, 3*half_h));
+
+    startp.push_back(cv::Point2f(2*half_w, 0));
+    startp.push_back(cv::Point2f(2*half_w, half_h));
+    startp.push_back(cv::Point2f(2*half_w, 2*half_h));
+    startp.push_back(cv::Point2f(2*half_w, 3*half_h));
+
+    startp.push_back(cv::Point2f(3*half_w, 0));
+    startp.push_back(cv::Point2f(3*half_w, half_h));
+    startp.push_back(cv::Point2f(3*half_w, 2*half_h));
+    startp.push_back(cv::Point2f(3*half_w, 3*half_h));
+
+    cv::Rect rect[16];
+    cv::Mat lastGray_a[16];
+
+    for(int i=0;i<16;i++)
     {
-        Point2f sum(0,0);
-        list<vector<Point2f>>::iterator Iter_2;//指向第二层链
-        //特征点坐标之和
-        for( Iter_2 = (*Iter).begin() ; Iter_2 != (*Iter).end() ; Iter_2++ )
+        rect[i]=cv::Rect(startp[i].x, startp[i].y, half_w, half_h);
+        lastGray_a[i] = lastGray(rect[i]);
+        goodFeaturesToTrack(lastGray_a[i], lastFeatures_a[i], max_corners, quality_level, min_distance);//检测特征点
+        for(int j=0; j<lastFeatures_a[i].size(); j++)
         {
-            sum += (*Iter_2)[i];//讲每帧坐标位置加和
+            cv::Point2f pt=lastFeatures_a[i][j]+startp[i];
+            lastFeatures.push_back(pt);
         }
-        Point2f centerPoint;
-        centerPoint.x = sum.x / trjNum;//除以特征点个数
-        centerPoint.y = sum.y / trjNum;
-        avgFeatPos.push_back(centerPoint);//存储每一帧的中心点
     }
+}
 
+void ThreadCompensation::track_feature()
+{
+    double rate = 1.4;
 
-    //轨迹坐标中心化，转置
-    vector<vector<Point2f>> normalTrj_T;
-    for( int i = 0 ; i < trjLength ; i++ )
+    status.clear();
+    std::vector<float> err;
+    curFeatures.clear();
+
+    //LOGI("step4_1");
+    calcOpticalFlowPyrLK( lastGray , curGray , lastFeatures , curFeatures , status , err );//根据已检测到的前一帧特征点在后一帧查找匹配的特征点
+    status_choose.clear();
+    status_choose.assign(status.begin(), status.end());
+
+    //LOGI("step4_2");
+    int max = lastFeatures.size() < curFeatures.size() ? lastFeatures.size() : curFeatures.size();
+    double dis_sum=0;
+    for(int i=0;i<max;i++)
     {
-        vector<Point2f> tmp;
-        list<vector<Point2f>>::iterator Iter_2;
-        for( Iter_2 = (*Iter).begin() ; Iter_2 != (*Iter).end() ; Iter_2++ )
+        dis_sum += point_distance(lastFeatures[i],curFeatures[i]);
+    }
+    double dis_avg=0;
+    dis_avg=dis_sum/max;
+
+    //LOGI("step4_3");
+    max = max < status.size() ? max : status.size();
+    for(int i=0;i<max;i++)
+    {
+        if(point_distance(lastFeatures[i],curFeatures[i]) > dis_avg * rate)
         {
-            (*Iter_2)[i] -= avgFeatPos[i];
-            tmp.push_back( (*Iter_2)[i] );
-        }//减去中心点
-        normalTrj_T.push_back( tmp );
-    }
-
-    Mat affine;
-    Mat conMat = Mat::zeros(1, 3, CV_64F);
-    conMat.at<double>(0, 2) = 1;
-    Mat tmpEye = Mat::eye(3, 3, CV_64F);
-    Mat I = Mat::eye(2, 3, CV_64F);
-    for( int i = 1 ; i < avgFeatPos.size() - 1 ; i++ )
-    {
-        //计算前一帧和后一帧的仿射矩阵，2行3列
-        affine = estimateRigidTransform( normalTrj_T[i] , normalTrj_T[i - 1] , false );
-        if (affine.empty()) {
-            affine = I;
+            status[i] = 0;
         }
-        vconcat(affine, conMat, affine);//4行3列
-        tmpEye = tmpEye * affine;
-        affineMatrix.push_back(tmpEye.rowRange(0, 2).clone());
     }
-    affine = estimateRigidTransform( normalTrj_T[avgFeatPos.size()-1] , normalTrj_T[avgFeatPos.size()-2] , false );
-    if (affine.empty()) {
-        affine = I;
-    }
-    vconcat(affine, conMat, affine);
-    tmpEye = tmpEye * affine;
-    Mat affineLast = tmpEye.inv();
 
-    affineMatrix.push_back( affineLast.rowRange(0, 2).clone());
+    //LOGI("step4_4");
+    cv::Mat m_Fundamental;
+    std::vector<uchar> m_RANSACStatus;
+    cv::Mat p1(lastFeatures);
+    cv::Mat p2(curFeatures);
+    double outliner=0;
+    m_Fundamental = findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC, 3, 0.99);
+
+    //LOGI("step4_5");
+    for (int j = 0 ; j < status.size() ; j++ )
+    {
+        if (m_RANSACStatus.size() > j && m_RANSACStatus[j] == 0) // 状态为0表示野点(误匹配)
+        {
+            status[j] = 0;
+        }
+        if(status[j]==0)
+        {
+            outliner++;
+        }
+    }
+
+    int idx = 0;
+    curFeaturesTmp.clear();
+    lastFeaturesTmp.clear();
+
+    //LOGI("step4_6");
+    for (auto itC = curFeatures.begin(), itP = lastFeatures.begin(); itC != curFeatures.end(); itC ++, itP ++, idx ++) {
+
+        if (status[idx] == 0 || err[idx] > 20 || outOfImg(*itC, Size(lastGray.cols, lastGray.rows))) {
+            status_choose[idx]=0;
+        } else {
+            cv::Point2f cfp=*itC * ThreadContext::DOWNSAMPLE_SCALE;
+            cv::Point2f lfp=*itP * ThreadContext::DOWNSAMPLE_SCALE;
+            curFeaturesTmp.push_back(cfp);
+            lastFeaturesTmp.push_back(lfp);
+        }
+    }
+}
+
+Mat ThreadCompensation::moveAndScale()
+{
+    double hw = lastGray.cols * ThreadContext::DOWNSAMPLE_SCALE / 2;
+    double hh = lastGray.rows * ThreadContext::DOWNSAMPLE_SCALE / 2;
+    int poi_count[3];
+    Point2f last_poi_avg[3], cur_poi_avg[3];
+
+    for(int i=0; i<3; i++)
+    {
+        last_poi_avg[i] = Point2f(0,0);
+        cur_poi_avg[i] = Point2f(0,0);
+        poi_count[i] = 0;
+    }
+
+    int n = lastFeaturesTmp.size() < curFeaturesTmp.size() ? lastFeaturesTmp.size() : curFeaturesTmp.size();
+    for(int i=0; i<n; i++)
+    {
+        if(lastFeaturesTmp[i].y < hh)
+        {
+            poi_count[0]++;
+            last_poi_avg[0] += lastFeaturesTmp[i];
+            cur_poi_avg[0] += curFeaturesTmp[i];
+        }
+        else
+        {
+            poi_count[1]++;
+            last_poi_avg[1] += lastFeaturesTmp[i];
+            cur_poi_avg[1] += curFeaturesTmp[i];
+        }
+
+        poi_count[2]++;
+        last_poi_avg[2] += lastFeaturesTmp[i];
+        cur_poi_avg[2] += curFeaturesTmp[i];
+    }
+
+    bool all_ok = true;
+    for(int i=0; i<3; i++)
+    {
+        if(poi_count[i] <= 0)
+        {
+            all_ok = false;
+            break;
+        }
+        last_poi_avg[i] = last_poi_avg[i] / poi_count[i];
+        cur_poi_avg[i] = cur_poi_avg[i] / poi_count[i];
+    }
+
+    Mat move = Mat::eye(3,3,CV_64F);
+    if(!all_ok)
+    {
+        return move;
+    }
+    Mat scale = Mat::eye(3,3,CV_64F);
+    Point2f m = cur_poi_avg[2] - last_poi_avg[2];
+    double l[3];
+    l[0] = point_distance(last_poi_avg[0], last_poi_avg[1]);
+    l[1] = point_distance(cur_poi_avg[0], cur_poi_avg[1]);
+    l[2] = l[1]/l[0];
+    scale.at<double>(0,0) = l[2];
+    scale.at<double>(1,1) = l[2];
+    move.at<double>(0,2) = m.x;
+    move.at<double>(1,2) = m.y;
+
+    return (scale * move);
+}
+
+bool ThreadCompensation::affPointSimplify( vector<Point2f> &last_out , vector<Point2f> &cur_out )
+{
+    double hw = lastGray.cols * ThreadContext::DOWNSAMPLE_SCALE / 2;
+    double hh = lastGray.rows * ThreadContext::DOWNSAMPLE_SCALE / 2;
+    int poi_count[3];
+    Point2f last_poi_avg[3], cur_poi_avg[3];
+    last_out.clear();
+    cur_out.clear();
+
+    for(int i=0; i<3; i++)
+    {
+        last_poi_avg[i] = Point2f(0,0);
+        cur_poi_avg[i] = Point2f(0,0);
+        poi_count[i] = 0;
+    }
+
+    int n = lastFeaturesTmp.size() < curFeaturesTmp.size() ? lastFeaturesTmp.size() : curFeaturesTmp.size();
+    for(int i=0; i<n; i++)
+    {
+        if(lastFeaturesTmp[i].y < hh)
+        {
+            poi_count[0]++;
+            last_poi_avg[0] += lastFeaturesTmp[i];
+            cur_poi_avg[0] += curFeaturesTmp[i];
+        }
+        else if(lastFeaturesTmp[i].x < hw)
+        {
+            poi_count[1]++;
+            last_poi_avg[1] += lastFeaturesTmp[i];
+            cur_poi_avg[1] += curFeaturesTmp[i];
+        }
+        else
+        {
+            poi_count[2]++;
+            last_poi_avg[2] += lastFeaturesTmp[i];
+            cur_poi_avg[2] += curFeaturesTmp[i];
+        }
+    }
+
+    bool all_ok = true;
+    for(int i=0; i<3; i++)
+    {
+        if(poi_count[i] <= 0)
+        {
+            all_ok = false;
+            break;
+        }
+        last_poi_avg[i] = last_poi_avg[i] / poi_count[i];
+        cur_poi_avg[i] = cur_poi_avg[i] / poi_count[i];
+
+        last_out.push_back(last_poi_avg[i]);
+        cur_out.push_back(cur_poi_avg[i]);
+    }
+
+    return all_ok;
+}
+
+bool ThreadCompensation::affPointSimplify_tri( vector<Point2f> &last_out , vector<Point2f> &cur_out )
+{
+    double hw = lastGray.cols * ThreadContext::DOWNSAMPLE_SCALE / 2;
+    double hh = lastGray.rows * ThreadContext::DOWNSAMPLE_SCALE / 2;
+    int poi_count[3];
+    Point2f last_poi_avg[3], cur_poi_avg[3];
+    last_out.clear();
+    cur_out.clear();
+
+    for(int i=0; i<3; i++)
+    {
+        last_poi_avg[i] = Point2f(0,0);
+        cur_poi_avg[i] = Point2f(0,0);
+        poi_count[i] = 0;
+    }
+
+    int n = lastFeaturesTmp.size() < curFeaturesTmp.size() ? lastFeaturesTmp.size() : curFeaturesTmp.size();
+    for(int i=0; i<n; i++)
+    {
+        if(lastFeaturesTmp[i].y < hh)
+        {
+            poi_count[0]++;
+            last_poi_avg[0] += lastFeaturesTmp[i];
+            cur_poi_avg[0] += curFeaturesTmp[i];
+        }
+        else
+        {
+            poi_count[1]++;
+            last_poi_avg[1] += lastFeaturesTmp[i];
+            cur_poi_avg[1] += curFeaturesTmp[i];
+        }
+    }
+
+    bool all_ok = true;
+    for(int i=0; i<2; i++)
+    {
+        if(poi_count[i] <= 0)
+        {
+            all_ok = false;
+            break;
+        }
+        last_poi_avg[i] = last_poi_avg[i] / poi_count[i];
+        cur_poi_avg[i] = cur_poi_avg[i] / poi_count[i];
+
+        last_out.push_back(last_poi_avg[i]);
+        cur_out.push_back(cur_poi_avg[i]);
+    }
+
+    if(all_ok) {
+        Point2f lp = (last_poi_avg[0] + last_poi_avg[1]) / 2;
+        Point2f hlp = lp - last_poi_avg[0];
+        Point2f trilp;
+        trilp.x = lp.x + hlp.y;
+        trilp.y = lp.y + hlp.x;
+
+        Point2f cp = (cur_poi_avg[0] + cur_poi_avg[1]) / 2;
+        Point2f hcp = cp - cur_poi_avg[0];
+        Point2f tricp;
+        tricp.x = cp.x + hcp.y;
+        tricp.y = cp.y + hcp.x;
+
+        last_out.push_back(trilp);
+        cur_out.push_back(tricp);
+    }
+
+    return all_ok;
+}
+
+Mat ThreadCompensation::calcul_Homo(int niter)
+{
+    Mat H = cv::Mat();
+    std::vector<char> ifselect;
+    //std::cout<<totalIdx<<" feature size:"<<lastFeaturesTmp.size()<<std::endl;
+    //(*fnp)<<totalIdx<<" "<<lastFeaturesTmp.size()<<endl;
+    if(lastFeaturesTmp.size() < 3)
+    {
+        H = cv::Mat::eye(3, 3, CV_64F);
+    }
+    else
+    {
+        vector<Point2f> p1,p2;
+        if(with_roll)
+        {
+            bool ok = affPointSimplify_tri(p1,p2);
+            if(ok)
+            {
+                H = getAffineTransform(p1 , p2);
+            } else{
+                H = cv::Mat::eye(3, 3, CV_64F);
+            }
+        } else{
+            H = moveAndScale();
+        }
+    }
+
+    Mat aff = Mat::zeros(3,3,CV_64FC1);
+    aff.at<double>(0,0) = H.at<double>(0,0);
+    aff.at<double>(0,1) = H.at<double>(0,1);
+    aff.at<double>(0,2) = H.at<double>(0,2);
+    aff.at<double>(1,0) = H.at<double>(1,0);
+    aff.at<double>(1,1) = H.at<double>(1,1);
+    aff.at<double>(1,2) = H.at<double>(1,2);
+    aff.at<double>(2,2) = 1;
+
+    return aff;
+}
+
+double line_distance(cv::Point2f p0, cv::Point2f p1, cv::Point2f p2)
+{
+    double d = (fabs((p2.y - p1.y) * p0.x +(p1.x - p2.x) * p0.y + ((p2.x * p1.y) -(p1.x * p2.y)))) / (sqrt(pow(p2.y - p1.y, 2) + pow(p1.x - p2.x, 2)));
+    return d;
+}
+
+void ThreadCompensation::calcul_Homo_s(std::vector<cv::Point2f> last, std::vector<cv::Point2f> cur) {
+    cv::Mat h;
+    std::vector<char> s;
+    //cout<<totalIdx<<" feature size:"<<lastFeaturesTmp.size()<<endl;
+
+    h = findHomography(last, cur, 0);
+
+    //hom_s.push_back(h);
+
+}
+
+bool ThreadCompensation::stable_count(double e)
+{
+    double height = curGray.rows * ThreadContext::DOWNSAMPLE_SCALE;
+    double width = curGray.cols * ThreadContext::DOWNSAMPLE_SCALE;
+    cv::Point2f cen(width/2, height/2);
+    double long_side = width > height ? width : height;
+    double limit_cor = sqrt(pow(height, 2) + pow(width, 2))/15;
+
+    double sta_sca_limit = 0.00015;
+    double sta_limit = long_side * sta_sca_limit;
+    double sca_limit = long_side * sta_sca_limit * 4;
+    int numStable = 0,numScale = 0;
+
+    std::vector<cv::Point2f> last_sc,cur_sc;
+
+    int num=(curFeatures.size()<lastFeatures.size()?curFeatures.size():lastFeatures.size());
+    for(int i=0;i<num;i++)
+    {
+        cv::Point2f d = curFeatures[i] - lastFeatures[i];
+        float d_mu;
+        d_mu = sqrt(d.x * d.x + d.y * d.y);
+        if (d_mu > sca_limit || status_choose[i]==0)
+        {
+
+        }
+        else if (d_mu > sta_limit && d_mu <= sca_limit)
+        {
+            cv::Point2f cp1 = curFeatures[i] * ThreadContext::DOWNSAMPLE_SCALE, lp1 = lastFeatures[i] * ThreadContext::DOWNSAMPLE_SCALE;
+            double d=line_distance(cen,cp1,lp1);
+            //cout<<"limit:"<<limit_cor<<endl;
+            //cout<<"zoom_center_distance: "<<d<<endl;
+
+            if(d<limit_cor)
+            {
+//                cv::Point2f cp2 = cp1, lp2 = lp1;
+//                cp2.x = width - cp1.x;
+//                lp2.x = width - lp1.x;
+//                cv::Point2f cp3 = cp1, lp3 = lp1;
+//                cp3.y = height - cp1.y;
+//                lp3.y = height - lp1.y;
+//                cv::Point2f cp4 = cp2, lp4 = lp2;
+//                cp4.y = height - cp2.y;
+//                lp4.y = height - lp2.y;
+
+                cur_sc.push_back(cp1);
+                last_sc.push_back(lp1);
+//                cur_sc.push_back(cp2);
+//                last_sc.push_back(lp2);
+//                cur_sc.push_back(cp3);
+//                last_sc.push_back(lp3);
+//                cur_sc.push_back(cp4);
+//                last_sc.push_back(lp4);
+                numScale++;
+            } else
+            {
+                //numStable++;
+            }
+        }
+        else
+        {
+            numStable++;
+        }
+    }
+
+    LOGE("stable and scale: %d / %d", numStable , numScale);
+    if(numStable > 10 || e < 1e-5)
+    {
+        LOGE("is stable");
+        H_scale = cv::Mat::eye(3, 3, CV_64F);
+        return true;
+    }
+    /*else if(numScale > numStable && numScale > 4)
+    {
+        int n = last_sc.size();
+        double nscale = 0;
+        for(int i = 0;i<n;i++)
+        {
+            double ll = point_distance(last_sc[i], cen);
+            double cl = point_distance(cur_sc[i], cen);
+            nscale += cl/ll;
+        }
+        nscale = nscale / n;
+
+        Mat move1 = Mat::eye(3,3,CV_64F);
+        move1.at<double>(0,2) = -cen.x;
+        move1.at<double>(1,2) = -cen.y;
+        Mat scale = Mat::eye(3,3,CV_64F);
+        scale.at<double>(0,0) = nscale;
+        scale.at<double>(1,1) = nscale;
+        Mat move2 = Mat::eye(3,3,CV_64F);
+        move2.at<double>(0,2) = cen.x;
+        move2.at<double>(1,2) = cen.y;
+        //H_scale = findHomography(last_sc, cur_sc, 0);
+        H_scale = move1 * scale * move2;
+        return true;
+    }*/
+    else
+    {
+        return false;
+    }
+}
+
+Mat ThreadCompensation::computeAffine()
+{
+    //LOGI("step1");
+    Mat lastFrame = ThreadContext::frameVec[cm_las_index_];
+    Mat frame = ThreadContext::frameVec[cm_cur_index_];
+    frameSize.height=frame.rows;
+    frameSize.width=frame.cols;
+
+    //LOGI("step2");
+    curGray = frame.rowRange(0,frame.rows * 2 / 3);
+    LOGE("curGray size: %d, %d", curGray.cols, curGray.rows);
+    resize(curGray, curGray, cv::Size(curGray.cols / ThreadContext::DOWNSAMPLE_SCALE, curGray.rows / ThreadContext::DOWNSAMPLE_SCALE));
+
+    if (ex_index_ == 0) {
+        //LOGI("step3");
+        lastGray = lastFrame.rowRange(0,lastFrame.rows * 2 / 3);
+        resize(lastGray, lastGray, cv::Size(lastGray.cols / ThreadContext::DOWNSAMPLE_SCALE, lastGray.rows / ThreadContext::DOWNSAMPLE_SCALE));
+        detect_feature();
+    }
+
+    //LOGI("step4");
+    track_feature();
+
+//    Mat R = ThreadContext::stableRVec[out_index_];
+//    //LOGI("see R : %f, %f, %f; %f, %f, %f; %f, %f, %f",R.at<double>(0,0),R.at<double>(0,1),R.at<double>(0,2), R.at<double>(1,0),R.at<double>(1,1),R.at<double>(1,2), R.at<double>(2,0),R.at<double>(2,1),R.at<double>(2,2));
+//
+//    Mat I_R = Mat::eye(3, 3, CV_64F);
+//    I_R.at<double>(0,1) = R.at<double>(0,1);
+//    I_R.at<double>(0,2) = R.at<double>(0,2);
+//    Mat e = R - I_R;
+//    double error = 0;
+//    for(int i = 0;i < 3;i++)
+//    {
+//        for(int j = 0;j < 3;j++)
+//        {
+//            error += e.at<double>(i,j) * e.at<double>(i,j);
+//        }
+//    }
+//
+//    //LOGI("see error : %f", error);
+
+    Vec<double, 3> rot = ThreadContext::rTheta.front();
+    ThreadContext::rTheta.pop();
+    Vec<double, 3> er = lastRot-rot;
+    lastRot = rot;
+    //LOGI("see r : %f, %f, %f ", er[0], er[1], er[2]);
+    double error = er[0]*er[0] + er[1]*er[1] + er[2]*er[2];
+    LOGI("see error : %f ", error);
+
+    bool sc = false;
+    sc = stable_count(error);
+
+    //LOGI("step5");
+    Mat aff;
+    if(sc)
+    {
+        aff = H_scale.clone();
+    }
+    else
+    {
+        aff = calcul_Homo(1);
+    }
+
+    //LOGI("step6");
+    lastFeatures.clear();
+    lastFeatures.assign(curFeatures.begin(), curFeatures.end());
+    curGray.copyTo(lastGray);
+
+    return aff;
 }
 
 void ThreadCompensation::frameCompensate()
 {
-    int start = ThreadContext::motionCompList[0].x;
-    int length = ThreadContext::motionCompList[0].y;
-
-    /*稳定视频帧*/
-    vector<Point2f> avgFeatPos;//存储段内每帧的几何中心坐标
-    vector<Mat> affineMatrix;//存储帧与帧之间的仿射变换
-
     /*为旋转插值准备数据，即计算仿射矩阵，计算本段非关键帧到前关键帧的仿射矩阵与前关键帧到后关键帧的仿射矩阵*/
-    computeAffine( avgFeatPos , affineMatrix );
+    //LOGI("cal aff");
+    Mat aff = computeAffine();
 
-    vector<double> thetaVec;
-    for( int i = 0 ; i < affineMatrix.size() ; i++ )//进行SVD分解，得到旋转角度
-    {
-        if( !affineMatrix.empty() )
+    //LOGI("filter cal");
+    bool readyToPull = filter.push(aff);
+    if (readyToPull) {
+        cv::Mat gooda = filter.pop();
+        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];
+
+        if( cropControlFlag )
         {
-            SVD thissvd;
-            Mat affine , W , U , VT;
-            affine = affineMatrix[i].colRange(0,2);
-            thissvd.compute(affine,W,U,VT,SVD::FULL_UV);//计算旋转矩阵
-            affine = U*VT;
-            double theta = asinf((float) affine.at<double>(0, 1));
-            thetaVec.push_back(theta);
+            cropControl(cropRation, frameSize, goodar);
+
+            cv::Mat scale = cv::Mat::eye(3,3,CV_64F);
+            cv::Mat move = cv::Mat::eye(3,3,CV_64F);
+            double croph=frameSize.height*cropRation;
+            double cropw=frameSize.width*cropRation;
+            double mh=(frameSize.height-croph)/2;
+            double mw=(frameSize.width-cropw)/2;
+            scale.at<double>(0,0) = 1.0 / cropRation;
+            scale.at<double>(1,1) = 1.0 / cropRation;
+            move.at<double>(0,2) = -mw;
+            move.at<double>(1,2) = -mh;
+
+            goodar = scale * move * goodar;
         }
+
+        goodar.copyTo(ThreadContext::stableTransformVec[out_index_]);
+        out_index_ = (out_index_ + 1) % ThreadContext::BUFFERSIZE;
+
+        ThreadContext::out_semaphore->Signal();
     }
 
-    bool isStable = false;
-    if( shakeDetect )//如果进行抖动检测，计算平移振幅和旋转振幅
-    {
-        if( avgFeatPos.size() > 0 )
-        {
-            /*计算平均平移振幅*/
-            float cosinlim = 0.996;
-            vector<float> shift_SD;
-            for( int i = 1 ; i < avgFeatPos.size() - 1 ; i++ )
-            {
-                Point2f d1 , d2;
-                d1 = avgFeatPos[i] - avgFeatPos[i-1];
-                d2 = avgFeatPos[i+1] - avgFeatPos[i];
-                //判断d1与d2方向是否一致（向量夹角小于一阈值），若一致，输出0
-                float d1_mu , d2_mu;
-                d1_mu = sqrt( d1.x * d1.x + d1.y * d1.y );
-                d2_mu = sqrt( d2.x * d2.x + d2.y * d2.y );
-                float yuxian = ( d1.x * d2.x + d1.y * d2.y ) / ( d1_mu * d2_mu );
-                if( yuxian > cosinlim )
-                {
-                    shift_SD.push_back(0);
-                }
-                else
-                {
-                    Point2f d = d2 - d1;
-                    d.x = d.x / 2.0f;
-                    d.y = d.y / 2.0f;
-                    float d_mu;
-                    d_mu = sqrt( d.x * d.x + d.y * d.y );
-                    shift_SD.push_back(d_mu);
-                }
-            }
-            float avg_shift_SD = 0;
-            //段内平均移动值
-            for( int SD = 0 ; SD < shift_SD.size() ; SD++ )
-            {
-                avg_shift_SD += shift_SD[SD];
-            }
-            avg_shift_SD = avg_shift_SD / (float)shift_SD.size();
-            /**/
-            /*计算平均旋转振幅*/
-            double avg_rotate_SD = 0;
-            if( thetaVec.size() == ThreadContext::SEGSIZE - 1 )
-            {
-                vector<double> tmpRotate;//相邻两帧中前一帧到后一帧的旋转角度
-                for( int i = 0 ; i < thetaVec.size() ; i++ )
-                {
-                    if( i == 0 )
-                    {
-                        tmpRotate.push_back( -thetaVec[i] );
-                    }
-                    else
-                    {
-                        if( i == thetaVec.size() - 1 )
-                        {
-                            tmpRotate.push_back( thetaVec[i] + thetaVec[i-1] );
-                        }
-                        else
-                        {
-                            tmpRotate.push_back( -thetaVec[i] + thetaVec[i-1] );
-                        }
-                    }
-                }
-                vector<double> rotate_SD;
-                for( int i = 0 ; i < tmpRotate.size()-1 ; i++ )
-                {
-                    if( (tmpRotate[i] > 0 && tmpRotate[i+1] > 0) || (tmpRotate[i] < 0 && tmpRotate[i+1] < 0) )
-                    {
-                        rotate_SD.push_back(0);
-                    }
-                    else
-                    {
-                        rotate_SD.push_back(abs(tmpRotate[i]-tmpRotate[i+1]));
-                    }
-                }
-                for( int SD = 0 ; SD < rotate_SD.size() ; SD++ )
-                {
-                    avg_rotate_SD += rotate_SD[SD];
-                }
-                avg_rotate_SD = avg_rotate_SD / (double)rotate_SD.size();
-            }
-            /**/
-
-            if( avg_shift_SD < ThreadContext::TRANSLATE_AMPLITUDE )//认为稳定(平移振幅)
-            {
-                isStable = true;
-            }
-            if( thetaVec.size() == ThreadContext::SEGSIZE - 1 )
-            {
-                if( avg_rotate_SD > ThreadContext::ROTATE_AMPLITUDE )//认为不稳定(旋转振幅)
-                {
-                    isStable = false;
-                }
-            }
-        }
-    }
-
-    //int x_tip = videoSize.width * ( 1 - cropRation ) / 2;
-    //int y_tip = videoSize.height * ( 1 - cropRation ) / 2;
-    //if( cropControlFlag )//如果进行裁剪控制
-    //{
-    //	Mat out = frameVec[start].rowRange( y_tip , videoSize.height - y_tip ).colRange( x_tip , videoSize.width - x_tip );
-    //	stableVec.push_back(out);
-    //}
-    //else
-    //{
-    //	stableVec.push_back(frameVec[start]);
-    //}
-
-    Mat tmp = Mat::zeros(2,3,CV_64FC1);
-    tmp.at<double>(0,0) = 1;
-    tmp.at<double>(1,1) = 1;
-
-    cv::Mat transVec3(3,3,CV_64F);
-    for (int i = 0; i < 6; i ++) {
-        transVec3.at<double>(i/3,i%3)=tmp.at<double>(i/3,i%3);
-    }
-    transVec3.at<double>(2,0)=0;
-    transVec3.at<double>(2,1)=0;
-    transVec3.at<double>(2,2)=1;
-    ThreadContext::stableTransformVec[start] =transVec3*ThreadContext::stableRVec[start] ;
-    //前关键帧到后关键帧的旋转角度
-    double s2e_theta = 0;
-    if( affineMatrix.size() != 0  )
-    {
-        if( !affineMatrix[affineMatrix.size()-1].empty() )
-        {
-            s2e_theta = thetaVec[thetaVec.size()-1];
-        }
-    }
-
-    if( videoSize == Size(1920,1080) )//降采样后坐标为原坐标的1/2，因此要乘2恢复
-    {
-        for( int i = 0 ; i < avgFeatPos.size() ; i++ )
-        {
-//            avgFeatPos[i].x = avgFeatPos[i].x * 4;
-//            avgFeatPos[i].y = avgFeatPos[i].y * 4;
-            avgFeatPos[i].x = avgFeatPos[i].x * ThreadContext::DOWNSAMPLE_SCALE;
-            avgFeatPos[i].y = avgFeatPos[i].y * ThreadContext::DOWNSAMPLE_SCALE;
-        }
-    }
-
-    for( int m = 0 ; m < length - 2 ; m++ )//计算段内非关键帧的运动补偿
-    {
-        int index = ( start + m + 1 ) % ( ThreadContext::BUFFERSIZE );
-        Point2f shift;//平移补偿
-        Mat affine;//旋转补偿
-        if( affineMatrix.size() == 0 )//即在此段内横跨整段的轨迹条数小于3
-        {
-            shift = Point2f(0.0,0.0);
-            affine = Mat::zeros(2,3,CV_64FC1);
-            affine.at<double>(0,0) = 1;
-            affine.at<double>(1,1) = 1;
-        }
-        else
-        {
-            //平移补偿计算
-            Point2f tmpP;
-            tmpP = avgFeatPos[avgFeatPos.size()-1] - avgFeatPos[0];
-            tmpP.x = ( m + 1 ) * tmpP.x / (float)( avgFeatPos.size() - 1 );
-            tmpP.y = ( m + 1 ) * tmpP.y / (float)( avgFeatPos.size() - 1 );
-            shift = avgFeatPos[0] - avgFeatPos[m+1] + tmpP;
-
-            //旋转补偿计算
-            double degree;
-            if( affineMatrix[affineMatrix.size()-1].empty() || affineMatrix[m].empty() )
-            {
-                /*affine = Mat::zeros(2,3,CV_64FC1);
-                affine.at<double>(0,0) = 1;
-                affine.at<double>(1,1) = 1;*/
-                degree = 0;
-            }
-            else
-            {
-                double delta_theta;
-                delta_theta = ( m + 1 ) * s2e_theta / (double)( avgFeatPos.size() - 1 );
-
-                //通过奇异值分解得到非关键帧到前关键帧的旋转矩阵
-                double theta;
-                //SVD thissvd;
-                //Mat i2sAffine , W2 , U2 , VT2;
-                //i2sAffine = affineMatrix[m].colRange(0,2);
-                //thissvd.compute(i2sAffine,W2,U2,VT2,SVD::FULL_UV);//计算旋转矩阵
-                //i2sAffine = U2*VT2;
-                //theta = asinf( i2sAffine.at<double>(0,1) );
-                theta = thetaVec[m];
-
-
-                //计算旋转补偿量
-                //double degree;//角度为正表示逆时针旋转
-                degree = theta + delta_theta;
-                //degree = degree * 180 / 3.1415926;
-                //affine = getRotationMatrix2D( avgFeatPos[m+1]+shift , degree , 1 );
-            }
-//            degree=-degree;//todo get neg degree
-
-            if( shakeDetect )
-            {
-                if( isStable )
-                {
-                    shift = Point2f(0.0,0.0);
-                    degree = 0;
-                }
-            }
-
-            if( cropControlFlag )
-            {
-                cropControl( cropRation , avgFeatPos[m+1] , shift , degree );
-                degree = degree * 180 / 3.1415926;
-                affine = getRotationMatrix2D( avgFeatPos[m+1]+shift , degree , 1 );
-            }
-            else
-            {
-                degree = degree * 180 / 3.1415926;
-                affine = getRotationMatrix2D( avgFeatPos[m+1]+shift , degree , 1 );
-            }
-        }
-
-        //平移补偿转化为齐次矩阵形式
-        Mat shiftAffine = Mat::zeros(3,3,CV_64FC1);
-        shiftAffine.at<double>(0,0) = 1;
-        shiftAffine.at<double>(1,1) = 1;
-        shiftAffine.at<double>(0,2) = shift.x;
-        shiftAffine.at<double>(1,2) = shift.y;
-        shiftAffine.at<double>(2,2) = 1;
-
-        //旋转补偿转化为齐次矩阵形式
-        Mat tmpaff = Mat::zeros(3,3,CV_64FC1);
-        tmpaff.at<double>(0,0) = affine.at<double>(0,0);
-        tmpaff.at<double>(0,1) = affine.at<double>(0,1);
-        tmpaff.at<double>(0,2) = affine.at<double>(0,2);
-        tmpaff.at<double>(1,0) = affine.at<double>(1,0);
-        tmpaff.at<double>(1,1) = affine.at<double>(1,1);
-        tmpaff.at<double>(1,2) = affine.at<double>(1,2);
-        tmpaff.at<double>(2,2) = 1;
-
-        Mat resultAffine;//最终补偿变换
-        resultAffine = tmpaff * shiftAffine ;
-        resultAffine = resultAffine.rowRange(0,2);
-
-        //Mat out;//稳定帧
-        //warpAffine( tmpimg , out , resultAffine , videoSize ,1,0,Scalar(0,0,0));
-        //if( cropControlFlag )
-        //{
-        //	out = out.rowRange( y_tip , videoSize.height - y_tip ).colRange( x_tip , videoSize.width - x_tip );
-        //}
-        //stableVec.push_back(out);
-
-        cv::Mat transVec3(3,3,CV_64F);
-        for (int i = 0; i < 6; i ++) {
-            transVec3.at<double>(i/3,i%3)=resultAffine.at<double>(i/3,i%3);
-        }
-        transVec3.at<double>(2,0)=0;
-        transVec3.at<double>(2,1)=0;
-        transVec3.at<double>(2,2)=1;
-//        __android_log_print(ANDROID_LOG_ERROR, "NStableProcessor", "transVec3: %f",transVec3.at<double>(0,0));
-//        __android_log_print(ANDROID_LOG_ERROR, "NStableProcessor", "stableRvec: %f",ThreadContext::stableRVec[index].at<double>(0,0));
-
-        ThreadContext::stableTransformVec[index] = transVec3*ThreadContext::stableRVec[index];
-    }
-
-    ThreadContext::trj.pop_front();
+    //LOGI("compensate end");
 }
 
-//经过平移旋转后仍包括裁剪窗口返回true，否则返回false，且修改shift和degree值
-bool ThreadCompensation::cropControl( float cropRation , Point2f center , Point2f &shift , double &degree )
+bool isInside(cv::Mat cropvertex ,cv::Mat newvertex)
 {
-    vector<Point2f> pt;//原始图像顶点坐标
-    pt.push_back( Point2f(0,0) );
-    pt.push_back( Point2f(0,videoSize.height-1) );
-    pt.push_back( Point2f(videoSize.width-1,videoSize.height-1) );
-    pt.push_back( Point2f(videoSize.width-1,0) );
-    vector<Point2f> pt_crop;//裁剪窗口顶点坐标
-    int x_tip = (int) (videoSize.width * (1 - cropRation ) / 2);
-    int y_tip = (int) (videoSize.height * (1 - cropRation ) / 2);
-    pt_crop.push_back( Point2f(x_tip,y_tip) );
-    pt_crop.push_back( Point2f(x_tip,videoSize.height-y_tip) );
-    pt_crop.push_back( Point2f(videoSize.width-x_tip,videoSize.height-y_tip) );
-    pt_crop.push_back( Point2f(videoSize.width-x_tip,y_tip) );
-
-
-    Mat shiftMat = Mat::eye(3,3,CV_64FC1);
-    shiftMat.at<double>(0,2) = shift.x;
-    shiftMat.at<double>(1,2) = shift.y;
-    double angle = degree * 180 / 3.1415926;
-    Mat tmpRotateMat = getRotationMatrix2D( center+shift , angle , 1 );
-    Mat rotateMat = Mat::zeros(3,3,CV_64FC1);
-    rotateMat.at<double>(0,0) = tmpRotateMat.at<double>(0,0);
-    rotateMat.at<double>(0,1) = tmpRotateMat.at<double>(0,1);
-    rotateMat.at<double>(0,2) = tmpRotateMat.at<double>(0,2);
-    rotateMat.at<double>(1,0) = tmpRotateMat.at<double>(1,0);
-    rotateMat.at<double>(1,1) = tmpRotateMat.at<double>(1,1);
-    rotateMat.at<double>(1,2) = tmpRotateMat.at<double>(1,2);
-    rotateMat.at<double>(2,2) = 1;
-    Mat affine = rotateMat * shiftMat;
-    affine = affine.rowRange(0,2);
-
-    if( isInsideAfterTransform( affine , pt_crop , pt ) )//经过平移旋转后依然包括裁剪窗口
+    bool aInside = true;
+    for( int i = 0 ; i < 4 ; i++ )
     {
-        return true;
+        for( int j = 0 ; j < 4 ; j++ )
+        {
+            cv::Point2f vec1 , vec2;
+            vec1.x=float(newvertex.at<double>(0,j)-cropvertex.at<double>(0,i));
+            vec1.y=float(newvertex.at<double>(1,j)-cropvertex.at<double>(1,i));
+            vec2.x=float(newvertex.at<double>(0,(j+1)%4)-newvertex.at<double>(0,j));
+            vec2.y=float(newvertex.at<double>(1,(j+1)%4)-newvertex.at<double>(1,j));
+
+            // vec1 = pt_transform[j] - pt_crop[i];
+            // vec2 = pt_transform[(j+1)%4] - pt_transform[j];
+            float cross_product = vec1.x * vec2.y - vec2.x * vec1.y;
+            //  NSLog(@"%f",cross_product);
+            if( cross_product > 0 )
+            {
+                aInside = false;
+                break;
+            }
+        }
+        if( !aInside )
+        {
+            break;
+        }
     }
-    else
+    return aInside;
+
+}
+
+//经过平移旋转后仍包括裁剪窗口返回true，否则返回false，且修改affine
+bool ThreadCompensation::cropControl( float cropr , Size size , Mat &affine )
+{
+    bool doCrop = false;
+    int out=0;
+    Mat vertex=(cv::Mat_<double>(3, 4)<<0.0,0.0,size.width-1,size.width-1,0.0,size.height-1,size.height-1,0.0,1.0,1.0,1.0,1.0);
+    double croph=size.height*cropr;
+    double cropw=size.width*cropr;
+    double mh=(size.height-croph)/2;
+    double mw=(size.width-cropw)/2;
+    Mat cropvertex=(cv::Mat_<double>(3, 4)<<mw,mw,cropw+mw-1,cropw+mw-1,mh,croph+mh-1,croph+mh-1,mh,1.0,1.0,1.0,1.0);
+
+    Mat stableVec = affine.clone();
+    //cout<<"crop"<<crop<<endl;
+    Mat newvertex = stableVec * vertex;
+    newvertex.at<double>(0, 0) = newvertex.at<double>(0, 0) / newvertex.at<double>(2, 0);
+    newvertex.at<double>(1, 0) = newvertex.at<double>(1, 0) / newvertex.at<double>(2, 0);
+
+    newvertex.at<double>(0, 1) = newvertex.at<double>(0, 1) / newvertex.at<double>(2, 1);
+    newvertex.at<double>(1, 1) = newvertex.at<double>(1, 1) / newvertex.at<double>(2, 1);
+
+    newvertex.at<double>(0, 2) = newvertex.at<double>(0, 2) / newvertex.at<double>(2, 2);
+    newvertex.at<double>(1, 2) = newvertex.at<double>(1, 2) / newvertex.at<double>(2, 2);
+
+    newvertex.at<double>(0, 3) = newvertex.at<double>(0, 3) / newvertex.at<double>(2, 3);
+    newvertex.at<double>(1, 3) = newvertex.at<double>(1, 3) / newvertex.at<double>(2, 3);
+
+    bool allInside=isInside(cropvertex,newvertex);
+    double ratio=1.0;
+    cv::Mat I=cv::Mat::eye(3, 3, CV_64F);
+    cv::Mat resultVec=stableVec.clone();
+    while((!allInside)&&(ratio>=0))
     {
-        if( x_tip < abs(shift.x) || y_tip < abs(shift.y) )//经过平移后不包括裁剪窗口
-        {
-            float ratio1 = (float)x_tip / abs(shift.x);
-            float ratio2 = (float)y_tip / abs(shift.y);
-            if( ratio1 < ratio2 )
-            {
-                if( shift.x > 0 )
-                {
-                    shift.x = x_tip;
-                }
-                else
-                {
-                    shift.x = -x_tip;
-                }
-                shift.y = ratio1 * shift.y;
-            }
-            else
-            {
-                shift.x = ratio2 * shift.x;
-                if( shift.y > 0 )
-                {
-                    shift.y = y_tip;
-                }
-                else
-                {
-                    shift.y = -y_tip;
-                }
-            }
-            degree = 0;
-        }
-        else//经过平移后包括裁剪窗口
-        {
-            /*计算最大旋转角*/
-            vector<Point2f> new_crop_pt;
-            for( int i = 0 ; i < 4 ; i++ )
-            {
-                new_crop_pt.push_back(pt_crop[i]-shift);
-            }
+        doCrop = true;
+        double transdet= determinant(stableVec);
+        cv::Mat transtemp=stableVec/pow(transdet, 1.0/3);
+        resultVec=I*(1-ratio)+transtemp*ratio;
 
-            double maxDegree[4];
-            vector<Point2f> img_line;
-            vector<Point2f> crop_line;
-            img_line.push_back( Point2f(0,0) );
-            img_line.push_back( Point2f(videoSize.width-1,0) );
-            crop_line.push_back( new_crop_pt[0] );
-            crop_line.push_back( new_crop_pt[3] );
-            maxDegree[0] = computeMaxDegree( img_line , crop_line , degree , center );
+        ratio=ratio-0.01;
+        newvertex=resultVec*vertex;
+        newvertex.at<double>(0,0)=newvertex.at<double>(0,0)/newvertex.at<double>(2,0);
+        newvertex.at<double>(1,0)=newvertex.at<double>(1,0)/newvertex.at<double>(2,0);
 
-            img_line[1] = Point2f(videoSize.height-1,0);
-            crop_line[0] = Point2f(videoSize.height-1-new_crop_pt[1].y , new_crop_pt[1].x);
-            crop_line[1] = Point2f(videoSize.height-1-new_crop_pt[0].y , new_crop_pt[0].x);
-            Point2f newCenter;
-            newCenter.x = videoSize.height-1-center.y;
-            newCenter.y = center.x;
-            maxDegree[1] = computeMaxDegree( img_line , crop_line , degree , newCenter );
+        newvertex.at<double>(0,1)=newvertex.at<double>(0,1)/newvertex.at<double>(2,1);
+        newvertex.at<double>(1,1)=newvertex.at<double>(1,1)/newvertex.at<double>(2,1);
 
-            img_line[1] = Point2f(videoSize.width-1,0);
-            crop_line[0] = Point2f(videoSize.width-1-new_crop_pt[2].x , videoSize.height-1-new_crop_pt[2].y);
-            crop_line[1] = Point2f(videoSize.width-1-new_crop_pt[1].x , videoSize.height-1-new_crop_pt[1].y);
-            newCenter.x = videoSize.width-1-center.x;
-            newCenter.y = videoSize.height-1-center.y;
-            maxDegree[2] = computeMaxDegree( img_line , crop_line , degree , newCenter );
+        newvertex.at<double>(0,2)=newvertex.at<double>(0,2)/newvertex.at<double>(2,2);
+        newvertex.at<double>(1,2)=newvertex.at<double>(1,2)/newvertex.at<double>(2,2);
 
-            img_line[1] = Point2f(videoSize.height-1,0);
-            crop_line[0] = Point2f(new_crop_pt[3].y , videoSize.width-1-new_crop_pt[3].x);
-            crop_line[1] = Point2f(new_crop_pt[2].y , videoSize.width-1-new_crop_pt[2].x);
-            newCenter.x = center.y;
-            newCenter.y = videoSize.width-1-center.x;
-            maxDegree[3] = computeMaxDegree( img_line , crop_line , degree , newCenter );
+        newvertex.at<double>(0,3)=newvertex.at<double>(0,3)/newvertex.at<double>(2,3);
+        newvertex.at<double>(1,3)=newvertex.at<double>(1,3)/newvertex.at<double>(2,3);
 
-            if( degree > 0 )
-            {
-                double min = degree;
-                for( int i = 0 ; i < 4 ; i++ )
-                {
-                    if( min > maxDegree[i] )
-                    {
-                        min = maxDegree[i];
-                    }
-                }
-                degree = min;
-            }
-            else
-            {
-                double max = degree;
-                for( int i = 0 ; i < 4 ; i++ )
-                {
-                    if( max < maxDegree[i] )
-                    {
-                        max = maxDegree[i];
-                    }
-                }
-                degree = max;
-            }
-            /**/
-        }
-
-        return false;
+        allInside = isInside(cropvertex,newvertex);
     }
+
+    if(doCrop)
+    {
+        resultVec.copyTo(affine);
+    }
+
+    return doCrop;
 }
 
 //判断经过变换后是否依然包括裁剪窗口

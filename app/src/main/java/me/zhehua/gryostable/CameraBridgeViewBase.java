@@ -86,7 +86,7 @@ public class CameraBridgeViewBase extends GLSurfaceView {
         super(context, attrs);
 
         int count = attrs.getAttributeCount();
-//        Log.d(TAG, "Attr count: " + Integer.valueOf(count));
+        Log.d(TAG, "Attr count: " + Integer.valueOf(count));
 
         TypedArray styledAttrs = getContext().obtainStyledAttributes(attrs, org.opencv.R.styleable.CameraBridgeViewBase);
 //        if (styledAttrs.getBoolean(org.opencv.R.styleable.CameraBridgeViewBase_show_fps, false))
@@ -206,7 +206,7 @@ public class CameraBridgeViewBase extends GLSurfaceView {
             if (storageCanvas != null) {
                 storageCanvas.drawColor(0, android.graphics.PorterDuff.Mode.CLEAR);
                 if (BuildConfig.DEBUG)
-//                    Log.d(TAG, "mStretch value: " + mScale);
+                    Log.d(TAG, "mStretch value: " + mScale);
 
                 if (transformMat == null) {
                     transformMat = new Matrix();
@@ -232,7 +232,6 @@ public class CameraBridgeViewBase extends GLSurfaceView {
     public class DisplayThread implements Runnable {
         Mat transVec = new Mat(3, 3, CvType.CV_64F);
         Mat outputMat = new Mat(mFrameHeight, mFrameWidth, CvType.CV_8UC3);
-        Mat rsMat = new Mat(30, 3, CvType.CV_64F);
         double[] transData = new double[9];
         float[] transDataF = new float[9];
 
@@ -251,8 +250,7 @@ public class CameraBridgeViewBase extends GLSurfaceView {
                     }
                 }
                 if (stableProcessor != null) {
-                    stableProcessor.dequeueOutputBuffer(transVec, outputMat, rsMat);
-//                    Log.e(TAG, "rsMat-------------"+rsMat.dump());
+                    stableProcessor.dequeueOutputBuffer(transVec, outputMat);
                 }
 
                 if (outputMat.empty()) {
@@ -263,15 +261,13 @@ public class CameraBridgeViewBase extends GLSurfaceView {
                     Log.e(TAG, "WTF?? " + transVec.dump() + outputMat.dump());
                     Log.e(TAG, transVec + " " + outputMat);
                 }
+
+                Log.e(TAG, "stab data: " + transVec + " " + outputMat);
+
                 transVec.get(0, 0, transData);
                 for (int i = 0; i < 9; i++) {
                     transDataF[i] = (float) transData[i];
-
                 }
-//                Log.e(TAG,"transDataF: "+transDataF[0]);
-                double o00[]=outputMat.get(0,0);
-//                Log.e(TAG,"outputMat: "+o00[0]);
-
 //                for (int i = 0; i < 6; i ++) {
 //                    transDataF[i] = (float)transData[i];
 //                }
@@ -281,12 +277,9 @@ public class CameraBridgeViewBase extends GLSurfaceView {
 //                transMatrix.setValues(transDataF);
 
 //                renderer.transVec = transVec;
-                //稳像矩阵，注释掉关闭稳像效果
                 renderer.transformMat = transDataF;
 //                outputMat.put(100, 1900, 0);
                 renderer.outputMat = outputMat;
-                renderer.rsMat = rsMat;
-//                Log.e(TAG, "rsMat-----"+rsMat.dump());
                 if (renderer.isReady) {
                     CameraBridgeViewBase.this.requestRender();
                 }

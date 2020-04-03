@@ -33,7 +33,14 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         src/main/cpp/native-lib.cpp
-        ${STABLE_PROC_SRC}
+#        ${STABLE_PROC_SRC}
+        src/main/cpp/processor/Filter.cc
+        src/main/cpp/processor/MySemaphore.cc
+        src/main/cpp/processor/StableProcessor.cc
+        src/main/cpp/processor/ThetaHelper.cc
+        src/main/cpp/processor/ThreadCompensation.cc
+        src/main/cpp/processor/ThreadContext.cc
+        src/main/cpp/processor/ThreadKlt.cc
         )
 
 # Searches for a specified prebuilt library and stores the path as a

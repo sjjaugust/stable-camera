@@ -41,12 +41,11 @@ JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1enqueueInputBuffer(JNIEnv *env, jobject instance,
                                                                     jint buffer_index,
                                                                     jlong new_frame,
-                                                                    jlong RR,
-                                                                    jlong rsOutTheta) {
+                                                                    jlong RR) {
     Mat* inFrame = (Mat*) new_frame;
     Mat* R = (Mat*) RR;
     *R = RR2stableVec * (*R) * stableVec2RR;
-    n_sp.enqueueInputBuffer(buffer_index, inFrame, R, (Mat*)rsOutTheta);
+    n_sp.enqueueInputBuffer(buffer_index, inFrame, R);
 }
 
 JNIEXPORT void JNICALL
@@ -57,11 +56,16 @@ Java_me_zhehua_gryostable_StableProcessor_n_1enqueueOutputBuffer(JNIEnv *env,
 
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1dequeueOutputBuffer(JNIEnv *env, jobject instance,
-                                                                     jlong stableVec, jlong frame, jlong rsMat) {
+                                                                     jlong stableVec, jlong frame) {
     Mat* nStableVec = (Mat*) stableVec;
     Mat* nFrame = (Mat*) frame;
-    Mat* nRsMat = (Mat*) rsMat;
-    n_sp.dequeueOutputBuffer(nStableVec, nFrame, nRsMat);
+    n_sp.dequeueOutputBuffer(nStableVec, nFrame);
+}
+
+JNIEXPORT void JNICALL
+Java_me_zhehua_gryostable_StableProcessor_n_1setCrop(JNIEnv *env, jobject instance,
+                                                     jboolean isCrop) {
+    n_sp.setCrop(isCrop);
 }
 
 }
@@ -72,20 +76,8 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_ThetaHelper_n_1getR(JNIEnv *env, jobject instance, jlong timestamp,
                                               jlong matR, jboolean isCrop) {
+
     n_th.getR(timestamp / 1000000000.0, (Mat*) matR, isCrop);
-}
-
-extern "C"
-JNIEXPORT void JNICALL
-Java_me_zhehua_gryostable_ThetaHelper_n_1getRsThetaRows(JNIEnv *env, jobject instance, jint rsGyroThetaRows){
-    n_th.getRsThetaRows(rsGyroThetaRows);
-    __android_log_print(ANDROID_LOG_ERROR, "ThetaHelper" ,"gyroTheta: %d", rsGyroThetaRows);
-}
-
-extern "C"
-JNIEXPORT void JNICALL
-Java_me_zhehua_gryostable_ThetaHelper_n_1rsChangeVectorToMat(JNIEnv *env, jobject instance, jlong rsOutMat){
-    n_th.rsChangeVectorToMat((Mat*) rsOutMat);
 }
 
 extern "C"
@@ -101,9 +93,9 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_ThetaHelper_n_1init(JNIEnv *env, jobject instance) {
     // TODO time check
-    time_t now = time(0);
-    n_th.init();
-    /*if (now < 1561910400) { // 2019.7.1 0:0:0
+    /*time_t now = time(0);
+    if (now < 1561910400) { // 2019.7.1 0:0:0
 
     }*/
+    n_th.init();
 }

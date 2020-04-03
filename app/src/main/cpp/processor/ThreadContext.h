@@ -9,10 +9,6 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <list>
-#include <android/log.h>
-#include <cmath>
-#define pi 3.1415926
-
 
 using namespace std;
 using namespace cv;
@@ -21,7 +17,7 @@ namespace threads {
     public:
         const static int SEGSIZE = 5;
         const static int BUFFERSIZE = SEGSIZE * 4;
-        const static int MIN_DISTANCE = 20;//两点相似的最小距离
+        const static int MIN_DISTANCE = 20;
         constexpr const static float TRANSLATE_AMPLITUDE = 0.4f;
         constexpr const static float ROTATE_AMPLITUDE = 0.02f;
         const static int DOWNSAMPLE_SCALE = 4;
@@ -30,24 +26,13 @@ namespace threads {
         static MySemaphore* klt_semaphore;
         static MySemaphore* mc_semaphore;
         static MySemaphore* out_semaphore;
-        //果冻效应信号量
-        static MySemaphore* rs_semaphore;
 
         static vector<Point2i> kltList;
-        static vector<Point2i> motionCompList;
-        static vector<Point2i> outputList;
         static list<list<vector<Point2f>>> trj;
+        static queue<Vec<double, 3>> rTheta;
         static Mat frameVec[BUFFERSIZE];
         static Mat stableTransformVec[BUFFERSIZE];
         static Mat stableRVec[BUFFERSIZE];
-
-        //果冻效应相关
-        const static int rsStripNum = 10;
-        static Mat rsOutTheta[BUFFERSIZE];
-        static vector<Point2i> rsList;
-        static Mat rsMat[BUFFERSIZE][rsStripNum];
-        static double gaussWeight[11];
-        static void createGaussWeight(double *gaussWeight);
 
         static void Init();
         static void Release();
