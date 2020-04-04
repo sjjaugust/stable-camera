@@ -9,6 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <list>
+#define pi 3.1415926
 
 using namespace std;
 using namespace cv;
@@ -36,6 +37,14 @@ namespace threads {
 
         static void Init();
         static void Release();
+
+    public:
+        static MySemaphore* rs_semaphore_;
+        static const int KRsStripNum_ = 10;
+        static cv::Mat rs_out_theta_[BUFFERSIZE];
+        static cv::Mat rs_Mat_[BUFFERSIZE][KRsStripNum_];
+        static double guass_weight_[11];
+        static void CreateGaussWeight(double* gauss_weight);
     };
 }
 

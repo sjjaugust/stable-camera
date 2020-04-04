@@ -41,11 +41,12 @@ JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1enqueueInputBuffer(JNIEnv *env, jobject instance,
                                                                     jint buffer_index,
                                                                     jlong new_frame,
-                                                                    jlong RR) {
+                                                                    jlong RR,
+                                                                    jlong rs_out_mat) {
     Mat* inFrame = (Mat*) new_frame;
     Mat* R = (Mat*) RR;
     *R = RR2stableVec * (*R) * stableVec2RR;
-    n_sp.enqueueInputBuffer(buffer_index, inFrame, R);
+    n_sp.enqueueInputBuffer(buffer_index, inFrame, R, (Mat*)rs_out_mat);
 }
 
 JNIEXPORT void JNICALL
@@ -56,10 +57,11 @@ Java_me_zhehua_gryostable_StableProcessor_n_1enqueueOutputBuffer(JNIEnv *env,
 
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1dequeueOutputBuffer(JNIEnv *env, jobject instance,
-                                                                     jlong stableVec, jlong frame) {
+                                                                     jlong stableVec, jlong frame,
+                                                                     jlong rsMat) {
     Mat* nStableVec = (Mat*) stableVec;
     Mat* nFrame = (Mat*) frame;
-    n_sp.dequeueOutputBuffer(nStableVec, nFrame);
+    n_sp.dequeueOutputBuffer(nStableVec, nFrame, (Mat*)rsMat);
 }
 
 JNIEXPORT void JNICALL
@@ -98,4 +100,10 @@ Java_me_zhehua_gryostable_ThetaHelper_n_1init(JNIEnv *env, jobject instance) {
 
     }*/
     n_th.init();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_me_zhehua_gryostable_ThetaHelper_n_1RsChangeVectorToMat(JNIEnv *env, jobject instance, jlong rs_out_mat){
+    n_th.RsChangeVectorToMat((Mat*) rs_out_mat);
 }

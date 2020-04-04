@@ -299,8 +299,11 @@ public class Camera2BasicFragment extends Fragment
                 int idx = stableProcessor.dequeueInputBuffer();
 
                 mThetaHelper.n_getR(lastTimestamp, R.nativeObj, isCrop);
+                Mat rs_out_mat = new Mat(0 , 0, CvType.CV_64F);
+                mThetaHelper.n_RsChangeVectorToMat(rs_out_mat.nativeObj);
 
-                stableProcessor.enqueueInputBuffer(idx, lastFrame, R);
+                stableProcessor.enqueueInputBuffer(idx, lastFrame, R, rs_out_mat);
+                Log.d(TAG, "onImageAvailable"+rs_out_mat.dump());
                 synchronized (mTextureView.syncObj) {
                     mTextureView.syncObj.notify();
                 }

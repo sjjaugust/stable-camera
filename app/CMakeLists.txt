@@ -41,6 +41,7 @@ add_library( # Sets the name of the library.
         src/main/cpp/processor/ThreadCompensation.cc
         src/main/cpp/processor/ThreadContext.cc
         src/main/cpp/processor/ThreadKlt.cc
+        src/main/cpp/processor/ThreadRollingShutter.cpp
         )
 
 # Searches for a specified prebuilt library and stores the path as a

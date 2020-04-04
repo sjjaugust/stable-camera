@@ -61,6 +61,16 @@ public:
     cv::Mat getRotationMat(cv::Vec<double, 3> theta);
     void getR(double timestamp, Mat *matR, bool isCrop);
     void putValue(double timestamp, float x, float y, float z);
+
+private:
+    int rs_frame_index_;
+    int rs_gyro_index_;
+    cv::Vec<double, 4> rs_last_theta_;
+    double rs_last_x_, rs_last_y_, rs_last_z_;
+    std::vector<cv::Vec<double, 4>> rs_gyro_theta_;
+public:
+    std::vector<cv::Vec<double, 4>> GetRsTheta();
+    void RsChangeVectorToMat(cv::Mat* rs_out_Mat);
 };
 
 

@@ -184,6 +184,12 @@ void ThetaHelper::init() {
     rx=exp(5);
     ry=exp(5);
     rz=exp(5);
+
+    rs_frame_index_ = 0;
+    rs_gyro_index_ = 0;
+    rs_last_x_ = 0;
+    rs_last_y_ = 0;
+    rs_last_z_ = 0;
 }
 
 bool ThetaHelper::isInside(cv::Mat cropvertex, cv::Mat newvertex)
@@ -261,6 +267,8 @@ void ThetaHelper::cropControl(Mat& transVec) {
 }
 
 void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
+    rs_gyro_index_ = gyindex;
+
     Timeframe.push_back(timestamp);
     cv::Vec<double, 3> oldtheta=getTheta();
     threads::ThreadContext::rTheta.push(oldtheta);
@@ -277,6 +285,61 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
 //        cropControl(RR);
 //    }
     RR.copyTo(*matR);
+
+    rs_gyro_theta_ = GetRsTheta();
+
+}
+
+std::vector<cv::Vec<double, 4>> ThetaHelper::GetRsTheta() {
+    std::vector<cv::Vec<double, 4>> rs_gyro_theta;
+    double frame_time = Timeframe[rs_frame_index_];
+    double gyro_time = Timeg[rs_gyro_index_];
+    cv::Vec<double, 4> temp;
+    for(int i = 0; i < 4; i++){
+        temp[i] = 0;
+    }
+    if(rs_frame_index_ > 0){
+        double last_time = Timeframe[rs_frame_index_ - 1];
+        temp[0] = 0;
+        temp[1] = -rs_last_x_ * (gyro_time - last_time) + rs_last_theta_[1];
+        temp[2] = -rs_last_y_ * (gyro_time - last_time) + rs_last_theta_[2];
+        temp[3] = -rs_last_z_ * (gyro_time - last_time) + rs_last_theta_[3];
+    }
+    while (gyro_time < frame_time){
+        double angle_x = roxl[rs_gyro_index_];
+        double angle_y = royl[rs_gyro_index_];
+        double angle_z = rozl[rs_gyro_index_];
+        double gyro_time_next = Timeg[rs_gyro_index_ + 1];
+
+        if(gyro_time_next < frame_time){
+            temp[0] = gyro_time_next;
+            temp[1] = temp[1] + (gyro_time_next - gyro_time) * (-angle_x);
+            temp[2] = temp[2] + (gyro_time_next - gyro_time) * (-angle_y);
+            temp[3] = temp[3] + (gyro_time_next - gyro_time) * (-angle_z);
+            rs_gyro_theta.push_back(temp);
+            rs_gyro_index_++;
+        }else {
+            temp[0] = frame_time;
+            temp[1] = temp[1] + (frame_time - gyro_time) * (-angle_x);
+            temp[2] = temp[2] + (frame_time - gyro_time) * (-angle_y);
+            temp[3] = temp[3] + (frame_time - gyro_time) * (-angle_z);
+            rs_gyro_theta.push_back(temp);
+
+            rs_last_x_ = angle_x;
+            rs_last_y_ = angle_y;
+            rs_last_z_ = angle_z;
+            rs_last_theta_ = temp;
+            rs_gyro_index_++;
+            break;
+        }
+        gyro_time = Timeg[rs_gyro_index_];
+    }
+    rs_frame_index_++;
+    return rs_gyro_theta;
+}
+void ThetaHelper::RsChangeVectorToMat(cv::Mat* rs_out_Mat) {
+    cv::Mat temp(rs_gyro_theta_);
+    temp.copyTo(*rs_out_Mat);
 }
 
 void ThetaHelper::putValue(double timestamp, float x, float y, float z) {

@@ -40,6 +40,14 @@ build CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o: CXX_COMPILER__nat
   IN_ABS = D:\Repositories\stable-camera\app\src\main\cpp\native-lib.cpp
   OBJECT_DIR = CMakeFiles\native-lib.dir
   OBJECT_FILE_DIR = CMakeFiles\native-lib.dir\src\main\cpp
+build CMakeFiles/native-lib.dir/src/main/cpp/processor/Filter.cc.o: CXX_COMPILER__native-lib ../../../../src/main/cpp/processor/Filter.cc
+  DEFINES = -Dnative_lib_EXPORTS
+  DEP_FILE = CMakeFiles\native-lib.dir\src\main\cpp\processor\Filter.cc.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O2 -DNDEBUG  -fPIC   -std=gnu++11
+  INCLUDES = -I../../../../src/main/cpp/include
+  IN_ABS = D:\Repositories\stable-camera\app\src\main\cpp\processor\Filter.cc
+  OBJECT_DIR = CMakeFiles\native-lib.dir
+  OBJECT_FILE_DIR = CMakeFiles\native-lib.dir\src\main\cpp\processor
 build CMakeFiles/native-lib.dir/src/main/cpp/processor/MySemaphore.cc.o: CXX_COMPILER__native-lib ../../../../src/main/cpp/processor/MySemaphore.cc
   DEFINES = -Dnative_lib_EXPORTS
   DEP_FILE = CMakeFiles\native-lib.dir\src\main\cpp\processor\MySemaphore.cc.o.d
@@ -96,14 +104,6 @@ build CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.
   IN_ABS = D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadRollingShutter.cpp
   OBJECT_DIR = CMakeFiles\native-lib.dir
   OBJECT_FILE_DIR = CMakeFiles\native-lib.dir\src\main\cpp\processor
-build CMakeFiles/native-lib.dir/src/main/cpp/processor/TimeRecorder.cpp.o: CXX_COMPILER__native-lib ../../../../src/main/cpp/processor/TimeRecorder.cpp
-  DEFINES = -Dnative_lib_EXPORTS
-  DEP_FILE = CMakeFiles\native-lib.dir\src\main\cpp\processor\TimeRecorder.cpp.o.d
-  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O2 -DNDEBUG  -fPIC   -std=gnu++11
-  INCLUDES = -I../../../../src/main/cpp/include
-  IN_ABS = D:\Repositories\stable-camera\app\src\main\cpp\processor\TimeRecorder.cpp
-  OBJECT_DIR = CMakeFiles\native-lib.dir
-  OBJECT_FILE_DIR = CMakeFiles\native-lib.dir\src\main\cpp\processor
 
 # =============================================================================
 # Link build statements for SHARED_LIBRARY target native-lib
@@ -112,7 +112,7 @@ build CMakeFiles/native-lib.dir/src/main/cpp/processor/TimeRecorder.cpp.o: CXX_C
 #############################################
 # Link the shared library ..\..\..\..\build\intermediates\cmake\release\obj\arm64-v8a\libnative-lib.so
 
-build ../../../../build/intermediates/cmake/release/obj/arm64-v8a/libnative-lib.so: CXX_SHARED_LIBRARY_LINKER__native-lib CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/MySemaphore.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadKlt.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/TimeRecorder.cpp.o | ../../../../src/main/jniLibs/arm64-v8a/libopencv_java3.so D$:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/21/liblog.so
+build ../../../../build/intermediates/cmake/release/obj/arm64-v8a/libnative-lib.so: CXX_SHARED_LIBRARY_LINKER__native-lib CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/Filter.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/MySemaphore.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadKlt.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o | ../../../../src/main/jniLibs/arm64-v8a/libopencv_java3.so D$:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/aarch64-linux-android/21/liblog.so
   LANGUAGE_COMPILE_FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O2 -DNDEBUG
   LINK_FLAGS = -Wl,--exclude-libs,libgcc_real.a -Wl,--exclude-libs,libatomic.a -static-libstdc++ -Wl,--build-id -Wl,--fatal-warnings -Wl,--no-undefined -Qunused-arguments
   LINK_LIBRARIES = -landroid -llog ../../../../src/main/jniLibs/arm64-v8a/libopencv_java3.so -llog -latomic -lm

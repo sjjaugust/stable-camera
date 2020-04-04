@@ -8,6 +8,7 @@
 #include "ThreadKlt.h"
 #include "ThreadCompensation.h"
 #include "ThreadContext.h"
+#include "ThreadRollingShutter.h"
 #include <assert.h>
 
 namespace threads {
@@ -15,6 +16,7 @@ namespace threads {
     private:
 
         ThreadCompensation* cm_thread_;
+        ThreadRollingShutter* rs_thread_;
 
         volatile int buffer_index_ = 0;
         volatile int out_index_ = 0;
@@ -29,9 +31,9 @@ namespace threads {
 
         void Init(Size videoSize);
         int dequeueInputBuffer();
-        void enqueueInputBuffer(int buffer_index, const Mat* new_frame, const Mat* RR);
+        void enqueueInputBuffer(int buffer_index, const Mat* new_frame, const Mat* RR, const Mat* rs_out_mat);
         void enqueueOutputBuffer();
-        void dequeueOutputBuffer(Mat* const stableVec, Mat* const frame);
+        void dequeueOutputBuffer(Mat* const stableVec, Mat* const frame, Mat* const rsMat);
         void setCrop(bool isCrop);
     };
 }

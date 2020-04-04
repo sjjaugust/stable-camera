@@ -102,12 +102,12 @@ void ThreadCompensation::detect_feature()
 
     for(int i=0;i<16;i++)
     {
-        rect[i]=cv::Rect(startp[i].x, startp[i].y, half_w, half_h);
+        rect[i]=cv::Rect(startp[i].x, startp[i].y, half_w, half_h);//左上角坐标以及矩形宽和高
         lastGray_a[i] = lastGray(rect[i]);
         goodFeaturesToTrack(lastGray_a[i], lastFeatures_a[i], max_corners, quality_level, min_distance);//检测特征点
         for(int j=0; j<lastFeatures_a[i].size(); j++)
         {
-            cv::Point2f pt=lastFeatures_a[i][j]+startp[i];
+            cv::Point2f pt=lastFeatures_a[i][j]+startp[i];//转化成全局坐标
             lastFeatures.push_back(pt);
         }
     }
@@ -124,7 +124,7 @@ void ThreadCompensation::track_feature()
     //LOGI("step4_1");
     calcOpticalFlowPyrLK( lastGray , curGray , lastFeatures , curFeatures , status , err );//根据已检测到的前一帧特征点在后一帧查找匹配的特征点
     status_choose.clear();
-    status_choose.assign(status.begin(), status.end());
+    status_choose.assign(status.begin(), status.end());//将status复制到status_choose中
 
     //LOGI("step4_2");
     int max = lastFeatures.size() < curFeatures.size() ? lastFeatures.size() : curFeatures.size();
@@ -144,7 +144,7 @@ void ThreadCompensation::track_feature()
         {
             status[i] = 0;
         }
-    }
+    }//如果大于特征点之间的距离大于平均距离的1.4倍，则舍弃
 
     //LOGI("step4_4");
     cv::Mat m_Fundamental;
@@ -152,7 +152,7 @@ void ThreadCompensation::track_feature()
     cv::Mat p1(lastFeatures);
     cv::Mat p2(curFeatures);
     double outliner=0;
-    m_Fundamental = findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC, 3, 0.99);
+//    m_Fundamental = findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC, 3, 0.99);
 
     //LOGI("step4_5");
     for (int j = 0 ; j < status.size() ; j++ )
@@ -638,7 +638,7 @@ void ThreadCompensation::frameCompensate()
         goodar.copyTo(ThreadContext::stableTransformVec[out_index_]);
         out_index_ = (out_index_ + 1) % ThreadContext::BUFFERSIZE;
 
-        ThreadContext::out_semaphore->Signal();
+        ThreadContext::rs_semaphore_->Signal();
     }
 
     //LOGI("compensate end");

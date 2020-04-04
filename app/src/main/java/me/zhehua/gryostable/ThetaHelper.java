@@ -34,4 +34,5 @@ public class ThetaHelper implements SensorEventListener {
     private native void n_sensor_changed(long timestamp, float x, float y, float z);
     public native void n_getR(long timestamp, long matR, boolean isCrop);
     private native void n_init();
+    public native void n_RsChangeVectorToMat(long rs_out_mat);
 }
