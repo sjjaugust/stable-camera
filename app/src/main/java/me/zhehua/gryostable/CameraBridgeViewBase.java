@@ -280,7 +280,9 @@ public class CameraBridgeViewBase extends GLSurfaceView {
 //                transMatrix.setValues(transDataF);
 
 //                renderer.transVec = transVec;
+                //稳像开关
                 renderer.transformMat = transDataF;
+
 //                outputMat.put(100, 1900, 0);
                 renderer.rsMat = rsMat;
                 renderer.outputMat = outputMat;

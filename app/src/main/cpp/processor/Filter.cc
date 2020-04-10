@@ -43,7 +43,7 @@ bool Filter::push(Mat data) {
         }
         return true;
     }
-    _window.push_back(data);
+    _window.push_back(data);//仿射矩阵放入_window
     
     if (_window.size() < _kernel) {
         
@@ -86,8 +86,8 @@ Filter::Filter(int kernel, double sigma, void (*transform)(const deque<Mat>& win
         _kernelVec.push_back(weight);
         //cout << "weight:"<<weight << endl;
         _kernelSum += weight;
-    }
-    _transformedWindow.resize(_kernel);
+    }//生成高斯核并计算权值之和
+    _transformedWindow.resize(_kernel);//调整窗口个数
 }
 
 void Filter::inc_filter( int curframe, int kernelOffset) {
@@ -96,7 +96,7 @@ void Filter::inc_filter( int curframe, int kernelOffset) {
     //    cout << _window[i] << endl;
     //}
     //int curframe=_window.size()/2;
-    _transform(_window, _transformedWindow,curframe);
+    _transform(_window, _transformedWindow,curframe);//把_window中的仿射矩阵复制到_transformedWindow中
     //cout << "====== transformed ======" << endl;
     //for (int i = 0; i < _transformedWindow.size(); i ++) {
     //    cout << _transformedWindow[i] << endl;
@@ -109,7 +109,7 @@ void Filter::inc_filter( int curframe, int kernelOffset) {
         sumMat += _kernelVec[j + kernelOffset] * _transformedWindow[j];
         _kernelSum+=_kernelVec[j+ kernelOffset];
     }
-    sumMat /= _kernelSum;
+    sumMat /= _kernelSum;//归一化？让系数归一
     _outputBuffer.push(sumMat);
 }
 

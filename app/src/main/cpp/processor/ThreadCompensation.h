@@ -36,6 +36,8 @@ namespace threads {
         std::vector<uchar> status,status_choose;
         Vec<double, 3> lastRot;
 
+        bool is_first_use_rtheta = true;
+
         void worker();
         void detect_feature();
         void track_feature();

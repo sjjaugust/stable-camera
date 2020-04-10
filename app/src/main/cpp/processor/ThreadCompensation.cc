@@ -6,6 +6,7 @@
 
 #include <android/log.h>
 #include <jni.h>
+#include <opencv2/core/mat.hpp>
 
 #define LOG_TAG    "c_ThreadCompensation"
 #define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -14,7 +15,9 @@
 using namespace cv;
 using namespace std;
 using namespace threads;
-
+static int frame_count = 0;
+static cv::Mat test_point = (cv::Mat_<double>(3, 1) << 1.0, 1.0, 1.0);
+static cv::Point2f test_point1(1.0, 1.0);
 double point_distance(cv::Point2f p1,cv::Point2f p2)
 {
     cv::Point2f d = p1 - p2;
@@ -40,6 +43,7 @@ void ThreadCompensation::worker()
 {
     //LOGI("ThreadCompensation::worker");
     filter = Filter(ThreadContext::SEGSIZE * 2 , 5, Filter::delta_T);
+//    filter = Filter(ThreadContext::SEGSIZE * 2 , 5);
     lastRot[0]=0;
     lastRot[1]=0;
     lastRot[2]=0;
@@ -122,13 +126,15 @@ void ThreadCompensation::track_feature()
     curFeatures.clear();
 
     //LOGI("step4_1");
-    calcOpticalFlowPyrLK( lastGray , curGray , lastFeatures , curFeatures , status , err );//根据已检测到的前一帧特征点在后一帧查找匹配的特征点
+    calcOpticalFlowPyrLK( lastGray , curGray , lastFeatures , curFeatures , status , err);//根据已检测到的前一帧特征点在后一帧查找匹配的特征点
+    //如果没找到匹配点会将前一帧特征点位置复制到curFeatures中，并在status中标记为0
     status_choose.clear();
     status_choose.assign(status.begin(), status.end());//将status复制到status_choose中
 
     //LOGI("step4_2");
     int max = lastFeatures.size() < curFeatures.size() ? lastFeatures.size() : curFeatures.size();
     double dis_sum=0;
+    //如果是没有找到匹配点，两点之间的距离为0，不影响平均距离
     for(int i=0;i<max;i++)
     {
         dis_sum += point_distance(lastFeatures[i],curFeatures[i]);
@@ -152,7 +158,7 @@ void ThreadCompensation::track_feature()
     cv::Mat p1(lastFeatures);
     cv::Mat p2(curFeatures);
     double outliner=0;
-//    m_Fundamental = findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC, 3, 0.99);
+    m_Fundamental = findFundamentalMat(p1, p2, m_RANSACStatus, cv::FM_RANSAC, 3, 0.99);
 
     //LOGI("step4_5");
     for (int j = 0 ; j < status.size() ; j++ )
@@ -240,13 +246,20 @@ Mat ThreadCompensation::moveAndScale()
     Mat scale = Mat::eye(3,3,CV_64F);
     Point2f m = cur_poi_avg[2] - last_poi_avg[2];
     double l[3];
-    l[0] = point_distance(last_poi_avg[0], last_poi_avg[1]);
-    l[1] = point_distance(cur_poi_avg[0], cur_poi_avg[1]);
-    l[2] = l[1]/l[0];
+    l[0] = point_distance(last_poi_avg[0], last_poi_avg[1]);//前一帧上半部分和下半部分特征点平均值之间的距离
+    l[1] = point_distance(cur_poi_avg[0], cur_poi_avg[1]);//后一帧上半部分和下半部分特征点平均值之间的距离
+    l[2] = l[1]/l[0];//距离之比
     scale.at<double>(0,0) = l[2];
     scale.at<double>(1,1) = l[2];
     move.at<double>(0,2) = m.x;
     move.at<double>(1,2) = m.y;
+
+    cv::Mat temp = scale * move *test_point;
+    cv::Point2d temp_point;
+    temp_point.x = temp.at<double>(0, 0);
+    temp_point.y = temp.at<double>(1, 0);
+    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "before:%d, %f", frame_count, point_distance(temp_point, test_point1));
+//    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "before:%d, %f", frame_count, temp.at<double>(0, 0));
 
     return (scale * move);
 }
@@ -419,7 +432,7 @@ double line_distance(cv::Point2f p0, cv::Point2f p1, cv::Point2f p2)
 {
     double d = (fabs((p2.y - p1.y) * p0.x +(p1.x - p2.x) * p0.y + ((p2.x * p1.y) -(p1.x * p2.y)))) / (sqrt(pow(p2.y - p1.y, 2) + pow(p1.x - p2.x, 2)));
     return d;
-}
+}//中心点到p1p2组成直线的距离
 
 void ThreadCompensation::calcul_Homo_s(std::vector<cv::Point2f> last, std::vector<cv::Point2f> cur) {
     cv::Mat h;
@@ -431,7 +444,7 @@ void ThreadCompensation::calcul_Homo_s(std::vector<cv::Point2f> last, std::vecto
     //hom_s.push_back(h);
 
 }
-
+//检测是否抖动
 bool ThreadCompensation::stable_count(double e)
 {
     double height = curGray.rows * ThreadContext::DOWNSAMPLE_SCALE;
@@ -574,8 +587,13 @@ Mat ThreadCompensation::computeAffine()
 //    }
 //
 //    //LOGI("see error : %f", error);
-
-    Vec<double, 3> rot = ThreadContext::rTheta.front();
+    if(is_first_use_rtheta){
+        ThreadContext::rTheta.pop();
+        is_first_use_rtheta = false;
+    } else {
+        is_first_use_rtheta = false;
+    }
+    Vec<double, 3> rot = ThreadContext::rTheta.front();//前一帧的旋转矩阵
     ThreadContext::rTheta.pop();
     Vec<double, 3> er = lastRot-rot;
     lastRot = rot;
@@ -610,12 +628,21 @@ void ThreadCompensation::frameCompensate()
     /*为旋转插值准备数据，即计算仿射矩阵，计算本段非关键帧到前关键帧的仿射矩阵与前关键帧到后关键帧的仿射矩阵*/
     //LOGI("cal aff");
     Mat aff = computeAffine();
-
+//    __android_log_print(ANDROID_LOG_DEBUG, "ThreadRollingShutter", "i am here1");
     //LOGI("filter cal");
     bool readyToPull = filter.push(aff);
     if (readyToPull) {
         cv::Mat gooda = filter.pop();
-        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];
+
+        cv::Mat temp = gooda * test_point;
+        cv::Point2d temp_point;
+        temp_point.x = temp.at<double>(0, 0);
+        temp_point.y = temp.at<double>(1, 0);
+        __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "after:%d, %f", frame_count,
+                point_distance(temp_point, test_point1));
+
+        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];//第一帧？延迟5帧？//TODO
+//        cv::Mat goodar = gooda;
 
         if( cropControlFlag )
         {
@@ -637,6 +664,8 @@ void ThreadCompensation::frameCompensate()
 
         goodar.copyTo(ThreadContext::stableTransformVec[out_index_]);
         out_index_ = (out_index_ + 1) % ThreadContext::BUFFERSIZE;
+
+        frame_count++;
 
         ThreadContext::rs_semaphore_->Signal();
     }
@@ -710,7 +739,7 @@ bool ThreadCompensation::cropControl( float cropr , Size size , Mat &affine )
     while((!allInside)&&(ratio>=0))
     {
         doCrop = true;
-        double transdet= determinant(stableVec);
+        double transdet= determinant(stableVec);//求行列式
         cv::Mat transtemp=stableVec/pow(transdet, 1.0/3);
         resultVec=I*(1-ratio)+transtemp*ratio;
 

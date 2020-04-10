@@ -5,9 +5,12 @@
 #include "ThetaHelper.h"
 #include "ThreadContext.h"
 #include <android/log.h>
+#include <string>
 
 Mat ThetaHelper::getRR(Mat oldRotation, Mat newRotation)
 {
+//    newRotation = cv::Mat::eye(cv::Size(3, 3), CV_64F);
+
     cv::Mat a1 = (cv::Mat_<double>(3, 3) << 0.0,1.0,0.0, -1.0,0.0,0.0, 0.0 ,0.0 ,1.0);
     cv::Mat a2 = (cv::Mat_<double>(3, 3) << 1,0,0, 0,-1,0, 0 ,0 ,-1);
     cv::Mat A=a1*a2;
@@ -317,6 +320,7 @@ std::vector<cv::Vec<double, 4>> ThetaHelper::GetRsTheta() {
             temp[2] = temp[2] + (gyro_time_next - gyro_time) * (-angle_y);
             temp[3] = temp[3] + (gyro_time_next - gyro_time) * (-angle_z);
             rs_gyro_theta.push_back(temp);
+            __android_log_print(ANDROID_LOG_DEBUG, "ThetaHelper:", "temp111:%f, %f, %f", temp[1], temp[2], temp[3]);
             rs_gyro_index_++;
         }else {
             temp[0] = frame_time;
@@ -344,9 +348,17 @@ void ThetaHelper::RsChangeVectorToMat(cv::Mat* rs_out_Mat) {
 
 void ThetaHelper::putValue(double timestamp, float x, float y, float z) {
     Timeg.push_back(timestamp);
+    if(is_use_drift_){
+        roxl.push_back(y - y_drift_);
+        royl.push_back(-(x - x_drift_));
+        rozl.push_back(z - z_drift_);
+    }else{
+        roxl.push_back(y);
+        royl.push_back(-x);
+        rozl.push_back(z);
+    }
+    __android_log_print(ANDROID_LOG_DEBUG, "ThetaHelper", "three:%f, %f, %f", roxl.back(), royl.back(), rozl.back());
 
-    roxl.push_back(y);
-    royl.push_back(-x);
-    rozl.push_back(z);
+
 }
 

@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.Arrays;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -465,7 +466,7 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
         vertex[tempPosition+4] = (float) dst[1];
         vertex[tempPosition+5] = (float) dst[2];
 
-//        Log.e(TAG, "changeVertex11111: "+ Arrays.toString(vertex));
+        Log.e(TAG, "changeVertex11111: "+ Arrays.toString(vertex));
 
     }
     private double[] mul(Mat src1, double[] src2){

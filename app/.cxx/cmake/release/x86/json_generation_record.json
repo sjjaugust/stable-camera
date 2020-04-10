@@ -21,15 +21,15 @@
   },
   {
     "level": "INFO",
-    "message": "- a dependent build file changed"
+    "message": "- command changed from previous, will remove stale json folder"
   },
   {
     "level": "INFO",
-    "message": "  - D:\\Repositories\\stable-camera\\app\\CMakeLists.txt"
+    "message": "removing stale contents from \u0027D:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\x86\u0027"
   },
   {
     "level": "INFO",
-    "message": "keeping json folder \u0027D:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\x86\u0027 but regenerating project"
+    "message": "created folder \u0027D:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\release\\x86\u0027"
   },
   {
     "level": "INFO",

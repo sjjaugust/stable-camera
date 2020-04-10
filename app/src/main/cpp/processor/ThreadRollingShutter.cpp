@@ -98,7 +98,7 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
     Mat e = Mat::eye(3, 3, CV_64F);
     Mat orgMat(3, 3, CV_64F);
     Mat skewOrgMat(3, 3, CV_64F);
-    //计算第一条旋转矩阵
+//    计算第一条旋转矩阵
     double thOrg = gyroInfoInFrameX[0]*gyroInfoInFrameX[0]+
                    gyroInfoInFrameY[0]*gyroInfoInFrameY[0]+
                    gyroInfoInFrameZ[0]*gyroInfoInFrameZ[0];
@@ -144,9 +144,49 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
         skewMat.at<double>(2,1) = gyroInfoInFrameX[i];
         skewMat.at<double>(2,2) = 0;
         cvMat = e+sin(th)*skewMat.t()+(1-cos(th))*(skewMat*skewMat).t();
-        Mat outMat = inmat*cvMat*orgMat.inv()*inmat.inv();
+
+        cv::Mat a1 = (cv::Mat_<double>(3, 3) << 0.0,1.0,0.0, -1.0,0.0,0.0, 0.0 ,0.0 ,1.0);
+        cv::Mat a2 = (cv::Mat_<double>(3, 3) << 1,0,0, 0,-1,0, 0 ,0 ,-1);
+        cv::Mat A=a1*a2;
+        cv::Mat hom = cv::Mat::eye(cv::Size(3,3),CV_64F);
+//        Mat outMat = inmat*A.t()*cvMat*orgMat.t()*hom.t()*A*inmat.inv();
+        Mat outMat = inmat*A.t()*orgMat*cvMat.t()*hom.t()*A*inmat.inv();
+
         outMat.copyTo(*(rsOutTheta+i));
     }
+//    for(int i = 0; i < gyroInfoInFrameX.size(); i++){
+//        Mat cvMat(3, 3, CV_64F);
+//        Mat skewMat(3, 3, CV_64F);
+//        double angle_diff_x = -(gyroInfoInFrameX[i]-gyroInfoInFrameX[0]);
+//        double angle_diff_y = -(gyroInfoInFrameY[i]-gyroInfoInFrameY[0]);
+//        double angle_diff_z = -(gyroInfoInFrameZ[i]-gyroInfoInFrameZ[0]);
+//        double th = angle_diff_x * angle_diff_x +
+//                angle_diff_y * angle_diff_y +
+//                angle_diff_z * angle_diff_z;
+//        th = sqrt(th);
+//        int eq = 0;
+//        if(th == 0){
+//            eq = 1;
+//        }
+//        th += eq;
+//        gyroInfoInFrameX[i] /= th;
+//        gyroInfoInFrameY[i] /= th;
+//        gyroInfoInFrameZ[i] /= th;
+//
+//        skewMat.at<double>(0,0) = 0;
+//        skewMat.at<double>(0,1) = -angle_diff_z;
+//        skewMat.at<double>(0,2) = angle_diff_y;
+//        skewMat.at<double>(1,0) = angle_diff_z;
+//        skewMat.at<double>(1,1) = 0;
+//        skewMat.at<double>(1,2) = -angle_diff_x;
+//        skewMat.at<double>(2,0) = -angle_diff_y;
+//        skewMat.at<double>(2,1) = angle_diff_x;
+//        skewMat.at<double>(2,2) = 0;
+//        __android_log_print(ANDROID_LOG_DEBUG, "ThreadRollingShutter", "angle_diff:%f, %f ,%f", angle_diff_x, angle_diff_y, angle_diff_z);
+//        cvMat = e+sin(th)*skewMat.t()+(1-cos(th))*(skewMat*skewMat).t();
+//        Mat outMat = inmat*cvMat*inmat.inv();
+//        outMat.copyTo(*(rsOutTheta+i));
+//    }
 
 }
 
