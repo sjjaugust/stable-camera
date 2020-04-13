@@ -31,7 +31,19 @@ void Filter::delta_T(const deque<Mat>& window, vector<Mat>& transWindow ,int cur
         transWindow[i] = window[i - 1] * transWindow[i - 1];
     }
 }
-
+void Filter::RotationUse(const deque<cv::Mat> &window, vector<cv::Mat> &transWindow, int curframe) {
+    int kernel = curframe;
+    transWindow.clear();
+    transWindow.resize(window.size());
+    transWindow[kernel] = Mat::eye(3, 3, CV_64F);
+    cv::Mat inv_mat = window[kernel].inv();
+    for(int i = kernel-1; i >= 0; i--){
+        transWindow[i] = window[i].inv()*window[kernel];
+    }
+    for(int i = kernel+1; i < window.size(); i++){
+        transWindow[i] = inv_mat*window[i];
+    }
+}
 bool Filter::push(Mat data) {
     if (data.empty()) {
         int curframe=_kernel/2;

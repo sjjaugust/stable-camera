@@ -6,6 +6,8 @@
 #define GRYOSTABLE_THETAHELPER_H
 
 #include "opencv2/opencv.hpp"
+#include "ThreadContext.h"
+#include "Filter.h"
 using namespace cv;
 using namespace std;
 class ThetaHelper {
@@ -73,6 +75,8 @@ private:
     const float x_drift_ = -0.945954f;
     const float y_drift_ = 0.227967;
     const float z_drift_ = 0.018109f;
+    Filter filter_;
+    std::queue<cv::Mat> old_rotation_queue_;
 public:
     std::vector<cv::Vec<double, 4>> GetRsTheta();
     void RsChangeVectorToMat(cv::Mat* rs_out_Mat);

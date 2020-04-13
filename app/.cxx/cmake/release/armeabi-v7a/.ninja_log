@@ -1,0 +1,11 @@
+# ninja log v5
+7	2201	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/MySemaphore.cc.o	fe811254420dbcdd
+78	6853	0	CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o	65f4e46f6b103cf1
+94	7233	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o	97b83ae320fc831d
+118	7334	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o	c2788fef05fea41b
+155	7370	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o	32c530bb5ac2c005
+99	7374	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadKlt.cc.o	e706dd82a6b72137
+1	7378	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/Filter.cc.o	18e59d926357450c
+17	8317	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o	4b750cd2c3e7da24
+11	8934	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o	3df19bdb8066d8e2
+8935	9366	0	../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libnative-lib.so	933f8b4a9ca29c7e

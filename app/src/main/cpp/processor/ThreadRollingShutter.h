@@ -16,21 +16,23 @@ namespace threads{
     private:
         const char* TAG = "ThreadRollingShutter";
         thread work_thread;
-        void worker();
-        Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);
-        void gaussSmooth(Mat *rsOutTheta);
-        Mat constantMulMat(Mat &src, double num);
+        const Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);
         int buffer_index_ = 0;
+        std::vector<double> angle_;
+        const double correction_threshold = 0.1;
+    private:
+        void worker();
+        void gaussSmooth(cv::Mat *rsOutTheta);
+        Mat constantMulMat(cv::Mat &src, double num);
     public:
-        Size videosize;
         void start();
         void getRollingShutterR();
         vector<double> getTimeStampInFrame(double timestart, double timeend, int num);
-        vector<double> interpolation (vector<double> x0, vector<double> x, vector<double> y);
-        void getMatInFrame(Mat *rsOutTheta, vector<double> gyroInfoInFrameX, vector<double> gyroInfoInFrameY,
-                           vector<double> gyroInfoInFrameZ);
+        vector<double> interpolation (std::vector<double> x0, std::vector<double> x, std::vector<double> y);
+        void getMatInFrame(cv::Mat *rsOutTheta, std::vector<double> gyroInfoInFrameX, std::vector<double> gyroInfoInFrameY,
+                           std::vector<double> gyroInfoInFrameZ);
         ~ThreadRollingShutter();
-        void showMat(Mat cvMat);
+        void showMat(cv::Mat cvMat);
 
 
     };

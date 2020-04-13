@@ -49,6 +49,13 @@ void ThreadRollingShutter::getRollingShutterR(){
         Mat *rsOutTheta = new Mat[10];
         getMatInFrame(rsOutTheta, gyroInfoInFrameX, gyroInfoInFrameY, gyroInfoInFrameZ);
         gaussSmooth(rsOutTheta);
+        __android_log_print(ANDROID_LOG_DEBUG, "ThreadRollingShutter", "sum: angle %f, %f, %f", angle_[0], angle_[1], angle_[2]);
+        if(angle_[0] < correction_threshold || angle_[1] < correction_threshold ||angle_[2] < correction_threshold){
+            for(int k = 0; k < 10; k++){
+                rsOutTheta[k] = cv::Mat::eye(cv::Size(3, 3), CV_64F);
+            }
+        }
+
         for(int j = 0; j < ThreadContext::KRsStripNum_; j++){
             ThreadContext::rs_Mat_[buffer_index_][j] = *(rsOutTheta+j);
         }
@@ -118,7 +125,20 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
     skewOrgMat.at<double>(2,2) = 0;
     orgMat = e+sin(thOrg)*skewOrgMat.t()+(1-cos(thOrg))*(skewOrgMat*skewOrgMat).t();
 
+    angle_.clear();
+    angle_.resize(3);
+    for(int i = 0; i < 3; i++){
+        angle_[i] = 0;
+    }
+    std::vector<double> temp_x = gyroInfoInFrameX;
+    std::vector<double> temp_y = gyroInfoInFrameY;
+    std::vector<double> temp_z = gyroInfoInFrameZ;
     for(int i = 0; i < gyroInfoInFrameX.size(); i++){
+        angle_[0] += abs(temp_x[i]-temp_x[0]);
+        angle_[1] += abs(temp_y[i]-temp_y[0]);
+        angle_[2] += abs(temp_z[i]-temp_z[0]);
+//        __android_log_print(ANDROID_LOG_DEBUG, "ThreadRollingShutter", "gyroInfo:%d, %lf, %lf", i, gyroInfoInFrameX[i], gyroInfoInFrameX[0]);
+//        __android_log_print(ANDROID_LOG_DEBUG, "ThreadRollingShutter", "gyroInfo:%d, %lf", i, gyroInfoInFrameX[i] - gyroInfoInFrameX[0]);
         Mat cvMat(3, 3, CV_64F);
         Mat skewMat(3, 3, CV_64F);
         double th = gyroInfoInFrameX[i]*gyroInfoInFrameX[i]+

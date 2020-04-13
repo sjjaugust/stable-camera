@@ -7,6 +7,18 @@
 #include <android/log.h>
 #include <string>
 
+static cv::Mat test_point_before = (cv::Mat_<double>(3, 1) << 1.0, 1.0, 1.0);
+static cv::Mat test_point_after = (cv::Mat_<double>(3, 1) << 1.0, 1.0, 1.0);
+static cv::Point2f test_point1(1.0, 1.0);
+static int frame_count = 0;
+static double point_distance(cv::Point2f p1,cv::Point2f p2)
+{
+    cv::Point2f d = p1 - p2;
+    double d_mu;
+    d_mu = sqrt(d.x * d.x + d.y * d.y);
+    return d_mu;
+}
+
 Mat ThetaHelper::getRR(Mat oldRotation, Mat newRotation)
 {
 //    newRotation = cv::Mat::eye(cv::Size(3, 3), CV_64F);
@@ -20,6 +32,8 @@ Mat ThetaHelper::getRR(Mat oldRotation, Mat newRotation)
     cv::Mat temp=A.t()*sta.t()*hom.t()*A;
     cv::Mat R=inmat*temp*inmat.inv();
     // warpPerspective(oldImage, newImage, RR, oldImage.size(),cv::INTER_CUBIC);//INTER_LINEAR);
+
+
     return R;
 }
 
@@ -193,6 +207,9 @@ void ThetaHelper::init() {
     rs_last_x_ = 0;
     rs_last_y_ = 0;
     rs_last_z_ = 0;
+
+    filter_ = Filter(10 , 10, Filter::RotationUse);
+
 }
 
 bool ThetaHelper::isInside(cv::Mat cropvertex, cv::Mat newvertex)
@@ -283,11 +300,33 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
 
     cv::Mat oldRotation=getRotationMat(oldtheta);//[self getRotationMat:oldtheta];
     cv::Mat newRotation=getRotationMat(newtheta);//[self getRotationMat:newtheta];
-    RR=getRR(oldRotation, newRotation);//[self getRR:oldRotation :newRotation];
-//    if (isCrop) {
-//        cropControl(RR);
-//    }
-    RR.copyTo(*matR);
+
+    bool ready_to_pull = filter_.push(newRotation);
+    old_rotation_queue_.push(newRotation);
+    if(ready_to_pull){
+        __android_log_print(ANDROID_LOG_DEBUG, "ThetaHelper", "i am here!!!!");
+        cv::Mat new_rotation = filter_.pop();
+        cv::Mat temp = old_rotation_queue_.front();
+        old_rotation_queue_.pop();
+        RR = getRR(temp, new_rotation);
+        RR.copyTo(*matR);
+    }else {
+        RR = getRR(newRotation, newRotation);
+        RR.copyTo(*matR);
+    }
+
+    cv::Mat test_point_before1 = newRotation*test_point_before;
+    cv::Mat test_point_after1 = RR*test_point_after;
+    cv::Point2d temp_point_before(test_point_before1.at<double>(0, 0), test_point_before1.at<double>(1, 0));
+    cv::Point2d temp_point_after(test_point_after1.at<double>(0, 0), test_point_after1.at<double>(1, 0));
+    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "before:%d, %f", frame_count, point_distance(temp_point_before, test_point1));
+    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "after:%d, %f", frame_count, point_distance(temp_point_after, test_point1));
+    frame_count++;
+
+
+//    RR=getRR(oldRotation, newRotation);//[self getRR:oldRotation :newRotation];
+
+//    RR.copyTo(*matR);
 
     rs_gyro_theta_ = GetRsTheta();
 

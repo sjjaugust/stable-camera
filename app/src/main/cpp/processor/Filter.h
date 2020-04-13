@@ -28,12 +28,14 @@ private:
     
     
 public:
+    //2.44949
     explicit Filter(int kernel = 5, double sigma = 2.44949, void (*transform_)(const deque<Mat>& window, vector<Mat>& transWindow,int curframe) = null_func);
     static void delta_T(const deque<Mat>& window, vector<Mat>& transWindow,int curframe);//一种预处理仿射矩阵序列的处理方式
     static void null_func(const deque<Mat>& window, vector<Mat>& transWindow,int curframe);//默认方式
     bool push(Mat data);
     Mat pop();
     bool empty();
+    static void RotationUse(const deque<cv::Mat>& window, vector<cv::Mat>& transWindow, int curframe);
 };
 
 

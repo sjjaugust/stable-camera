@@ -16,7 +16,8 @@ using namespace cv;
 using namespace std;
 using namespace threads;
 static int frame_count = 0;
-static cv::Mat test_point = (cv::Mat_<double>(3, 1) << 1.0, 1.0, 1.0);
+static cv::Mat test_point_before = (cv::Mat_<double>(3, 1) << 1.0, 1.0, 1.0);
+static cv::Mat test_point_after = (cv::Mat_<double>(3, 1) << 1.0, 1.0, 1.0);
 static cv::Point2f test_point1(1.0, 1.0);
 double point_distance(cv::Point2f p1,cv::Point2f p2)
 {
@@ -42,7 +43,7 @@ void ThreadCompensation::start() {
 void ThreadCompensation::worker()
 {
     //LOGI("ThreadCompensation::worker");
-    filter = Filter(ThreadContext::SEGSIZE * 2 , 5, Filter::delta_T);
+    filter = Filter(ThreadContext::SEGSIZE * 2 , 20, Filter::delta_T);
 //    filter = Filter(ThreadContext::SEGSIZE * 2 , 5);
     lastRot[0]=0;
     lastRot[1]=0;
@@ -254,11 +255,11 @@ Mat ThreadCompensation::moveAndScale()
     move.at<double>(0,2) = m.x;
     move.at<double>(1,2) = m.y;
 
-    cv::Mat temp = scale * move *test_point;
-    cv::Point2d temp_point;
-    temp_point.x = temp.at<double>(0, 0);
-    temp_point.y = temp.at<double>(1, 0);
-    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "before:%d, %f", frame_count, point_distance(temp_point, test_point1));
+//    test_point_before = scale * move *test_point_before;
+//    cv::Point2d temp_point;
+//    temp_point.x = test_point_before.at<double>(0, 0);
+//    temp_point.y = test_point_before.at<double>(1, 0);
+//    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "before:%d, %f", frame_count, point_distance(temp_point, test_point1));
 //    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "before:%d, %f", frame_count, temp.at<double>(0, 0));
 
     return (scale * move);
@@ -634,12 +635,12 @@ void ThreadCompensation::frameCompensate()
     if (readyToPull) {
         cv::Mat gooda = filter.pop();
 
-        cv::Mat temp = gooda * test_point;
-        cv::Point2d temp_point;
-        temp_point.x = temp.at<double>(0, 0);
-        temp_point.y = temp.at<double>(1, 0);
-        __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "after:%d, %f", frame_count,
-                point_distance(temp_point, test_point1));
+//        test_point_after = gooda * test_point_after;
+//        cv::Point2d temp_point;
+//        temp_point.x = test_point_after.at<double>(0, 0);
+//        temp_point.y = test_point_after.at<double>(1, 0);
+//        __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "after:%d, %f", frame_count,
+//                point_distance(temp_point, test_point1));
 
         cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];//第一帧？延迟5帧？//TODO
 //        cv::Mat goodar = gooda;
