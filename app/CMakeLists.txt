@@ -42,6 +42,9 @@ add_library( # Sets the name of the library.
         src/main/cpp/processor/ThreadContext.cc
         src/main/cpp/processor/ThreadKlt.cc
         src/main/cpp/processor/ThreadRollingShutter.cpp
+
+        src/main/cpp/new_processor/ThetaHelper.cpp
+        src/main/cpp/new_processor/ThreadContext.cpp
         )
 
 # Searches for a specified prebuilt library and stores the path as a

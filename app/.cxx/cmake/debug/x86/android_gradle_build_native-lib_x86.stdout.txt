@@ -1,7 +1,0 @@
-[1/7] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
-[2/7] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o
-[3/7] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o
-[4/7] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
-[5/7] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/Filter.cc.o
-[6/7] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o
-[7/7] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\x86\libnative-lib.so

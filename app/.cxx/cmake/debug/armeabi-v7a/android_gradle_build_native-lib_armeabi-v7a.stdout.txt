@@ -1,2 +1,24 @@
-[1/2] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/Filter.cc.o
-[2/2] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\armeabi-v7a\libnative-lib.so
+[1/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
+[2/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o
+[3/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o
+[4/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/Filter.cc.o
+[5/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/MySemaphore.cc.o
+[6/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
+[7/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThreadContext.cpp.o
+[8/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadKlt.cc.o
+[9/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o
+[10/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o
+[11/12] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThetaHelper.cpp.o
+FAILED: D:\AndroidSdk\ndk\21.0.6113669\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe  --target=armv7-none-linux-androideabi21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I../../../../src/main/cpp/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11 -MD -MT CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThetaHelper.cpp.o -MF CMakeFiles\native-lib.dir\src\main\cpp\new_processor\ThetaHelper.cpp.o.d -o CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThetaHelper.cpp.o -c D:\Repositories\stable-camera\app\src\main\cpp\new_processor\ThetaHelper.cpp
+In file included from D:\Repositories\stable-camera\app\src\main\cpp\new_processor\ThetaHelper.cpp:5:
+D:\Repositories\stable-camera\app\src\main\cpp\new_processor/ThetaHelper.h:11:5: error: use of undeclared identifier 'std'
+    std::vector<double> angular_x_;
+    ^
+D:\Repositories\stable-camera\app\src\main\cpp\new_processor/ThetaHelper.h:12:5: error: use of undeclared identifier 'std'
+    std::vector<double> angular_y_;
+    ^
+D:\Repositories\stable-camera\app\src\main\cpp\new_processor/ThetaHelper.h:13:5: error: use of undeclared identifier 'std'
+    std::vector<double> angular_z_;
+    ^
+3 errors generated.
+ninja: build stopped: subcommand failed.

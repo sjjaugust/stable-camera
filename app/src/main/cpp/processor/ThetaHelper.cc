@@ -320,7 +320,7 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
     cv::Point2d temp_point_before(test_point_before1.at<double>(0, 0), test_point_before1.at<double>(1, 0));
     cv::Point2d temp_point_after(test_point_after1.at<double>(0, 0), test_point_after1.at<double>(1, 0));
     __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "before:%d, %f", frame_count, point_distance(temp_point_before, test_point1));
-    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "after:%d, %f", frame_count, point_distance(temp_point_after, test_point1));
+    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "after:%d, %f", frame_count, point_distance(temp_point_after, test_point1) );
     frame_count++;
 
 
