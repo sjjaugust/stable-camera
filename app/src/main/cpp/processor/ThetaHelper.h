@@ -77,6 +77,8 @@ private:
     const float z_drift_ = 0.018109f;
     Filter filter_;
     std::queue<cv::Mat> old_rotation_queue_;
+    cv::Mat last_new_theta_;
+    bool is_first_push_ = true;
 public:
     std::vector<cv::Vec<double, 4>> GetRsTheta();
     void RsChangeVectorToMat(cv::Mat* rs_out_Mat);

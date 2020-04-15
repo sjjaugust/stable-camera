@@ -32,8 +32,6 @@ Mat ThetaHelper::getRR(Mat oldRotation, Mat newRotation)
     cv::Mat temp=A.t()*sta.t()*hom.t()*A;
     cv::Mat R=inmat*temp*inmat.inv();
     // warpPerspective(oldImage, newImage, RR, oldImage.size(),cv::INTER_CUBIC);//INTER_LINEAR);
-
-
     return R;
 }
 
@@ -208,7 +206,8 @@ void ThetaHelper::init() {
     rs_last_y_ = 0;
     rs_last_z_ = 0;
 
-    filter_ = Filter(10 , 10, Filter::RotationUse);
+    filter_ = Filter(10 , 10);
+    last_new_theta_ = cv::Mat::eye(3, 3, CV_64F);
 
 }
 
@@ -300,20 +299,20 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
 
     cv::Mat oldRotation=getRotationMat(oldtheta);//[self getRotationMat:oldtheta];
     cv::Mat newRotation=getRotationMat(newtheta);//[self getRotationMat:newtheta];
-
-    bool ready_to_pull = filter_.push(newRotation);
-    old_rotation_queue_.push(newRotation);
-    if(ready_to_pull){
-        __android_log_print(ANDROID_LOG_DEBUG, "ThetaHelper", "i am here!!!!");
-        cv::Mat new_rotation = filter_.pop();
-        cv::Mat temp = old_rotation_queue_.front();
-        old_rotation_queue_.pop();
-        RR = getRR(temp, new_rotation);
-        RR.copyTo(*matR);
-    }else {
-        RR = getRR(newRotation, newRotation);
-        RR.copyTo(*matR);
-    }
+    RR = getRR(oldRotation, newRotation);
+    RR.copyTo(*matR);
+//    bool ready_to_pull = filter_.push(newRotation);
+//    old_rotation_queue_.push(oldRotation);
+//    if(ready_to_pull){
+//        cv::Mat new_rotation = filter_.pop();
+//        cv::Mat old_rotation = old_rotation_queue_.front();
+//        old_rotation_queue_.pop();
+//        RR = getRR(old_rotation, new_rotation);
+//        RR.copyTo(*matR);
+//    }else {
+//        RR = getRR(oldRotation, newRotation);
+//        RR.copyTo(*matR);
+//    }
 
     cv::Mat test_point_before1 = newRotation*test_point_before;
     cv::Mat test_point_after1 = RR*test_point_after;
@@ -322,12 +321,8 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
     __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "before:%d, %f", frame_count, point_distance(temp_point_before, test_point1));
     __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "after:%d, %f", frame_count, point_distance(temp_point_after, test_point1));
     frame_count++;
-
-
 //    RR=getRR(oldRotation, newRotation);//[self getRR:oldRotation :newRotation];
-
 //    RR.copyTo(*matR);
-
     rs_gyro_theta_ = GetRsTheta();
 
 }
@@ -354,7 +349,7 @@ std::vector<cv::Vec<double, 4>> ThetaHelper::GetRsTheta() {
         double gyro_time_next = Timeg[rs_gyro_index_ + 1];
 
         if(gyro_time_next < frame_time){
-            temp[0] = gyro_time_next;
+            temp[0] = gyro_time;
             temp[1] = temp[1] + (gyro_time_next - gyro_time) * (-angle_x);
             temp[2] = temp[2] + (gyro_time_next - gyro_time) * (-angle_y);
             temp[3] = temp[3] + (gyro_time_next - gyro_time) * (-angle_z);
@@ -362,7 +357,7 @@ std::vector<cv::Vec<double, 4>> ThetaHelper::GetRsTheta() {
             __android_log_print(ANDROID_LOG_DEBUG, "ThetaHelper:", "temp111:%f, %f, %f", temp[1], temp[2], temp[3]);
             rs_gyro_index_++;
         }else {
-            temp[0] = frame_time;
+            temp[0] = gyro_time;
             temp[1] = temp[1] + (frame_time - gyro_time) * (-angle_x);
             temp[2] = temp[2] + (frame_time - gyro_time) * (-angle_y);
             temp[3] = temp[3] + (frame_time - gyro_time) * (-angle_z);

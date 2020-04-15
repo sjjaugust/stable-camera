@@ -43,7 +43,7 @@ void ThreadCompensation::start() {
 void ThreadCompensation::worker()
 {
     //LOGI("ThreadCompensation::worker");
-    filter = Filter(ThreadContext::SEGSIZE * 2 , 20, Filter::delta_T);
+    filter = Filter(ThreadContext::SEGSIZE*4 , 20, Filter::delta_T);
 //    filter = Filter(ThreadContext::SEGSIZE * 2 , 5);
     lastRot[0]=0;
     lastRot[1]=0;
