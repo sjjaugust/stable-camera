@@ -24,19 +24,21 @@ void ThetaHelper::Init() {
 
 }
 void ThetaHelper::GetQuaternion(const double timestamp, cv::Mat *out_mat) {
-    __android_log_print(ANDROID_LOG_DEBUG, "ThetaHelper", "i am here");
     timestamp_frame_.push_back(timestamp);
     std::vector<cv::Vec<double, 4>> euler_theta;
     GetEuler(euler_theta);
+    cv::Mat out_mat1(euler_theta.size(), 5, CV_64F);
     for(int i = 0; i < euler_theta.size(); i++) {
         Quaternion q = Quaternion::EulerToQuaternion(euler_theta[i][1], euler_theta[i][2],
                                                      euler_theta[i][3]);
-        out_mat->at<double>(i, 0) = euler_theta[i][0];
-        out_mat->at<double>(i, 1) = q.w_;
-        out_mat->at<double>(i, 2) = q.x_;
-        out_mat->at<double>(i, 3) = q.y_;
-        out_mat->at<double>(i, 4) = q.z_;
+        out_mat1.at<double>(i, 0) = euler_theta[i][0];
+        out_mat1.at<double>(i, 1) = q.w_;
+        out_mat1.at<double>(i, 2) = q.x_;
+        out_mat1.at<double>(i, 3) = q.y_;
+        out_mat1.at<double>(i, 4) = q.z_;
     }
+    out_mat1.copyTo(*out_mat);
+//    __android_log_print(ANDROID_LOG_DEBUG, "ThetaHelper", "out_mat:%f", out_mat1.at<double>(0, 0));
 }
 void ThetaHelper::GetEuler(std::vector<cv::Vec<double, 4>>& euler_theta) {
     double frame_time = timestamp_frame_[frame_index_];

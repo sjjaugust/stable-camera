@@ -6,13 +6,16 @@
 MySemaphore::MySemaphore(const int count)
 : count_(count){}
 void MySemaphore::Wait() {
-    std::unique_lock<std::mutex> lock;
-    if(--count_ < 0){
+    std::unique_lock<std::mutex> lock(mutex_);
+//    if(--count_ < 0){
+//        condition_.wait(lock);
+//    }
+    while(!count_) // Handle spurious wake-ups.
         condition_.wait(lock);
-    }
+    --count_;
 }
 void MySemaphore::Singal() {
-    std::unique_lock<std::mutex> lock;
+    std::unique_lock<std::mutex> lock(mutex_);
 //    if(++count_ <= 0){
 //        condition_.notify_one();
 //    }

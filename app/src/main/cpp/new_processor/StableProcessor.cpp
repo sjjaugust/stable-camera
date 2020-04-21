@@ -27,7 +27,7 @@ void StableProcessor::EnqueueOutputBuffer() {
 }
 void StableProcessor::EnqueueInputBuffer(int buffer_index, const cv::Mat *new_frame,
                                          const cv::Mat* quaternion_mat) {
-    assert(buffer_index=in_index_);
+    assert(buffer_index==in_index_);
     new_frame->copyTo(ThreadContext::frame_vec_[in_index_]);
     quaternion_mat->copyTo(ThreadContext::quaternion_vec_[in_index_]);
     ThreadContext::cm_semaphore_->Singal();

@@ -295,13 +295,13 @@ public class Camera2BasicFragment extends Fragment
             if (c == 0) {
                 curFrame.copyTo(lastFrame);
                 lastTimestamp = timeStamp;
-                Log.d(TAG, "onImageAvailable: i am here");
                 c++;
             } else {
                 int idx = stableProcessor.dequeueInputBuffer();
 
                 Mat out_mat = new Mat(0 , 0, CvType.CV_64F);
                 mThetaHelper.n_getQuaternion(lastTimestamp, out_mat.nativeObj);
+                Log.d(TAG, "onImageAvailable: Quaternion11"+out_mat.dump());
 
                 stableProcessor.enqueueInputBuffer(idx, lastFrame, out_mat);
                 synchronized (mTextureView.syncObj) {
