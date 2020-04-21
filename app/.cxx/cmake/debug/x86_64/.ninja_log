@@ -16,3 +16,12 @@
 36	4408	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o	a23cf6f0b85fbb68
 39	4743	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o	bee72a4fe972871e
 4744	5243	0	../../../../build/intermediates/cmake/debug/obj/x86_64/libnative-lib.so	cd692216f30d3d51
+10	1111	0	CMakeFiles/native-lib.dir/src/main/cpp/new_processor/MySemaphore.cpp.o	343c5c2a1d35855a
+17	1824	0	CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThreadContext.cpp.o	ba6542dd37111acd
+1	3846	0	CMakeFiles/native-lib.dir/src/main/cpp/new_processor/Quaternion.cpp.o	27bff6804d8c7674
+5	3943	0	CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThetaHelper.cpp.o	879f5c00e02e2581
+7	3994	0	CMakeFiles/native-lib.dir/src/main/cpp/new_processor/StableProcessor.cpp.o	cc3599e97652d2bc
+13	4025	0	CMakeFiles/native-lib.dir/src/main/cpp/native_lib.cpp.o	3edaa4a0d14a0017
+20	4092	0	CMakeFiles/native-lib.dir/src/main/cpp/new_processor/Filiter.cpp.o	c58cd55c0c7e7f5f
+23	4159	0	CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThreadCompensation.cpp.o	c939ddc2ec5659b5
+4159	4652	0	../../../../build/intermediates/cmake/debug/obj/x86_64/libnative-lib.so	fce0433da77d0f1a

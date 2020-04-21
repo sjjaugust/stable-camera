@@ -252,7 +252,7 @@ public class CameraBridgeViewBase extends GLSurfaceView {
                     }
                 }
                 if (stableProcessor != null) {
-                    stableProcessor.dequeueOutputBuffer(transVec, outputMat, rsMat);
+                    stableProcessor.dequeueOutputBuffer(transVec, outputMat);
                     Log.d(TAG, "rsMat:"+rsMat.dump());
                 }
 
@@ -284,7 +284,7 @@ public class CameraBridgeViewBase extends GLSurfaceView {
                 renderer.transformMat = transDataF;
 
 //                outputMat.put(100, 1900, 0);
-                renderer.rsMat = rsMat;
+//                renderer.rsMat = rsMat;
                 renderer.outputMat = outputMat;
                 if (renderer.isReady) {
                     CameraBridgeViewBase.this.requestRender();

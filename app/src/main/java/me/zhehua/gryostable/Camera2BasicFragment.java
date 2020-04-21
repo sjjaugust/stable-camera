@@ -268,12 +268,13 @@ public class Camera2BasicFragment extends Fragment
         public void onImageAvailable(ImageReader reader) {
 //            Log.i(TAG, "image come");
             Image image = reader.acquireNextImage();
-
             if (image == null) {
-                Log.e(TAG, "image null");
+                Log.d(TAG, "image null");
                 return;
             }
+            Log.d(TAG, "onImageAvailable: i am here");
             final long timeStamp = image.getTimestamp() + timeDelay;
+
             if (curFrame == null) {
                 curFrame = new Mat(image.getHeight() / 2 * 3, image.getWidth(), CvType.CV_8U); // TODO
                 byteBuffer = new byte[image.getWidth() * image.getHeight()];
@@ -294,16 +295,15 @@ public class Camera2BasicFragment extends Fragment
             if (c == 0) {
                 curFrame.copyTo(lastFrame);
                 lastTimestamp = timeStamp;
+                Log.d(TAG, "onImageAvailable: i am here");
                 c++;
             } else {
                 int idx = stableProcessor.dequeueInputBuffer();
 
-                mThetaHelper.n_getR(lastTimestamp, R.nativeObj, isCrop);
-                Mat rs_out_mat = new Mat(0 , 0, CvType.CV_64F);
-                mThetaHelper.n_RsChangeVectorToMat(rs_out_mat.nativeObj);
+                Mat out_mat = new Mat(0 , 0, CvType.CV_64F);
+                mThetaHelper.n_getQuaternion(lastTimestamp, out_mat.nativeObj);
 
-                stableProcessor.enqueueInputBuffer(idx, lastFrame, R, rs_out_mat);
-                Log.d(TAG, "onImageAvailable"+rs_out_mat.dump());
+                stableProcessor.enqueueInputBuffer(idx, lastFrame, out_mat);
                 synchronized (mTextureView.syncObj) {
                     mTextureView.syncObj.notify();
                 }
@@ -709,8 +709,8 @@ public class Camera2BasicFragment extends Fragment
 
                 stableProcessor = new StableProcessor();
                 mTextureView.stableProcessor = this.stableProcessor;
-                stableProcessor.init(mPreviewSize.getWidth(), mPreviewSize.getHeight());
-
+//                stableProcessor.init(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+                stableProcessor.init();
                 mTextureView.startDisplayThread();
                 return;
             }

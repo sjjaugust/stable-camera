@@ -32,19 +32,25 @@ add_library( # Sets the name of the library.
         SHARED
 
         # Provides a relative path to your source file(s).
-        src/main/cpp/native-lib.cpp
+#        src/main/cpp/native-lib.cpp
 #        ${STABLE_PROC_SRC}
-        src/main/cpp/processor/Filter.cc
-        src/main/cpp/processor/MySemaphore.cc
-        src/main/cpp/processor/StableProcessor.cc
-        src/main/cpp/processor/ThetaHelper.cc
-        src/main/cpp/processor/ThreadCompensation.cc
-        src/main/cpp/processor/ThreadContext.cc
-        src/main/cpp/processor/ThreadKlt.cc
-        src/main/cpp/processor/ThreadRollingShutter.cpp
+#        src/main/cpp/processor/Filter.cc
+#        src/main/cpp/processor/MySemaphore.cc
+#        src/main/cpp/processor/StableProcessor.cc
+#        src/main/cpp/processor/ThetaHelper.cc
+#        src/main/cpp/processor/ThreadCompensation.cc
+#        src/main/cpp/processor/ThreadContext.cc
+#        src/main/cpp/processor/ThreadKlt.cc
+#        src/main/cpp/processor/ThreadRollingShutter.cpp
 
+        src/main/cpp/native_lib.cpp
         src/main/cpp/new_processor/ThetaHelper.cpp
         src/main/cpp/new_processor/ThreadContext.cpp
+        src/main/cpp/new_processor/Quaternion.cpp
+        src/main/cpp/new_processor/MySemaphore.cpp
+        src/main/cpp/new_processor/StableProcessor.cpp
+        src/main/cpp/new_processor/ThreadCompensation.cpp
+        src/main/cpp/new_processor/Filiter.cpp
         )
 
 # Searches for a specified prebuilt library and stores the path as a

@@ -344,7 +344,7 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
             outputMat.get(videoHeight, 0, uBytes);
             GLES30.glUniformMatrix3fv(transformHandle, 1, true, transformMat, 0);
 
-            changeVertex(rsMat);
+//            changeVertex(rsMat);
             vertexBuffer = ByteBuffer.allocateDirect(vertex.length * 4)
                     .order(ByteOrder.nativeOrder())
                     .asFloatBuffer()
@@ -380,12 +380,6 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
             GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texName[1]);
             GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE_ALPHA, videoWidth / 2, videoHeight / 2, 0,
                     GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, uPlane); // TODO
-//            GLES30.glActiveTexture(GLES30.GL_TEXTURE2);
-//            GLES30.glPixelStorei(GL_UNPACK_ROW_LENGTH, 1);
-//            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texName[2]);
-//            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, videoWidth, videoHeight / 2, 0,
-//                    GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, uPlane); // TODO
-//            Log.i(TAG, transVec.dump());
             GLES30.glDrawElements(GLES30.GL_TRIANGLES, indices.length, GLES30.GL_UNSIGNED_SHORT, indexBuffer);
 
             GLES30.glDisableVertexAttribArray(positionHandle);

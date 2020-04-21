@@ -5,7 +5,7 @@
 	[
 		"D:\\AndroidSDK\\cmake\\3.6.4111459\\bin\\cmake.exe --build D:\\Repositories\\stable-camera\\app\\.cxx\\cmake\\debug\\arm64-v8a --target clean"
 	],
-	"cppFileExtensions" : [ "cc", "cpp" ],
+	"cppFileExtensions" : [ "cpp" ],
 	"libraries" : 
 	{
 		"libopencv_java3-Debug-arm64-v8a" : 
@@ -27,55 +27,7 @@
 				
 				{
 					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
-					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/native-lib.cpp",
-					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
-				},
-				
-				{
-					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
-					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/processor/Filter.cc",
-					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
-				},
-				
-				{
-					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
-					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/processor/MySemaphore.cc",
-					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
-				},
-				
-				{
-					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
-					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/processor/StableProcessor.cc",
-					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
-				},
-				
-				{
-					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
-					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/processor/ThetaHelper.cc",
-					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
-				},
-				
-				{
-					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
-					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/processor/ThreadCompensation.cc",
-					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
-				},
-				
-				{
-					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
-					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/processor/ThreadContext.cc",
-					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
-				},
-				
-				{
-					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
-					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/processor/ThreadKlt.cc",
-					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
-				},
-				
-				{
-					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
-					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/processor/ThreadRollingShutter.cpp",
+					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/native_lib.cpp",
 					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
 				},
 				
@@ -88,6 +40,36 @@
 				{
 					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
 					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/new_processor/ThreadContext.cpp",
+					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
+				},
+				
+				{
+					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
+					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/new_processor/Quaternion.cpp",
+					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
+				},
+				
+				{
+					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
+					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/new_processor/MySemaphore.cpp",
+					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
+				},
+				
+				{
+					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
+					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/new_processor/StableProcessor.cpp",
+					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
+				},
+				
+				{
+					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
+					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/new_processor/ThreadCompensation.cpp",
+					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
+				},
+				
+				{
+					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
+					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/new_processor/Filiter.cpp",
 					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
 				}
 			],

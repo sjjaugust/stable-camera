@@ -1,0 +1,9 @@
+[1/9] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThetaHelper.cpp.o
+[2/9] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/Quaternion.cpp.o
+[3/9] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThreadContext.cpp.o
+[4/9] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/StableProcessor.cpp.o
+[5/9] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/MySemaphore.cpp.o
+[6/9] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/native_lib.cpp.o
+[7/9] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/Filiter.cpp.o
+[8/9] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThreadCompensation.cpp.o
+[9/9] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\x86\libnative-lib.so
