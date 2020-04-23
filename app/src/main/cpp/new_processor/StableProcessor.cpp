@@ -34,10 +34,11 @@ void StableProcessor::EnqueueInputBuffer(int buffer_index, const cv::Mat *new_fr
     in_index_ = (in_index_ + 1) % ThreadContext::BUFFER_SIZE_;
 
 }
-void StableProcessor::DequeueOutputBuffer(cv::Mat *const stableVec, cv::Mat *const frame) {
+void StableProcessor::DequeueOutputBuffer(cv::Mat *const stableVec, cv::Mat *const frame, cv::Mat* const rs_convert_mat) {
     ThreadContext::out_semaphore_->Wait();
     ThreadContext::stable_vec_[out_index_].copyTo(*stableVec);
     ThreadContext::frame_vec_[out_index_].copyTo(*frame);
+    ThreadContext::rs_convert_mat_.copyTo(*rs_convert_mat);
     out_index_ = (out_index_ + 1) % ThreadContext::BUFFER_SIZE_;
 }
 void StableProcessor::SetCrop(bool is_crop) {

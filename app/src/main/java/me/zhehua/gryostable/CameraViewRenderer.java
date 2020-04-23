@@ -344,7 +344,7 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
             outputMat.get(videoHeight, 0, uBytes);
             GLES30.glUniformMatrix3fv(transformHandle, 1, true, transformMat, 0);
 
-//            changeVertex(rsMat);
+            changeVertex(rsMat);
             vertexBuffer = ByteBuffer.allocateDirect(vertex.length * 4)
                     .order(ByteOrder.nativeOrder())
                     .asFloatBuffer()
@@ -408,7 +408,8 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
             vertexT2[2] = vertex1[vertexPosition+5];
 
             Mat rsMatTemp = rsMat.rowRange(rsMatPosition, rsMatPosition+3);
-//            Log.e(TAG, "changeVertex: "+rsMatPosition+rsMatTemp.dump() );
+            Log.d(TAG, "changeVertex: "+rsMatPosition+rsMat.cols() );
+            Log.d(TAG, "changeVertex: "+Arrays.toString(vertexT1));
             double[] dst = mul(rsMatTemp, vertexT1);
             for(int j = 0; j < 3; j++){
                 if(Math.abs(dst[j])<1e-3){

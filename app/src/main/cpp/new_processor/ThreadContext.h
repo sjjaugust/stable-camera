@@ -22,6 +22,7 @@ public:
     static MySemaphore* out_semaphore_;
     static MySemaphore* cm_semaphore_;
     static MySemaphore* rs_semaphore_;
+    static cv::Mat rs_convert_mat_;
 public:
     static void Init();
     static void Release();

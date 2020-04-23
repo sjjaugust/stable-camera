@@ -1,2 +1,14 @@
-[1/2] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/StableProcessor.cpp.o
+[1/2] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThreadCompensation.cpp.o
+D:\Repositories\stable-camera\app\src\main\cpp\new_processor\ThreadCompensation.cpp:55:91: warning: format specifies type 'int' but the argument has type 'std::__ndk1::vector<Quaternion, std::__ndk1::allocator<Quaternion> >::size_type' (aka 'unsigned long') [-Wformat]
+            __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "curframe_q:%d", cur_frame_q.size());
+                                                                                     ~~   ^~~~~~~~~~~~~~~~~~
+                                                                                     %lu
+D:\Repositories\stable-camera\app\src\main\cpp\new_processor\ThreadCompensation.cpp:56:105: warning: format specifies type 'int' but the argument has type 'double' [-Wformat]
+            __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "%dtemp:[%lf, %lf, %lf, %lf]", cur_frame_q[0].w_,
+                                                                          ~~                            ^~~~~~~~~~~~~~~~~
+                                                                          %f
+D:\Repositories\stable-camera\app\src\main\cpp\new_processor\ThreadCompensation.cpp:56:100: warning: more '%' conversions than data arguments [-Wformat]
+            __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "%dtemp:[%lf, %lf, %lf, %lf]", cur_frame_q[0].w_,
+                                                                                                 ~~^
+3 warnings generated.
 [2/2] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\arm64-v8a\libnative-lib.so

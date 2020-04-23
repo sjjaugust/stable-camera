@@ -40,8 +40,8 @@ public class StableProcessor {
         n_enqueueOutputBuffer();
     }
 
-    public void dequeueOutputBuffer(Mat stableVec, Mat frame) {
-        n_dequeueOutputBuffer(stableVec.nativeObj, frame.nativeObj);
+    public void dequeueOutputBuffer(Mat stableVec, Mat frame, Mat rs_convert_mat) {
+        n_dequeueOutputBuffer(stableVec.nativeObj, frame.nativeObj, rs_convert_mat.nativeObj);
     }
 
 
@@ -50,6 +50,6 @@ public class StableProcessor {
     private native int n_dequeueInputBuffer();
     private native void n_enqueueInputBuffer(int buffer_index, long new_frame, long RR);
     private native void n_enqueueOutputBuffer();
-    private native void n_dequeueOutputBuffer(long stableVec, long frame);
+    private native void n_dequeueOutputBuffer(long stableVec, long frame, long rs_convert_mat);
     public native void setCrop(boolean is_crop);
 }

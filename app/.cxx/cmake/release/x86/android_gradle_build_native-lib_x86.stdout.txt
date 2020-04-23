@@ -1,1 +1,16 @@
-ninja: no work to do.
+[1/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThetaHelper.cpp.o
+[2/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/StableProcessor.cpp.o
+[3/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/Quaternion.cpp.o
+[4/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThreadContext.cpp.o
+[5/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/native_lib.cpp.o
+[6/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/Filiter.cpp.o
+[7/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThreadCompensation.cpp.o
+D:\Repositories\stable-camera\app\src\main\cpp\new_processor\ThreadCompensation.cpp:55:105: warning: format specifies type 'int' but the argument has type 'double' [-Wformat]
+            __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "%dtemp:[%lf, %lf, %lf, %lf]", cur_frame_q[0].w_,
+                                                                          ~~                            ^~~~~~~~~~~~~~~~~
+                                                                          %f
+D:\Repositories\stable-camera\app\src\main\cpp\new_processor\ThreadCompensation.cpp:55:100: warning: more '%' conversions than data arguments [-Wformat]
+            __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "%dtemp:[%lf, %lf, %lf, %lf]", cur_frame_q[0].w_,
+                                                                                                 ~~^
+2 warnings generated.
+[8/8] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\release\obj\x86\libnative-lib.so

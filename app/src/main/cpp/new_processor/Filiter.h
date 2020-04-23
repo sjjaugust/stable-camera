@@ -33,7 +33,7 @@ public:
     bool Empty();
     void IncFilter(int cur_frame, int offset);
     static void NullFunc(const std::deque<Quaternion>& window, std::vector<Quaternion>& transwindow,int curframe);
-
+    static void Method1(const std::deque<Quaternion>& window, std::vector<Quaternion>& transwindow,int curframe);
 };
 
 

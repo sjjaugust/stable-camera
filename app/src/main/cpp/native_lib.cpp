@@ -49,8 +49,8 @@ Java_me_zhehua_gryostable_StableProcessor_n_1enqueueOutputBuffer(JNIEnv *env, jo
 extern  "C"
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1dequeueOutputBuffer(JNIEnv *env, jobject instance,
-                                                                jlong stableVec, jlong frame){
-    n_sp.DequeueOutputBuffer((cv::Mat*)stableVec, (cv::Mat*)frame);
+                                                                jlong stableVec, jlong frame, jlong rs_convert_mat){
+    n_sp.DequeueOutputBuffer((cv::Mat*)stableVec, (cv::Mat*)frame, (cv::Mat*)rs_convert_mat);
 }
 extern  "C"
 JNIEXPORT void JNICALL

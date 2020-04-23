@@ -18,7 +18,7 @@ public:
     ~StableProcessor();
     void EnqueueInputBuffer(int buffer_index, const cv::Mat* new_frame, const cv::Mat* quaternion_mat);
     int DequeueInputBuffer();
-    void DequeueOutputBuffer(cv::Mat* const stableVec, cv::Mat* const frame);
+    void DequeueOutputBuffer(cv::Mat* const stableVec, cv::Mat* const frame, cv::Mat* const rs_convert_mat);
     void EnqueueOutputBuffer();
     void SetCrop(bool is_crop);//TODO SetCrop
     void Init();

@@ -29,7 +29,8 @@ public:
     static Quaternion CalAverage(const std::vector<Quaternion>& q_vector, const std::vector<double>& weight);
     static Quaternion Q1ToQ2(const Quaternion& q1, const Quaternion& q2);
     static cv::Vec3d Rotation(const Quaternion& q, const cv::Vec3d& vec);
-
+    static std::vector<Quaternion> Interpolation(const std::vector<double>& x0, const std::vector<double>& x,
+                                                 const std::vector<Quaternion>& y);
 public:
     Quaternion operator+(const Quaternion& other) const;
     Quaternion operator-(const Quaternion& other) const;

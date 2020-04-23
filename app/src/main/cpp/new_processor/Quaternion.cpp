@@ -3,6 +3,7 @@
 //
 
 #include "Quaternion.h"
+#include <android/log.h>
 
 Quaternion::Quaternion(const double w, const double x, const double y, const double z)
         : w_(w), x_(x), y_(y), z_(z){
@@ -141,6 +142,27 @@ cv::Vec3d Quaternion::Rotation(const Quaternion &q, const cv::Vec3d &vec) {
     result[1] = result_q.y_;
     result[2] = result_q.z_;
     return result;
+}
+std::vector<Quaternion> Quaternion::Interpolation (const std::vector<double>& x0, const std::vector<double>& x,
+                                                   const std::vector<Quaternion>& y){
+    std::vector<Quaternion> out;
+    for(auto xx0 : x0){
+        Quaternion yy0 = Quaternion::EulerToQuaternion(0,0,0);
+        for(int i = 1; i < x.size(); i++){
+            if(xx0>x[i]) continue;
+            else if(xx0==x[i]){
+                yy0 = y[i];
+                break;
+            }
+            if(i!=0){
+                double ratio = (xx0 - x[i-1]) / (x[i] - x[i-1]);
+                yy0 = Quaternion::Slerp(y[i-1], y[i], ratio);
+                break;
+            }
+        }
+        out.push_back(yy0);
+    }
+    return out;
 }
 Quaternion Quaternion::operator+(const Quaternion &other) const {
     return Add(other);

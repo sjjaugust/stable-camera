@@ -17,11 +17,22 @@ private:
     int out_index_ = 0;
     Filiter filiter;
     std::queue<Quaternion> q_cache_;
+    const double crop_ratio_ = 0.95;
+    cv::Size frame_size_;
+    bool is_first = true;
+    Quaternion nn;
+    Quaternion last;
+    std::queue<std::vector<Quaternion>> rs_q_cache_;
 public:
     bool crop_control_flag = true;
 private:
     void Work();
     void FrameCompensation();
+    bool CropControl(double crop_ratio, const cv::Size& size, cv::Mat& mat);
+    bool IsInside(cv::Mat crop_vertex, cv::Mat new_vertex);
+    void RollingShutter(int cm_index);
+    std::vector<double> GetTimeStampInFrame(double timestart, double timeend,
+                                            int num);
 public:
     void Start();
     ~ThreadCompensation();

@@ -67,3 +67,16 @@ void Filiter::IncFilter(int cur_frame, int offset) {
     }
     out_queue_.push(result);
 }
+void Filiter::Method1(const std::deque<Quaternion> &window, std::vector<Quaternion> &transwindow,
+                      int curframe) {
+    transwindow.clear();
+    transwindow.resize(window.size());
+    transwindow[curframe] = Quaternion::EulerToQuaternion(0, 0, 0);
+    for(int i = curframe - 1; i >= 0; i--){
+        transwindow[i] = window[i] * window[curframe].Inv();
+    }
+    for(int i = curframe + 1; i< window.size(); i++){
+        transwindow[i] = window[i] * window[curframe].Inv();
+    }
+
+}
