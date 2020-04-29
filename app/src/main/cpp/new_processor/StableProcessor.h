@@ -14,6 +14,7 @@ private:
     volatile int in_index_ = 0;
     volatile int out_index_ = 0;
     ThreadCompensation* cm_thread_;
+    bool is_first = true;
 public:
     ~StableProcessor();
     void EnqueueInputBuffer(int buffer_index, const cv::Mat* new_frame, const cv::Mat* quaternion_mat);

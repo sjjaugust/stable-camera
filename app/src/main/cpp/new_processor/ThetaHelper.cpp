@@ -3,6 +3,7 @@
 //
 
 #include "ThetaHelper.h"
+#include "ThreadContext.h"
 #include <android/log.h>
 void ThetaHelper::PutValue(const double timestamp, const double x, const double y,
                            const double z) {
@@ -75,8 +76,10 @@ void ThetaHelper::GetEuler(std::vector<cv::Vec<double, 4>>& euler_theta) {
             last_theta_ = temp;
             break;
         }
+
         gyro_time = timestamp_gyro_[gyro_index_];
     }
+    ThreadContext::rTheta.push(cv::Vec3d(temp[1], temp[2], temp[3]));
     frame_index_++;
 
 }

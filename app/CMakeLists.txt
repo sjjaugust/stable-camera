@@ -51,6 +51,7 @@ add_library( # Sets the name of the library.
         src/main/cpp/new_processor/StableProcessor.cpp
         src/main/cpp/new_processor/ThreadCompensation.cpp
         src/main/cpp/new_processor/Filiter.cpp
+        src/main/cpp/new_processor/DigitalFilter.cpp
         )
 
 # Searches for a specified prebuilt library and stores the path as a

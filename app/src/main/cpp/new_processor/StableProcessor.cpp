@@ -30,7 +30,11 @@ void StableProcessor::EnqueueInputBuffer(int buffer_index, const cv::Mat *new_fr
     assert(buffer_index==in_index_);
     new_frame->copyTo(ThreadContext::frame_vec_[in_index_]);
     quaternion_mat->copyTo(ThreadContext::quaternion_vec_[in_index_]);
-    ThreadContext::cm_semaphore_->Singal();
+    if(is_first){
+        is_first = false;
+    } else {
+        ThreadContext::cm_semaphore_->Singal();
+    }
     in_index_ = (in_index_ + 1) % ThreadContext::BUFFER_SIZE_;
 
 }

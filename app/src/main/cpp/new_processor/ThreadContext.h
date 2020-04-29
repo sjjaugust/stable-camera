@@ -8,9 +8,15 @@
 
 #include <opencv2/core/mat.hpp>
 #include "MySemaphore.h"
-
+#include <queue>
+#include "ThreadContext.h"
 class ThreadContext {
 public:
+    const static int MIN_DISTANCE = 20;
+    constexpr const static float TRANSLATE_AMPLITUDE = 0.4f;
+    constexpr const static float ROTATE_AMPLITUDE = 0.02f;
+    const static int DOWNSAMPLE_SCALE = 4;
+
     static const cv::Mat RR2stableVec ;
     static const cv::Mat stableVec2RR ;
     static const cv::Mat inmat;
@@ -23,6 +29,7 @@ public:
     static MySemaphore* cm_semaphore_;
     static MySemaphore* rs_semaphore_;
     static cv::Mat rs_convert_mat_;
+    static std::queue<cv::Vec3d> rTheta;
 public:
     static void Init();
     static void Release();
