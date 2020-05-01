@@ -23,9 +23,10 @@ private:
     const double crop_ratio_ = 0.9;
     cv::Size frame_size_;
     bool is_first = true;
-    Quaternion nn;
     Quaternion last;
     std::queue<std::vector<Quaternion>> rs_q_cache_;
+    Quaternion last_old_q;
+    std::queue<std::vector<cv::Point2f>> cur_features_queue;
 public:
     bool crop_control_flag = true;
 private:
@@ -36,7 +37,9 @@ private:
     void RollingShutter(int cm_index);
     std::vector<double> GetTimeStampInFrame(double timestart, double timeend,
                                             int num);
-    void WriteDataToFile(std::FILE* file_old, const Quaternion& old_q, std::FILE* file_new, const Quaternion& new_q, int frame);
+    cv::Vec2d CalTranslationByR(const Quaternion& last_q, const Quaternion& cur_q);
+    void WriteDataToFile(std::FILE* file_old, const Quaternion& old_q,
+            const cv::Mat& aff_old, std::FILE* file_new, const Quaternion& new_q, const cv::Mat& aff_new, int frame);
 public:
     void Start();
     ~ThreadCompensation();

@@ -49,6 +49,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Range;
 import android.util.Size;
@@ -61,6 +63,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.opencv.core.CvType;
@@ -136,7 +139,7 @@ public class Camera2BasicFragment extends Fragment
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
 
-    private static long timeDelay = 0;
+    private static long timeDelay = 36000000;
     public static boolean isSensorUseRTCTime = true;
 
     private SensorManager mSensorManager;
@@ -498,6 +501,7 @@ public class Camera2BasicFragment extends Fragment
     Button cropButton;
     SeekBar seekBar;
     boolean isCrop = true;
+    TextView textView;
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
         mTextureView = (CameraBridgeViewBase) view.findViewById(R.id.texture);
@@ -514,12 +518,16 @@ public class Camera2BasicFragment extends Fragment
                 stableProcessor.setCrop(isCrop);
             }
         });
+        textView = view.findViewById(R.id.tv_timedelay);
+        textView.setText(String.valueOf((int)(timeDelay / 1000 / 1000)));
+
         seekBar = view.findViewById(R.id.sb_time);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 timeDelay = progress * 1000 * 1000;
                 Log.i(TAG, "progress " + progress);
+                textView.setText(String.valueOf((int)(timeDelay / 1000 / 1000)));
             }
 
             @Override
@@ -535,6 +543,7 @@ public class Camera2BasicFragment extends Fragment
 
 
         seekBar.setProgress((int)(timeDelay / 1000 / 1000));
+
     }
 
     @Override

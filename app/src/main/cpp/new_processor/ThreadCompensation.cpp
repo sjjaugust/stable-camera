@@ -10,6 +10,12 @@
 static std::FILE* file_old = nullptr;
 static std::FILE* file_new = nullptr;
 static int frame_count = 0;
+static cv::Mat translation_before = cv::Mat::eye(3, 3, CV_64F);
+static cv::Mat translation_after = cv::Mat::eye(3, 3, CV_64F);
+static std::queue<cv::Mat> trans_before;
+static std::queue<cv::Mat> trans_before1;
+static cv::Mat last_before = (cv::Mat_<double>(3, 1) <<  960, 540, 0);
+static cv::Mat last_after = (cv::Mat_<double>(3, 1) <<  960, 540, 0);
 ThreadCompensation::~ThreadCompensation() {
     work_thread_.join();
     fclose(file_old);
@@ -22,12 +28,14 @@ void ThreadCompensation::Start() {
 }
 void ThreadCompensation::Work() {
     pthread_setname_np(pthread_self(), "CompensationThread");
-    filiter = Filiter(5, 20);
-    filiter1 = Filiter(7, 20);
-    digital_filter_ = DigitalFilter(10, 20, DigitalFilter::delta_T);
+    filiter = Filiter(5, 20);//四元数滤波器1
+    filiter1 = Filiter(10, 20);//四元数滤波器2
+    filiter2 = Filiter(15, 20);//四元数滤波器3
+    digital_filter_ = DigitalFilter(15, 20, DigitalFilter::delta_T);//数字方法的滤波器
     last_rot_[0] = 0;
     last_rot_[1] = 0;
     last_rot_[2] = 0;
+    last_old_q = Quaternion::EulerToQuaternion(0, 0, 0);
     while (true){
         ThreadContext::cm_semaphore_->Wait();
         if(cm_index_ < 0){
@@ -35,26 +43,36 @@ void ThreadCompensation::Work() {
             break;
         }
         FrameCompensation();
+        ex_index_ = (ex_index_ + 1) % ThreadContext::BUFFER_SIZE_;
+        cm_las_index_ = (cm_las_index_ + 1) % ThreadContext::BUFFER_SIZE_;
+        cm_cur_index_ = (cm_cur_index_ + 1) % ThreadContext::BUFFER_SIZE_;
     }
 }
 void ThreadCompensation::FrameCompensation() {
     frame_size_.height = ThreadContext::frame_vec_[0].rows;
     frame_size_.width = ThreadContext::frame_vec_[0].cols;
     ////**************数字部分*******************////
+    //之前数字计算的部分，将计算结果放入队列，四元数补偿完毕后从队列中取出
     cv::Mat aff = ComputeAffine();
+    translation_before = aff * translation_before;
+    LOGI("translation_before:%F", translation_before.at<double>(0, 2));
+    trans_before.push(translation_before);
+    trans_before1.push(aff);
     bool ready_to_pull_digt = digital_filter_.push(aff);
     if(ready_to_pull_digt){
         aff_queue_.push(digital_filter_.pop());
     }
     ////**************数字部分*******************////
+    //quaternion_vec_存储每帧图像的10条陀螺仪信息，取出第一条
     Quaternion first_q(ThreadContext::quaternion_vec_[cm_index_].at<double>(0, 1),
                        ThreadContext::quaternion_vec_[cm_index_].at<double>(0, 2),
                        ThreadContext::quaternion_vec_[cm_index_].at<double>(0, 2),
                        ThreadContext::quaternion_vec_[cm_index_].at<double>(0, 3));
-    //filiter process start
+    ////filiter process start
     bool ready_to_pull = filiter.Push(first_q);
-    q_cache_.push(first_q);
+    q_cache_.push(first_q);//按顺序放入缓存队列，计算变化时取出
     RollingShutter(cm_index_);
+    //使用三重滤波器对旋转滤波
     if(ready_to_pull){
         Quaternion new_q = filiter.Pop();
         Quaternion convert_q;
@@ -66,20 +84,40 @@ void ThreadCompensation::FrameCompensation() {
                 Quaternion new_q2 = filiter2.Pop();
                 Quaternion old_q = q_cache_.front();
                 q_cache_.pop();
-                convert_q = Quaternion::Q1ToQ2(old_q, new_q2);
-//                WriteDataToFile(file_old, old_q, file_new, new_q2, frame_count);
+                convert_q = Quaternion::Q1ToQ2(old_q, new_q2);//计算相应帧变换
                 __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "before:%d, %f", ++frame_count, old_q.x_);
                 __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "after:%d, %f", frame_count, convert_q.x_);
 
-                cv::Mat gooda = aff_queue_.front();
+                cv::Vec2d trans = CalTranslationByR(last_old_q, old_q);//计算由旋转产生的平移
+                last_old_q = old_q;
+                LOGI("translation:%f, %f", trans[0], trans[1]);
+
+                cv::Mat gooda = aff_queue_.front();//取出数字的变换矩阵
                 aff_queue_.pop();
-                cv::Mat convert_mat = Quaternion::QuaternionToR(convert_q);
+
+                cv::Mat temp = trans_before1.front();//取出之前的累计的平移姿态矩阵
+                trans_before1.pop();
+                translation_after = gooda * temp * translation_after;//计算黄线的路径坐标
+                cv::Mat translation_beforep = trans_before.front();//取出蓝线的路径坐标
+                trans_before.pop();
+//                WriteDataToFile(file_old, old_q, translation_beforep, file_new, new_q2, translation_after, frame_count);//写文件
+                //如果在数字补偿时认定稳定，则关闭旋转补偿
+                if(gooda.at<double>(0,0) == 1 && gooda.at<double>(1,1) == 1 && gooda.at<double>(2,2) == 1){
+                    convert_q = Quaternion::EulerToQuaternion(0, 0, 0);
+                    trans[0] = 0;
+                    trans[1] = 0;
+                }
+                //去除由旋转产生的平移
+//                gooda.at<double>(0, 2) -= trans[0];
+//                gooda.at<double>(1, 2) -= trans[1];
+                cv::Mat convert_mat = Quaternion::QuaternionToR(convert_q);//将四元数转化成旋转矩阵
                 convert_mat = ThreadContext::inmat * convert_mat * ThreadContext::inmat.inv();
                 convert_mat = ThreadContext::RR2stableVec * convert_mat * ThreadContext::stableVec2RR;
-                convert_mat = gooda * convert_mat;
+                convert_mat = gooda * convert_mat;//旋转*平移
 //                convert_mat = gooda;
+                //以下是去除rollingshutter的过程
                 //RollingShutter start
-                std::vector<Quaternion> cur_frame_q = rs_q_cache_.front();
+                std::vector<Quaternion> cur_frame_q = rs_q_cache_.front();//
                 rs_q_cache_.pop();
                 cv::Mat rs_convert_mat(30, 3, CV_64F);
                 int num = 0;
@@ -100,6 +138,7 @@ void ThreadCompensation::FrameCompensation() {
                 rs_convert_mat.copyTo(ThreadContext::rs_convert_mat_);
                 __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "rs_convert_mat:%d", rs_convert_mat.rows);
                 //RollingShutter end
+                //对旋转+平移矩阵进行补偿
                 if(crop_control_flag){
                     CropControl(crop_ratio_, frame_size_, convert_mat);
                     cv::Mat scale = cv::Mat::eye(3,3,CV_64F);
@@ -121,9 +160,34 @@ void ThreadCompensation::FrameCompensation() {
             }
         }
     }
-    //filiter process end
+    ////filiter process end
 
     cm_index_ = (cm_index_ + 1) % ThreadContext::BUFFER_SIZE_;
+}
+cv::Vec2d ThreadCompensation::CalTranslationByR(const Quaternion &last_q,
+                                                const Quaternion &cur_q) {
+    cv::Mat mat_old = ThreadContext::inmat * Quaternion::QuaternionToR(last_q) * ThreadContext::inmat.inv();
+    cv::Mat mat_new = ThreadContext::inmat * Quaternion::QuaternionToR(cur_q) * ThreadContext::inmat.inv();
+    mat_old = ThreadContext::RR2stableVec * mat_old * ThreadContext::stableVec2RR;
+    mat_new = ThreadContext::RR2stableVec * mat_new * ThreadContext::stableVec2RR;
+    std::vector<cv::Point2f> cur_features = cur_features_queue.front();
+    cur_features_queue.pop();
+    if(cur_features.size() < 5) {
+        return cv::Vec2d(0, 0);
+    }
+    double avg_x = 0;
+    double avg_y = 0;
+    for(auto pt : cur_features){
+        cv::Mat point = (cv::Mat_<double>(3, 1)<<pt.x, pt.y, 0);
+        cv::Mat point_before = mat_old * point;
+        cv::Mat point_after = mat_new * point;
+        avg_x += (point_after.at<double>(0, 0) - point_before.at<double>(0, 0));
+        avg_y += (point_after.at<double>(1, 0) - point_before.at<double>(1, 0));
+    }
+    avg_x /= cur_features.size();
+    avg_y /= cur_features.size();
+
+    return cv::Vec2d(avg_x, avg_y);
 }
 bool ThreadCompensation::CropControl(double crop_ratio, const cv::Size &size, cv::Mat &mat) {
     bool do_crop = false;
@@ -233,12 +297,18 @@ std::vector<double> ThreadCompensation::GetTimeStampInFrame(double timestart, do
     }
     return timeStampInFrame;
 }
-void ThreadCompensation::WriteDataToFile(std::FILE *file_old, const Quaternion &old_q,
-                                         std::FILE *file_new, const Quaternion &new_q, int frame) {
+void ThreadCompensation::WriteDataToFile(std::FILE* file_old, const Quaternion& old_q,
+                                         const cv::Mat& aff_old, std::FILE* file_new, const Quaternion& new_q,
+                                         const cv::Mat& aff_new, int frame) {
+    cv::Mat point = (cv::Mat_<double>(3, 1) << 960, 540, 0);
+    cv::Mat old_r = ThreadContext::inmat * Quaternion::QuaternionToR(old_q) * ThreadContext::inmat.inv();
+    cv::Mat new_r = ThreadContext::inmat * Quaternion::QuaternionToR(new_q) * ThreadContext::inmat.inv();
+    cv::Mat new_p_before =  aff_old  * point ;
+    cv::Mat new_p_after = aff_new  * point ;
     char before[60];
     char after[60];
-    sprintf(before, "before %d %f %f %f %f\n", frame, old_q.w_, old_q.x_, old_q.y_, old_q.z_);
-    sprintf(after, "after %d %f %f %f %f\n", frame, new_q.w_, new_q.x_, new_q.y_, new_q.z_);
+    sprintf(before, "before %d %f %f\n", frame, new_p_before.at<double>(0, 0), new_p_before.at<double>(1, 0));
+    sprintf(after, "after %d %f %f\n",  frame, new_p_after.at<double>(0, 0), new_p_after.at<double>(1, 0));
     fwrite(before, sizeof(char), strlen(before), file_old);
     fwrite(after, sizeof(char), strlen(after), file_new);
 }
@@ -256,6 +326,7 @@ cv::Mat ThreadCompensation::ComputeAffine() {
     //LOGI("step1");
     cv::Mat lastFrame = ThreadContext::frame_vec_[cm_las_index_];
     cv::Mat frame = ThreadContext::frame_vec_[cm_cur_index_];
+    LOGI("cmindex:%d, %d", cm_las_index_, cm_cur_index_);
     frame_size_.height=frame.rows;
     frame_size_.width=frame.cols;
 
@@ -289,7 +360,6 @@ cv::Mat ThreadCompensation::ComputeAffine() {
 
     bool sc = false;
     sc = StableCount(error);
-
     //LOGI("step5");
     cv::Mat aff;
     LOGI("see error : %d ", sc);
@@ -424,6 +494,7 @@ void ThreadCompensation::TrackFeature() {
             last_features_tmp_.push_back(lfp);
         }
     }
+    cur_features_queue.push(cur_features_tmp_);
 }
 bool ThreadCompensation::StableCount(double e) {
     double height = cur_gray_.rows * ThreadContext::DOWNSAMPLE_SCALE;
