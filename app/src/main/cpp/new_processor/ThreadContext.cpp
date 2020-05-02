@@ -15,7 +15,8 @@ cv::Mat ThreadContext::stable_vec_[ThreadContext::BUFFER_SIZE_];
 cv::Mat ThreadContext::rs_convert_mat_;
 const cv::Mat ThreadContext::RR2stableVec = (cv::Mat_<double>(3, 3)<<0.0, 1.0, 0.0, -1.0, 0.0, 1080.0, 0.0, 0.0, 1.0);
 const cv::Mat ThreadContext::stableVec2RR = (cv::Mat_<double>(3, 3)<<0.0, -1.0, 1080.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-const cv::Mat ThreadContext::inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);
+//const cv::Mat ThreadContext::inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);
+const cv::Mat ThreadContext::inmat = (cv::Mat_<double>(3, 3) << 1492.89950430177, 0.0, 940.850079740057, 0.0, 1496.13805384036, 552.228021875255, 0.0, 0.0, 1.0);
 std::queue<cv::Vec3d> ThreadContext::rTheta;
 void ThreadContext::Init() {
     Release();

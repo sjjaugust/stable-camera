@@ -1,1 +1,7 @@
-ninja: no work to do.
+[1/2] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/new_processor/ThreadCompensation.cpp.o
+D:\Repositories\stable-camera\app\src\main\cpp\new_processor\ThreadCompensation.cpp:126:99: warning: format specifies type 'int' but the argument has type 'std::__ndk1::vector<Quaternion, std::__ndk1::allocator<Quaternion> >::size_type' (aka 'unsigned long') [-Wformat]
+                    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "curframe_q:%d", cur_frame_q.size());
+                                                                                             ~~   ^~~~~~~~~~~~~~~~~~
+                                                                                             %lu
+1 warning generated.
+[2/2] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\arm64-v8a\libnative-lib.so

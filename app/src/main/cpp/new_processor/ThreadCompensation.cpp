@@ -29,9 +29,9 @@ void ThreadCompensation::Start() {
 void ThreadCompensation::Work() {
     pthread_setname_np(pthread_self(), "CompensationThread");
     filiter = Filiter(5, 20);//四元数滤波器1
-    filiter1 = Filiter(10, 20);//四元数滤波器2
-    filiter2 = Filiter(15, 20);//四元数滤波器3
-    digital_filter_ = DigitalFilter(15, 20, DigitalFilter::delta_T);//数字方法的滤波器
+    filiter1 = Filiter(7, 20);//四元数滤波器2
+    filiter2 = Filiter(7, 20);//四元数滤波器3
+    digital_filter_ = DigitalFilter(10, 20, DigitalFilter::delta_T);//数字方法的滤波器
     last_rot_[0] = 0;
     last_rot_[1] = 0;
     last_rot_[2] = 0;
@@ -100,7 +100,7 @@ void ThreadCompensation::FrameCompensation() {
                 translation_after = gooda * temp * translation_after;//计算黄线的路径坐标
                 cv::Mat translation_beforep = trans_before.front();//取出蓝线的路径坐标
                 trans_before.pop();
-//                WriteDataToFile(file_old, old_q, translation_beforep, file_new, new_q2, translation_after, frame_count);//写文件
+                WriteDataToFile(file_old, old_q, translation_beforep, file_new, new_q2, translation_after, frame_count);//写文件
                 //如果在数字补偿时认定稳定，则关闭旋转补偿
                 if(gooda.at<double>(0,0) == 1 && gooda.at<double>(1,1) == 1 && gooda.at<double>(2,2) == 1){
                     convert_q = Quaternion::EulerToQuaternion(0, 0, 0);
@@ -303,8 +303,8 @@ void ThreadCompensation::WriteDataToFile(std::FILE* file_old, const Quaternion& 
     cv::Mat point = (cv::Mat_<double>(3, 1) << 960, 540, 0);
     cv::Mat old_r = ThreadContext::inmat * Quaternion::QuaternionToR(old_q) * ThreadContext::inmat.inv();
     cv::Mat new_r = ThreadContext::inmat * Quaternion::QuaternionToR(new_q) * ThreadContext::inmat.inv();
-    cv::Mat new_p_before =  aff_old  * point ;
-    cv::Mat new_p_after = aff_new  * point ;
+    cv::Mat new_p_before =  aff_old * old_r * point ;
+    cv::Mat new_p_after = aff_new  * new_r * point ;
     char before[60];
     char after[60];
     sprintf(before, "before %d %f %f\n", frame, new_p_before.at<double>(0, 0), new_p_before.at<double>(1, 0));
