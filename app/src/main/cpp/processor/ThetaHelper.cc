@@ -6,11 +6,15 @@
 #include "ThreadContext.h"
 #include <android/log.h>
 #include <string>
-
+#define LOG_TAG    "ThetaHelper"
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 static cv::Mat test_point_before = (cv::Mat_<double>(3, 1) << 1.0, 1.0, 1.0);
 static cv::Mat test_point_after = (cv::Mat_<double>(3, 1) << 1.0, 1.0, 1.0);
 static cv::Point2f test_point1(1.0, 1.0);
 static int frame_count = 0;
+static FILE* file;
+static cv::Mat last_mat = cv::Mat::eye(3, 3, CV_64F);
+static cv::Mat cur_mat = cv::Mat::eye(3, 3, CV_64F);
 static double point_distance(cv::Point2f p1,cv::Point2f p2)
 {
     cv::Point2f d = p1 - p2;
@@ -91,7 +95,7 @@ cv::Vec<double, 3> ThetaHelper::getTheta()
 
     findex++;
     lastt=theta;
-    // NSLog(@"old  x:%f,y:%f,z:%f,",theta[0],theta[1],theta[2]);
+//    LOGD("old  x:%f,y:%f,z:%f,",theta[0],theta[1],theta[2]);
     return theta;
 
 }
@@ -152,7 +156,10 @@ cv::Vec<double, 3> ThetaHelper::getNewTheta(cv::Vec<double, 3> oldtheta)
 
 cv::Mat ThetaHelper::getRotationMat(cv::Vec<double, 3> theta)
 {
-    // NSLog(@"old   x:%f,y:%f,z:%f,",theta[0],theta[1],theta[2]);
+//    // NSLog(@"old   x:%f,y:%f,z:%f,",theta[0],theta[1],theta[2]);
+//    for(int i = 0; i < 3; i++){
+//        theta[i] = -theta[i];
+//    }
     cv::Mat cvmat(3, 3, CV_64F);
     cv::Mat skew_mat(3, 3, CV_64F);
 
@@ -207,7 +214,10 @@ void ThetaHelper::init() {
     rs_last_z_ = 0;
 
     filter_ = Filter(10 , 10);
-    last_new_theta_ = cv::Mat::eye(3, 3, CV_64F);
+    for(int i = 0; i < 3; i++){
+        avg_gyro_[i] = 0;
+    }
+    file = fopen("/data/data/me.zhehua.gryostable/data/gyro_data.txt", "a");
 
 }
 
@@ -290,6 +300,8 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
 
     Timeframe.push_back(timestamp);
     cv::Vec<double, 3> oldtheta=getTheta();
+    LOGD("angle11111:%f, %f, %f", oldtheta[0], oldtheta[1], oldtheta[2]);
+//    WriteToFile(file, oldtheta[0], oldtheta[1], oldtheta[2], frame_count);
     threads::ThreadContext::rTheta.push(oldtheta);
     oldx.push_back(oldtheta[0]);//[oldx addObject:[NSNumber numberWithDouble: oldtheta[0]]];
     oldy.push_back(oldtheta[1]);//[oldy addObject:[NSNumber numberWithDouble: oldtheta[1]]];
@@ -301,6 +313,13 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
     cv::Mat newRotation=getRotationMat(newtheta);//[self getRotationMat:newtheta];
     RR = getRR(oldRotation, newRotation);
     RR.copyTo(*matR);
+
+    cur_mat = oldRotation;
+    cv::Mat temp = inmat * cur_mat * last_mat.inv() * inmat.inv();
+    threads::ThreadContext::r_convert_que.push(oldRotation);
+    threads::ThreadContext::r_convert_new_que.push(newRotation);
+    last_mat = cur_mat;
+
 //    bool ready_to_pull = filter_.push(newRotation);
 //    old_rotation_queue_.push(oldRotation);
 //    if(ready_to_pull){
@@ -373,26 +392,102 @@ std::vector<cv::Vec<double, 4>> ThetaHelper::GetRsTheta() {
         gyro_time = Timeg[rs_gyro_index_];
     }
     rs_frame_index_++;
+    LOGD("old  x:%f,y:%f,z:%f,",temp[1],temp[2],temp[3]);
     return rs_gyro_theta;
 }
 void ThetaHelper::RsChangeVectorToMat(cv::Mat* rs_out_Mat) {
     cv::Mat temp(rs_gyro_theta_);
     temp.copyTo(*rs_out_Mat);
 }
-
+static float num = 0;
 void ThetaHelper::putValue(double timestamp, float x, float y, float z) {
     Timeg.push_back(timestamp);
     if(is_use_drift_){
-        roxl.push_back(y - y_drift_);
-        royl.push_back(-(x - x_drift_));
-        rozl.push_back(z - z_drift_);
+        if(gyro_count_ <= 30){
+            roxl.push_back(0);
+            royl.push_back(0);
+            rozl.push_back(0);
+        }else if(gyro_count_ > 30 && gyro_count_ <330){
+            roxl.push_back(0);
+            royl.push_back(0);
+            rozl.push_back(0);
+            avg_gyro_[0] += x;
+            avg_gyro_[1] += y;
+            avg_gyro_[2] += z;
+        } else if(gyro_count_ == 330){
+            roxl.push_back(0);
+            royl.push_back(0);
+            rozl.push_back(0);
+            avg_gyro_[0] += x;
+            avg_gyro_[1] += y;
+            avg_gyro_[2] += z;
+            x_drift_ = avg_gyro_[0]/300;
+            y_drift_ = avg_gyro_[1]/300;
+            z_drift_ = avg_gyro_[2]/300;
+        } else if(gyro_count_ >= 331 && gyro_count_ <=430){
+            roxl.push_back(y - y_drift_);
+            royl.push_back(z - z_drift_);
+            rozl.push_back(x - x_drift_);
+            GetNoise();
+//            roxl.push_back(y - y_drift_);
+//            royl.push_back(z - z_drift_);
+//            rozl.push_back(x - x_drift_);
+        } else {
+            GetGyro(x - x_drift_, y - y_drift_, z - z_drift_);
+//            roxl.push_back(y - y_drift_);
+//            royl.push_back(z - z_drift_);
+//            rozl.push_back(x - x_drift_);
+            roxl.push_back(xa_[1]);
+            royl.push_back(xa_[2]);
+            rozl.push_back(xa_[0]);
+
+        }
     }else{
         roxl.push_back(y);
         royl.push_back(-x);
         rozl.push_back(z);
     }
+    gyro_count_++;
     __android_log_print(ANDROID_LOG_DEBUG, "ThetaHelper", "three:%f, %f, %f", roxl.back(), royl.back(), rozl.back());
+    LOGD("--------------:%f, %f, %f", x, y, z);
 
 
+}
+void ThetaHelper::GetNoise() {
+    for(int i = 331; i < 431; i++){
+        noise_[0] += roxl[i];
+        noise_[1] += royl[i];
+        noise_[2] += rozl[i];
+    }
+    for(int i = 0; i < 3; i++){
+        noise_[i] /= 100;
+    }
+}
+void ThetaHelper::GetGyro(float x, float y, float z) {
+    float temp[3] = {0};
+    float p1, k;
+    xw_[count_] = x;
+    yw_[count_] = y;
+    zw_[count_] = z;
+    for(int i = 0; i < 5; i++){
+        temp[0] += xw_[i];
+        temp[1] += yw_[i];
+        temp[2] += zw_[i];
+    }
+    for(int i = 0; i < 3; i++){
+        temp[i] /= 5;
+    }
+    for(int i = 0; i < 3; i++){
+        p1 = p_[i] * p_[i] + 0.002f;
+        k = 0.1f * p1 / (p1 + pow(noise_[i] ,2));
+        xa_[i] = xa_[i] + k * (temp[i] - xa_[i]);
+        p_[i] = sqrt((1 - k) * p1);
+    }
+
+}
+void ThetaHelper::WriteToFile(FILE *file, float x, float y, float z, int gyro_count) {
+    char content[60];
+    sprintf(content, "%d %f %f %f\n", gyro_count, x, y, z);
+    fwrite(content, sizeof(char), strlen(content), file);
 }
 

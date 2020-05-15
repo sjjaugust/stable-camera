@@ -12,6 +12,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <list>
+#include <queue>
 
 namespace threads {
     class ThreadCompensation {
@@ -52,7 +53,12 @@ namespace threads {
         bool affPointSimplify_tri( vector<Point2f> &last_out , vector<Point2f> &cur_out );
         Mat moveAndScale();
         double computeMaxDegree( vector<Point2f> img_line , vector<Point2f> crop_line , double degree , Point2f center );
-
+        void WriteToFile(FILE* old_file, FILE* new_file, cv::Mat mat, int count, cv::Mat old_mat);
+        cv::Mat cumulative_path_;
+        cv::Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);//OnePlus 6T
+        bool is_stable_;
+        std::queue<std::vector<cv::Point2f>> feature_by_r_;
+        cv::Vec2f CalTranslationByR(cv::Mat r);
     public:
         void start();
 

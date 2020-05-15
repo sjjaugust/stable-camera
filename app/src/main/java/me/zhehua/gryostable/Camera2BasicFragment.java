@@ -50,6 +50,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.util.Range;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -60,6 +61,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.opencv.core.CvType;
@@ -135,7 +137,7 @@ public class Camera2BasicFragment extends Fragment
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
 
-    private static long timeDelay = 0;
+    private static long timeDelay = 12000000;
     public static boolean isSensorUseRTCTime = true;
 
     private SensorManager mSensorManager;
@@ -268,7 +270,7 @@ public class Camera2BasicFragment extends Fragment
         public void onImageAvailable(ImageReader reader) {
 //            Log.i(TAG, "image come");
             Image image = reader.acquireNextImage();
-
+            Log.d(TAG, "onImageAvailable: "+image);
             if (image == null) {
                 Log.e(TAG, "image null");
                 return;
@@ -495,9 +497,12 @@ public class Camera2BasicFragment extends Fragment
 
     Button cropButton;
     SeekBar seekBar;
+    TextView textView;
     boolean isCrop = true;
     @Override
     public void onViewCreated(final View view, Bundle savedInstanceState) {
+        textView = view.findViewById(R.id.tv_timedelay);
+        textView.setText(String.valueOf((int)(timeDelay/1000/1000)));
         mTextureView = (CameraBridgeViewBase) view.findViewById(R.id.texture);
         cropButton = view.findViewById(R.id.bt_crop);
         cropButton.setOnClickListener(new View.OnClickListener() {
@@ -518,6 +523,7 @@ public class Camera2BasicFragment extends Fragment
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 timeDelay = progress * 1000 * 1000;
                 Log.i(TAG, "progress " + progress);
+                textView.setText(String.valueOf((int)(timeDelay/1000/1000)));
             }
 
             @Override
@@ -609,6 +615,7 @@ public class Camera2BasicFragment extends Fragment
      *
      */
     @SuppressWarnings("SuspiciousNameCombination")
+    private static Range<Integer>[] fpsRanges;
     private void setUpCameraOutputs() {
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
@@ -616,6 +623,8 @@ public class Camera2BasicFragment extends Fragment
             for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
+                fpsRanges = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+                Log.d("FPS", "SYNC_MAX_LATENCY_PER_FRAME_CONTROL: " + Arrays.toString(fpsRanges));
 
                 // We don't use a front facing camera in this sample.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
@@ -836,6 +845,7 @@ public class Camera2BasicFragment extends Fragment
                                 // Auto focus should be continuous for camera preview.
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRanges[2]);
                                 // Flash is automatically enabled when necessary.
                                 setAutoFlash(mPreviewRequestBuilder);
 

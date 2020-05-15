@@ -10,6 +10,7 @@
 #include "ThreadContext.h"
 #include "ThreadRollingShutter.h"
 #include <assert.h>
+#include <android/log.h>
 
 namespace threads {
     class StableProcessor {

@@ -9,6 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <list>
+
 #define pi 3.1415926
 
 using namespace std;
@@ -45,6 +46,11 @@ namespace threads {
         static cv::Mat rs_Mat_[BUFFERSIZE][KRsStripNum_];
         static double guass_weight_[11];
         static void CreateGaussWeight(double* gauss_weight);
+////************************测试**********************////
+    public:
+        static std::queue<cv::Mat> r_convert_que;
+        static std::queue<cv::Mat> r_convert_new_que;
+        static cv::Mat last_old_Rotation_;
     };
 }
 

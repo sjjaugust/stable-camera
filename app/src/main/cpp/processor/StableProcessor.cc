@@ -25,7 +25,7 @@ void StableProcessor::Init(Size videoSize) {
     cm_thread_ -> videoSize = videoSize;
     cm_thread_ -> cropControlFlag = true;//在此设置是否进行裁剪控制
     cm_thread_ -> shakeDetect = false;//在此设置是否进行抖动检测
-    cm_thread_ -> cropRation = 0.9;
+    cm_thread_ -> cropRation = 0.92;
 
     //klt_thread_->start();
     cm_thread_->start();
@@ -37,6 +37,7 @@ void StableProcessor::enqueueInputBuffer(int buffer_index, const Mat* new_frame,
 
 
     assert (buffer_index == buffer_index_);
+    __android_log_print(ANDROID_LOG_DEBUG, "StableProcessor", "idx:%f",new_frame->at<double>(0, 1));
     new_frame->copyTo(ThreadContext::frameVec[buffer_index_]);
     RR->copyTo(ThreadContext::stableRVec[buffer_index_]);
 

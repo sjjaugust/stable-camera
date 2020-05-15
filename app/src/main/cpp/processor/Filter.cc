@@ -14,7 +14,11 @@ void Filter::null_func(const deque<Mat>& window, vector<Mat>& transWindow, int c
     for (int i = 0; i < window.size(); i ++) {
         
         transWindow[i] = window[i];
+
     }
+//    for(int j = 0;j < window.size(); j++){
+//        __android_log_print(ANDROID_LOG_DEBUG, "Filter", "samemmmm:%d %f", j, window[j].at<double>(0, 2));
+//    }
     
 }
 
@@ -55,7 +59,11 @@ bool Filter::push(Mat data) {
         }
         return true;
     }
+//    __android_log_print(ANDROID_LOG_DEBUG, "Filter", "samemmmm:%f", data.at<double>(0, 2));
     _window.push_back(data);//仿射矩阵放入_window
+    for(int j = 0;j < _window.size(); j++){
+        __android_log_print(ANDROID_LOG_DEBUG, "Filter", "samemmmm:%d %f, %f", j, _window[j].at<double>(0, 2), data.at<double>(0, 2));
+    }
     
     if (_window.size() < _kernel) {
         
@@ -118,10 +126,13 @@ void Filter::inc_filter( int curframe, int kernelOffset) {
     _kernelSum=0;
     //cout<<"!!!!!!!!!!"<<_transformedWindow.size()<<endl; //30...29.28.27...4.3.2
     for (int j = 0; j < _transformedWindow.size(); j ++) {
-        sumMat += _kernelVec[j + kernelOffset] * _transformedWindow[j];
+        sumMat += (_kernelVec[j + kernelOffset] * _transformedWindow[j]);
+//        sumMat += (1.0/_transformedWindow.size()) * _transformedWindow[j];
         _kernelSum+=_kernelVec[j+ kernelOffset];
     }
     sumMat /= _kernelSum;//归一化？让系数归一
+
+
     _outputBuffer.push(sumMat);
 }
 

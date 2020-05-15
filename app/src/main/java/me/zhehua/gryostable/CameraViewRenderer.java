@@ -345,6 +345,8 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
             GLES30.glUniformMatrix3fv(transformHandle, 1, true, transformMat, 0);
 
             changeVertex(rsMat);
+            Log.d(TAG, "onDrawFrame: "+rsMat.dump());
+
             vertexBuffer = ByteBuffer.allocateDirect(vertex.length * 4)
                     .order(ByteOrder.nativeOrder())
                     .asFloatBuffer()

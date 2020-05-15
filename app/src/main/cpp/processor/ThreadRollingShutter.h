@@ -16,7 +16,7 @@ namespace threads{
     private:
         const char* TAG = "ThreadRollingShutter";
         thread work_thread;
-        const Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);
+        cv::Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);//OnePlus 6T
         int buffer_index_ = 0;
         std::vector<double> angle_;
         const double correction_threshold = 0.1;

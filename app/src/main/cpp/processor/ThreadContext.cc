@@ -21,6 +21,10 @@ Mat ThreadContext::stableRVec[ThreadContext::BUFFERSIZE];
 Mat ThreadContext::rs_out_theta_[ThreadContext::BUFFERSIZE];
 Mat ThreadContext::rs_Mat_[ThreadContext::BUFFERSIZE][ThreadContext::KRsStripNum_];
 double ThreadContext::guass_weight_[11];
+////**************测试****************////
+std::queue<cv::Mat> ThreadContext::r_convert_que;
+std::queue<cv::Mat> ThreadContext::r_convert_new_que;
+cv::Mat ThreadContext::last_old_Rotation_ = cv::Mat::eye(3, 3, CV_64F);
 void ThreadContext::Init() {
     Release();
     klt_semaphore = new MySemaphore(0);

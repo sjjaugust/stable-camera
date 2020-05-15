@@ -6,7 +6,8 @@
 using namespace cv;
 using namespace std;
 using namespace threads;
-
+static Mat RR2stableVec = (cv::Mat_<double>(3, 3)<<0.0, 1.0, 0.0, -1.0, 0.0, 1080.0, 0.0, 0.0, 1.0);
+static Mat stableVec2RR = (cv::Mat_<double>(3, 3)<<0.0, -1.0, 1080.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 ThreadRollingShutter::~ThreadRollingShutter() {
     work_thread.join();
 }
@@ -32,15 +33,16 @@ void ThreadRollingShutter::getRollingShutterR(){
         Mat gyroInfo = ThreadContext::rs_out_theta_[buffer_index_];
         int gyroInfoRows = gyroInfo.rows;
         double timeStart = gyroInfo.at<double>(0,0);
-        double timeEnd = gyroInfo.at<double>(gyroInfoRows-1,0);
+        double timeEnd = gyroInfo.at<double>(gyroInfoRows-7,0);
 //        __android_log_print(ANDROID_LOG_ERROR, "ThreadRollingShutter","RsMat timeEnd:%f", timeEnd);
         vector<double> gyroInfoX, gyroInfoY, gyroInfoZ, gyroInfoOrgTime;
-        for(int j = 0; j < gyroInfoRows; j++){
+        for(int j = 0; j < gyroInfoRows-6; j++){
             gyroInfoOrgTime.push_back(gyroInfo.at<double>(j,0));
             gyroInfoX.push_back(gyroInfo.at<double>(j,1));
             gyroInfoY.push_back(gyroInfo.at<double>(j,2));
             gyroInfoZ.push_back(gyroInfo.at<double>(j,3));
         }
+
         vector<double> timeStampInFrame = getTimeStampInFrame(timeStart, timeEnd, ThreadContext::KRsStripNum_);
         vector<double> gyroInfoInFrameX, gyroInfoInFrameY, gyroInfoInFrameZ;
         gyroInfoInFrameX = interpolation(timeStampInFrame, gyroInfoOrgTime, gyroInfoX);
@@ -50,11 +52,11 @@ void ThreadRollingShutter::getRollingShutterR(){
         getMatInFrame(rsOutTheta, gyroInfoInFrameX, gyroInfoInFrameY, gyroInfoInFrameZ);
         gaussSmooth(rsOutTheta);
         __android_log_print(ANDROID_LOG_DEBUG, "ThreadRollingShutter", "sum: angle %f, %f, %f", angle_[0], angle_[1], angle_[2]);
-        if(angle_[0] < correction_threshold || angle_[1] < correction_threshold ||angle_[2] < correction_threshold){
-            for(int k = 0; k < 10; k++){
-                rsOutTheta[k] = cv::Mat::eye(cv::Size(3, 3), CV_64F);
-            }
-        }
+//        if(angle_[0] < correction_threshold || angle_[1] < correction_threshold ||angle_[2] < correction_threshold){
+//            for(int k = 0; k < 10; k++){
+//                rsOutTheta[k] = cv::Mat::eye(cv::Size(3, 3), CV_64F);
+//            }
+//        }
 
         for(int j = 0; j < ThreadContext::KRsStripNum_; j++){
             ThreadContext::rs_Mat_[buffer_index_][j] = *(rsOutTheta+j);
@@ -105,6 +107,11 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
     Mat e = Mat::eye(3, 3, CV_64F);
     Mat orgMat(3, 3, CV_64F);
     Mat skewOrgMat(3, 3, CV_64F);
+
+    gyroInfoInFrameX[0] = -gyroInfoInFrameX[0];
+    gyroInfoInFrameY[0] = -gyroInfoInFrameY[0];
+    gyroInfoInFrameZ[0] = -gyroInfoInFrameZ[0];
+
 //    计算第一条旋转矩阵
     double thOrg = gyroInfoInFrameX[0]*gyroInfoInFrameX[0]+
                    gyroInfoInFrameY[0]*gyroInfoInFrameY[0]+
@@ -134,6 +141,12 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
     std::vector<double> temp_y = gyroInfoInFrameY;
     std::vector<double> temp_z = gyroInfoInFrameZ;
     for(int i = 0; i < gyroInfoInFrameX.size(); i++){
+        if(i != 0){
+            gyroInfoInFrameX[i] = -gyroInfoInFrameX[i];
+            gyroInfoInFrameY[i] = -gyroInfoInFrameY[i];
+            gyroInfoInFrameZ[i] = -gyroInfoInFrameZ[i];
+        }
+
         angle_[0] += abs(temp_x[i]-temp_x[0]);
         angle_[1] += abs(temp_y[i]-temp_y[0]);
         angle_[2] += abs(temp_z[i]-temp_z[0]);
@@ -170,7 +183,7 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
         cv::Mat A=a1*a2;
         cv::Mat hom = cv::Mat::eye(cv::Size(3,3),CV_64F);
 //        Mat outMat = inmat*A.t()*cvMat*orgMat.t()*hom.t()*A*inmat.inv();
-        Mat outMat = inmat*A.t()*orgMat*cvMat.t()*hom.t()*A*inmat.inv();
+        Mat outMat = RR2stableVec * inmat*orgMat*cvMat.inv()*inmat.inv() * stableVec2RR;
 
         outMat.copyTo(*(rsOutTheta+i));
     }

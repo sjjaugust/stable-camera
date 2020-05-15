@@ -15,6 +15,7 @@ private:
 //    Mat inmat=(cv::Mat_<double>(3, 3)<<1440.0,0.0,540.0, 0.0,1440.0,960.0,0.0,0.0,1.0);
 //    Mat inmat=(cv::Mat_<double>(3, 3)<<600.0,0.0,616.0, 0.0,600.0,956.0,0.0,0.0,1.0);
     Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);//OnePlus 6T
+//    Mat inmat=(cv::Mat_<double>(3, 3)<<1492.89950430177,0.0,940.850079740057, 0.0,1496.13805384036,552.228021875255,0.0,0.0,1.0);//demo board
     Mat vertex=(cv::Mat_<double>(3, 4)<<0.0,0.0,1080.0,1080.0,0.0,1920.0,1920.0,0.0,1.0,1.0,1.0,1.0);
     Mat cropvertex=(cv::Mat_<double>(3, 4)<<108.0,108.0,972.0, 972.0, 192.0 , 1728.0, 1728.0, 192.0,1.0,1.0,1.0,1.0);
     Mat I=(cv::Mat_<double>(3, 3)<<1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0);
@@ -55,6 +56,8 @@ private:
     cv::Vec<double, 3> lastt;
     void cropControl(Mat& RR);
     bool isInside(cv::Mat cropvertex, cv::Mat newvertex);
+    int gyro_count_ = 0;
+    float avg_gyro_[3];
 
 public:
     void init();
@@ -72,16 +75,29 @@ private:
     double rs_last_x_, rs_last_y_, rs_last_z_;
     std::vector<cv::Vec<double, 4>> rs_gyro_theta_;
     const bool is_use_drift_ = false;
-    const float x_drift_ = -0.945954f;
-    const float y_drift_ = 0.227967;
-    const float z_drift_ = 0.018109f;
+    float x_drift_ = -0.945954f;
+    float y_drift_ = 0.227967;
+    float z_drift_ = 0.018109f;
     Filter filter_;
     std::queue<cv::Mat> old_rotation_queue_;
-    cv::Mat last_new_theta_;
+
     bool is_first_push_ = true;
+    void WriteToFile(FILE* file, float x, float y, float z, int gyro_count_);
 public:
     std::vector<cv::Vec<double, 4>> GetRsTheta();
     void RsChangeVectorToMat(cv::Mat* rs_out_Mat);
+////********************卡尔曼滤波处理陀螺仪数据*****************************////
+private:
+    float noise_[3] = {0};
+    float xw_[5] = {0};
+    float yw_[5] = {0};
+    float zw_[5] = {0};
+    int count_ = 0;
+    float p_[3] = {0};
+    float xa_[3] = {0};
+private:
+    void GetNoise();
+    void GetGyro(float x, float y, float z);
 };
 
 
