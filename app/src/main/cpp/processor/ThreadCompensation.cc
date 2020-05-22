@@ -662,8 +662,11 @@ void ThreadCompensation::frameCompensate()
         ////*************测试***********************////
 //        cv::Mat goodar = ThreadContext::stableRVec[out_index_];
 //        cv::Mat goodar = gooda;
-
+        gooda.at<double>(0, 2) = -gooda.at<double>(0, 2);
+        gooda.at<double>(1, 2) = -gooda.at<double>(1, 2);
+//        gooda.at<double>(2, 2) = -gooda.at<double>(2, 2);
         goodar = gooda;
+
 //        goodar = ThreadContext::stableRVec[out_index_];
 
         if( cropControlFlag )

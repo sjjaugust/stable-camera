@@ -52,9 +52,9 @@ cv::Vec<double, 3> ThetaHelper::getTheta()
     if(findex>0)
     {
         double lastftime= Timeframe[findex - 1];
-        theta[0]=-lastx*(gtime-lastftime)+lastt[0];
-        theta[1]=-lasty*(gtime-lastftime)+lastt[1];
-        theta[2]=-lastz*(gtime-lastftime)+lastt[2];
+        theta[0]=lastx*(gtime-lastftime)+lastt[0];
+        theta[1]=lasty*(gtime-lastftime)+lastt[1];
+        theta[2]=lastz*(gtime-lastftime)+lastt[2];
 
 
         // NSLog(@"frame:%f",lastftime);
@@ -73,19 +73,19 @@ cv::Vec<double, 3> ThetaHelper::getTheta()
         if(gtimenext<ftime)
         {
             // double gtimenext=[[Timeg objectAtIndex:gyindex+1] doubleValue];
-            theta[0]=theta[0]+(-anglevx)*(gtimenext-gtime);
-            theta[1]=theta[1]+(-anglevy)*(gtimenext-gtime);
-            theta[2]=theta[2]+(-anglevz)*(gtimenext-gtime);
+            theta[0]=theta[0]+(anglevx)*(gtimenext-gtime);
+            theta[1]=theta[1]+(anglevy)*(gtimenext-gtime);
+            theta[2]=theta[2]+(anglevz)*(gtimenext-gtime);
             gtime=gtimenext;
             gyindex++;
         }
         else
         {
-            theta[0]=theta[0]+(-anglevx)*(ftime-gtime);
+            theta[0]=theta[0]+(anglevx)*(ftime-gtime);
             lastx=anglevx;
-            theta[1]=theta[1]+(-anglevy)*(ftime-gtime);
+            theta[1]=theta[1]+(anglevy)*(ftime-gtime);
             lasty=anglevy;
-            theta[2]=theta[2]+(-anglevz)*(ftime-gtime);
+            theta[2]=theta[2]+(anglevz)*(ftime-gtime);
             lastz=anglevz;
             gyindex++;
             break;

@@ -660,6 +660,7 @@ public class Camera2BasicFragment extends Fragment
                 int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
                 //noinspection ConstantConditions
                 mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+                Log.d(TAG, "setUpCameraOutputs: "+displayRotation+" "+mSensorOrientation);
                 boolean swappedDimensions = false;
                 switch (displayRotation) {
                     case Surface.ROTATION_0:
