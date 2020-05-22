@@ -29,3 +29,13 @@
 3066	3281	0	../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libnative-lib.so	933f8b4a9ca29c7e
 4	3106	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o	c2788fef05fea41b
 3106	3517	0	../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libnative-lib.so	933f8b4a9ca29c7e
+5	4153	0	CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o	65f4e46f6b103cf1
+16	4170	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o	97b83ae320fc831d
+19	4491	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o	c2788fef05fea41b
+13	5002	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o	4b750cd2c3e7da24
+9	5585	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o	3df19bdb8066d8e2
+5585	5829	0	../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libnative-lib.so	933f8b4a9ca29c7e
+15	3721	0	CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o	65f4e46f6b103cf1
+5	4554	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o	4b750cd2c3e7da24
+11	5066	0	CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o	3df19bdb8066d8e2
+5067	5275	0	../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libnative-lib.so	933f8b4a9ca29c7e

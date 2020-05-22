@@ -43,7 +43,8 @@ ThreadCompensation::~ThreadCompensation() {
 void ThreadCompensation::start() {
     file_before = fopen("/data/data/me.zhehua.gryostable/data/track_before.txt", "a");
     file_after = fopen("/data/data/me.zhehua.gryostable/data/track_after.txt", "a");
-    filter = Filter(16, 20, Filter::delta_T);
+    filter = Filter(10, 20, Filter::delta_T);
+    last_homography_ = cv::Mat::eye(3, 3, CV_64F);
     worker_thread_ = thread(&ThreadCompensation::worker, this);
 }
 
@@ -562,6 +563,7 @@ Mat ThreadCompensation::computeAffine()
     Mat frame = ThreadContext::frameVec[cm_cur_index_];
     frameSize.height=frame.rows;
     frameSize.width=frame.cols;
+    LOGI("frameSize:%d, %d", frameSize.width, frameSize.height);
 
     //LOGI("step2");
     curGray = frame.rowRange(0,frame.rows * 2 / 3);
@@ -575,30 +577,12 @@ Mat ThreadCompensation::computeAffine()
         detect_feature();
     }
 
-    //LOGI("step4");
+    //特征点中心化
     track_feature();
 
-//    Mat R = ThreadContext::stableRVec[out_index_];
-//    //LOGI("see R : %f, %f, %f; %f, %f, %f; %f, %f, %f",R.at<double>(0,0),R.at<double>(0,1),R.at<double>(0,2), R.at<double>(1,0),R.at<double>(1,1),R.at<double>(1,2), R.at<double>(2,0),R.at<double>(2,1),R.at<double>(2,2));
-//
-//    Mat I_R = Mat::eye(3, 3, CV_64F);
-//    I_R.at<double>(0,1) = R.at<double>(0,1);
-//    I_R.at<double>(0,2) = R.at<double>(0,2);
-//    Mat e = R - I_R;
-//    double error = 0;
-//    for(int i = 0;i < 3;i++)
-//    {
-//        for(int j = 0;j < 3;j++)
-//        {
-//            error += e.at<double>(i,j) * e.at<double>(i,j);
-//        }
-//    }
-//
-//    //LOGI("see error : %f", error);
+
     if(is_first_use_rtheta){
         ThreadContext::rTheta.pop();
-        is_first_use_rtheta = false;
-    } else {
         is_first_use_rtheta = false;
     }
     Vec<double, 3> rot = ThreadContext::rTheta.front();//前一帧的旋转矩阵
@@ -607,21 +591,23 @@ Mat ThreadCompensation::computeAffine()
     lastRot = rot;
     //LOGI("see r : %f, %f, %f ", er[0], er[1], er[2]);
     double error = er[0]*er[0] + er[1]*er[1] + er[2]*er[2];
-    LOGI("see error : %f ", error);
+
 
     bool sc = false;
     sc = stable_count(error);
     is_stable_ = sc;
+    LOGI("see error : %f, %d ", error, is_stable_);
 
     //LOGI("step5");
     Mat aff;
     if(sc)
     {
-        aff = H_scale.clone();
+//        aff = H_scale.clone();
+        aff = RR2stableVec * stableVec2RR;
     }
     else
     {
-        aff = calcul_Homo(1);
+        aff = calHomography();
     }
 
     //LOGI("step6");
@@ -630,6 +616,9 @@ Mat ThreadCompensation::computeAffine()
 
     curGray.copyTo(lastGray);
 
+//    for(auto p : curFeaturesTmp){
+//        cv::circle(ThreadContext::frameVec[cm_cur_index_], p, 3, cv::Scalar(255, 0, 0),5);
+//    }
     return aff;
 }
 
@@ -642,8 +631,9 @@ void ThreadCompensation::frameCompensate()
     cv::Mat old_r_mat = threads::ThreadContext::r_convert_que.front();
     threads::ThreadContext::r_convert_que.pop();
     auto new_aff = aff;
+
     cv::Mat r_temp;
-    if(!is_stable_){
+    if(!is_stable_ ){
         cv::Mat temp =  old_r_mat * threads::ThreadContext::last_old_Rotation_.inv();
         auto T = CalTranslationByR(temp);
         LOGI("11111tx:%f, ty:%f， %f, %f", T[0], T[1], aff.at<double>(0, 2), aff.at<double>(1, 2));
@@ -655,6 +645,7 @@ void ThreadCompensation::frameCompensate()
         r_temp = cv::Mat::eye(3, 3, CV_64F);
     }
     threads::ThreadContext::last_old_Rotation_ = old_r_mat;
+
     new_aff = r_temp * new_aff;
     trans_que.push(new_aff);
     bool readyToPull = filter.push(new_aff.clone());
@@ -666,13 +657,9 @@ void ThreadCompensation::frameCompensate()
 
 
         ////*************测试***********************////
-
-
         cv::Mat new_r_mat = threads::ThreadContext::r_convert_new_que.front();
         threads::ThreadContext::r_convert_new_que.pop();
-
         ////*************测试***********************////
-
 //        cv::Mat goodar = ThreadContext::stableRVec[out_index_];
 //        cv::Mat goodar = gooda;
 
@@ -701,7 +688,7 @@ void ThreadCompensation::frameCompensate()
         out_index_ = (out_index_ + 1) % ThreadContext::BUFFERSIZE;
 
         frame_count++;
-
+        ThreadRollingShutter::getStableStatus(is_stable_);
         ThreadContext::rs_semaphore_->Signal();
     }
 
@@ -973,5 +960,64 @@ cv::Vec2f ThreadCompensation::CalTranslationByR(cv::Mat r) {
         return cv::Vec2f(0, 0);
     }
 
+
+}
+cv::Mat ThreadCompensation::calHomography() {
+    cv::Mat homography;
+//    if(lastFeaturesTmp.size() != 0 && curFeaturesTmp.size() != 0){
+//        homography = cv::findHomography(lastFeaturesTmp, curFeaturesTmp, cv::RHO);
+//
+//    } else {
+//        LOGI("i am here!!!!");
+//        homography = RR2stableVec * stableVec2RR;
+//    }
+//
+//    if(homography.empty() || isnan(homography.at<double>(0, 0))){
+//        homography = RR2stableVec * stableVec2RR;
+//    }
+//    LOGI("homography:%f, %f, %f", T[0].at<double>(0), T[0].at<double>(1), T[0].at<double>(2));
+    LOGI("new_aff:%d, %d", lastFeaturesTmp.size(), curFeaturesTmp.size());
+    if(lastFeaturesTmp.size() < 3){
+        homography = RR2stableVec * stableVec2RR;
+    } else {
+        if (!lastFeaturesTmp.empty() && !curFeaturesTmp.empty() && lastFeaturesTmp.size() >= 15){
+            homography = cv::findHomography(lastFeaturesTmp, curFeaturesTmp, cv::RHO);
+        }
+        else if(!lastFeaturesTmp.empty() && !curFeaturesTmp.empty() && lastFeaturesTmp.size() > 1){
+            if(lastFeaturesTmp.size()==3)
+            {
+                LOGI("i am here!!!!");
+                cv::Mat AF=cv::getAffineTransform(lastFeaturesTmp,curFeaturesTmp);
+                LOGI("new_aff:%d, [%f, %f, %f, %f, %f, %f, %f, %f, %f]", curFeaturesTmp.size(),
+                     AF.at<double>(0, 0), AF.at<double>(0, 1), AF.at<double>(0, 2),
+                     AF.at<double>(1, 0), AF.at<double>(1, 1), AF.at<double>(1, 2),
+                     AF.at<double>(2, 0), AF.at<double>(2, 1), AF.at<double>(2, 2));
+                homography=cv::Mat::zeros(3,3,AF.type());
+                if(!AF.empty() && !isnan(AF.at<double>(0, 0))){
+                    homography.at<double>(0,0)=AF.at<double>(0,0);
+                    homography.at<double>(0,1)=AF.at<double>(0,1);
+                    homography.at<double>(0,2)=AF.at<double>(0,2);
+                    homography.at<double>(1,0)=AF.at<double>(1,0);
+                    homography.at<double>(1,1)=AF.at<double>(1,1);
+                    homography.at<double>(1,2)=AF.at<double>(1,2);
+                    homography.at<double>(2,0)=0;
+                    homography.at<double>(2,1)=0;
+                    homography.at<double>(2,2)=1;
+                } else{
+                    homography = RR2stableVec * stableVec2RR;
+                }
+
+
+            }else {
+                homography = RR2stableVec * stableVec2RR;
+            }
+        } else {
+            homography = RR2stableVec * stableVec2RR;
+        }
+
+    }
+
+
+    return homography;
 
 }

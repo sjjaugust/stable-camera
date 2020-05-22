@@ -34,8 +34,8 @@ JNIEXPORT jint JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1dequeueInputBuffer(JNIEnv *env, jobject instance) {
     return n_sp.dequeueInputBuffer();
 }
-static Mat RR2stableVec = (cv::Mat_<double>(3, 3)<<0.0, 1.0, 0.0, -1.0, 0.0, 1080.0, 0.0, 0.0, 1.0);
-static Mat stableVec2RR = (cv::Mat_<double>(3, 3)<<0.0, -1.0, 1080.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+static Mat RR2stableVec = (cv::Mat_<double>(3, 3)<<0.0, 1.0, 0.0, -1.0, 0.0, 1620.0, 0.0, 0.0, 1.0);
+static Mat stableVec2RR = (cv::Mat_<double>(3, 3)<<0.0, -1.0, 1620.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1enqueueInputBuffer(JNIEnv *env, jobject instance,

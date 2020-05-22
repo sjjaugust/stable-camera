@@ -296,7 +296,6 @@ void ThetaHelper::cropControl(Mat& transVec) {
 }
 
 void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
-    rs_gyro_index_ = gyindex;
 
     Timeframe.push_back(timestamp);
     cv::Vec<double, 3> oldtheta=getTheta();
@@ -308,7 +307,7 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
     oldz.push_back(oldtheta[2]);//[oldz addObject:[NSNumber numberWithDouble: oldtheta[2]]];
     angledex++;
     cv::Vec<double, 3> newtheta=getNewTheta(oldtheta);//[self getNewTheta:oldtheta];
-
+    oldtheta[2] = 0;
     cv::Mat oldRotation=getRotationMat(oldtheta);//[self getRotationMat:oldtheta];
     cv::Mat newRotation=getRotationMat(newtheta);//[self getRotationMat:newtheta];
     RR = getRR(oldRotation, newRotation);
@@ -440,6 +439,9 @@ void ThetaHelper::putValue(double timestamp, float x, float y, float z) {
             roxl.push_back(xa_[1]);
             royl.push_back(xa_[2]);
             rozl.push_back(xa_[0]);
+//            roxl.push_back(xa_[1]);
+//            royl.push_back(-xa_[0]);
+//            rozl.push_back(xa_[2]);
 
         }
     }else{
@@ -469,6 +471,8 @@ void ThetaHelper::GetGyro(float x, float y, float z) {
     xw_[count_] = x;
     yw_[count_] = y;
     zw_[count_] = z;
+    count_++;
+    count_ %= 5;
     for(int i = 0; i < 5; i++){
         temp[0] += xw_[i];
         temp[1] += yw_[i];
@@ -479,7 +483,7 @@ void ThetaHelper::GetGyro(float x, float y, float z) {
     }
     for(int i = 0; i < 3; i++){
         p1 = p_[i] * p_[i] + 0.002f;
-        k = 0.1f * p1 / (p1 + pow(noise_[i] ,2));
+        k =  0.1 * p1 / (p1 + pow(noise_[i] ,2));
         xa_[i] = xa_[i] + k * (temp[i] - xa_[i]);
         p_[i] = sqrt((1 - k) * p1);
     }

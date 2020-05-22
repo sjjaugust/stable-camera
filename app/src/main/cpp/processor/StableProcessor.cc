@@ -25,7 +25,7 @@ void StableProcessor::Init(Size videoSize) {
     cm_thread_ -> videoSize = videoSize;
     cm_thread_ -> cropControlFlag = true;//在此设置是否进行裁剪控制
     cm_thread_ -> shakeDetect = false;//在此设置是否进行抖动检测
-    cm_thread_ -> cropRation = 0.92;
+    cm_thread_ -> cropRation = 0.9;
 
     //klt_thread_->start();
     cm_thread_->start();
@@ -47,6 +47,7 @@ void StableProcessor::enqueueInputBuffer(int buffer_index, const Mat* new_frame,
         is_first_frame_ = false;
     } else
     {
+//        ThreadContext::out_semaphore->Signal();
         ThreadContext::mc_semaphore->Signal();
     }
 
@@ -75,12 +76,13 @@ void StableProcessor::dequeueOutputBuffer(Mat* const stableVec, Mat* const frame
 //    frame_index_ ++;
 
     ThreadContext::stableTransformVec[out_index_].copyTo(*stableVec);
+//    cv::Mat stableVecc = cv::Mat::eye(3, 3, CV_64F);
+//    stableVecc.copyTo(*stableVec);
     ThreadContext::frameVec[out_index_].copyTo(*frame);
 
     Mat outTemp(30,3,CV_64F);
     int tempPosition = 0;
     for(int i = 0; i < ThreadContext::KRsStripNum_; i++){
-//        __android_log_print(ANDROID_LOG_ERROR, "StableProcessor:","%drsMat111111:%f", i, ThreadContext::rsMat[index][i].at<double>(0,0));
         Mat temp(3, 3, CV_64F);
         ThreadContext::rs_Mat_[out_index_][i].copyTo(temp);
         for(int j = tempPosition, l = 0; j < tempPosition+3; j++, l++){
@@ -88,8 +90,14 @@ void StableProcessor::dequeueOutputBuffer(Mat* const stableVec, Mat* const frame
                 outTemp.at<double>(j, k) = temp.at<double>(l, k);
             }
         }
+//        cv::Mat temp = cv::Mat::eye(3, 3, CV_64F);
+//        for(int j = tempPosition, l = 0; j < tempPosition+3; j++, l++){
+//            for(int k = 0; k < 3; k++){
+//                outTemp.at<double>(j, k) = temp.at<double>(l, k);
+//            }
+//        }
+
         tempPosition+=3;
-//        __android_log_print(ANDROID_LOG_ERROR, "StableProcessor:","%drsMat111111:%f", i, outTemp.at<double>(tempPosition-3, 0));
     }
     outTemp.copyTo(*rsMat);
 

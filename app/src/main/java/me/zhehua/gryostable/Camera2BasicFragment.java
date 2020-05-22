@@ -137,7 +137,8 @@ public class Camera2BasicFragment extends Fragment
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
 
-    private static long timeDelay = 12000000;
+//    private static long timeDelay = 15062017;
+    private static long timeDelay = 16000000;
     public static boolean isSensorUseRTCTime = true;
 
     private SensorManager mSensorManager;
@@ -256,6 +257,7 @@ public class Camera2BasicFragment extends Fragment
      * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
      * still image is ready to be saved.
      */
+    private long lastImageTime = 0;
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener
             = new ImageReader.OnImageAvailableListener() {
         Mat curFrame;
@@ -276,6 +278,10 @@ public class Camera2BasicFragment extends Fragment
                 return;
             }
             final long timeStamp = image.getTimestamp() + timeDelay;
+            long curTimeStamp = image.getTimestamp();
+            Log.d(TAG, "fps1111: "+ 1/((float)(curTimeStamp - lastImageTime)/1000/1000/1000));
+            lastImageTime = curTimeStamp;
+
             if (curFrame == null) {
                 curFrame = new Mat(image.getHeight() / 2 * 3, image.getWidth(), CvType.CV_8U); // TODO
                 byteBuffer = new byte[image.getWidth() * image.getHeight()];
@@ -334,7 +340,8 @@ public class Camera2BasicFragment extends Fragment
      *
      * @see #mCaptureCallback
      */
-    private int mState = STATE_PREVIEW;
+//    private int mState = STATE_PREVIEW;
+    private int mState = STATE_WAITING_LOCK;
 
     /**
      * A {@link Semaphore} to prevent the app from exiting before closing the camera.
@@ -616,6 +623,7 @@ public class Camera2BasicFragment extends Fragment
      */
     @SuppressWarnings("SuspiciousNameCombination")
     private static Range<Integer>[] fpsRanges;
+    private static Range<Long> exposureRange;
     private void setUpCameraOutputs() {
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
@@ -625,7 +633,8 @@ public class Camera2BasicFragment extends Fragment
                         = manager.getCameraCharacteristics(cameraId);
                 fpsRanges = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
                 Log.d("FPS", "SYNC_MAX_LATENCY_PER_FRAME_CONTROL: " + Arrays.toString(fpsRanges));
-
+//                exposureRange = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
+//                Log.d(TAG, "setUpCameraOutputs: "+ exposureRange.toString());
                 // We don't use a front facing camera in this sample.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
@@ -634,6 +643,8 @@ public class Camera2BasicFragment extends Fragment
 
                 StreamConfigurationMap map = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                Size size[] = map.getOutputSizes(ImageFormat.YUV_420_888);
+                Log.i(TAG, "setUpCameraOutputs: " + Arrays.toString(size));
                 if (map == null) {
                     continue;
                 }
@@ -937,6 +948,9 @@ public class Camera2BasicFragment extends Fragment
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                     CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
             // Tell #mCaptureCallback to wait for the precapture sequence to be set.
+//            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.AE);
+//            mPreviewRequestBuilder.set(CaptureRequest.SENSOR_EXPOSURE_TIME, exposureTime.getLower());
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRanges[2]);
             mState = STATE_WAITING_PRECAPTURE;
             mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
                     mBackgroundHandler);
@@ -963,6 +977,7 @@ public class Camera2BasicFragment extends Fragment
             // Use the same AE and AF modes as the preview.
             captureBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                     CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRanges[2]);
             setAutoFlash(captureBuilder);
 
             // Orientation

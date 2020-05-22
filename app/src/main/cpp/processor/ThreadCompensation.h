@@ -13,6 +13,7 @@
 #include <vector>
 #include <list>
 #include <queue>
+#include "ThreadRollingShutter.h"
 
 namespace threads {
     class ThreadCompensation {
@@ -38,6 +39,8 @@ namespace threads {
         Vec<double, 3> lastRot;
 
         bool is_first_use_rtheta = true;
+        bool is_first_cal_features = true;
+        cv::Mat last_homography_;
 
         void worker();
         void detect_feature();
@@ -55,10 +58,15 @@ namespace threads {
         double computeMaxDegree( vector<Point2f> img_line , vector<Point2f> crop_line , double degree , Point2f center );
         void WriteToFile(FILE* old_file, FILE* new_file, cv::Mat mat, int count, cv::Mat old_mat);
         cv::Mat cumulative_path_;
-        cv::Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);//OnePlus 6T
+//        cv::Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);//OnePlus 6T
+        cv::Mat inmat=(cv::Mat_<double>(3, 3)<<1492.89950430177,0.0,940.850079740057, 0.0,1496.13805384036,552.228021875255,0.0,0.0,1.0);//demo board
+
         bool is_stable_;
         std::queue<std::vector<cv::Point2f>> feature_by_r_;
         cv::Vec2f CalTranslationByR(cv::Mat r);
+        cv::Mat calHomography();
+        Mat RR2stableVec = (cv::Mat_<double>(3, 3)<<0.0, 1.0, 0.0, -1.0, 0.0, 1080.0, 0.0, 0.0, 1.0);
+        Mat stableVec2RR = (cv::Mat_<double>(3, 3)<<0.0, -1.0, 1080.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
     public:
         void start();
 
