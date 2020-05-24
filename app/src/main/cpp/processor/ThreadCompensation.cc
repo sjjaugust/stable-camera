@@ -637,23 +637,25 @@ void ThreadCompensation::frameCompensate()
         cv::Mat temp =  old_r_mat * threads::ThreadContext::last_old_Rotation_.inv();
         auto T = CalTranslationByR(temp);
         LOGI("11111tx:%f, ty:%f， %f, %f", T[0], T[1], aff.at<double>(0, 2), aff.at<double>(1, 2));
+        cv::Mat trans_by_r = (cv::Mat_<double>(3, 3) << 1, 0, -T[0], 0, 1, -T[1], 0, 0, 1);
         new_aff = aff;
-        new_aff.at<double>(0, 2) -= (new_aff.at<double>(0, 0) * T[0]);
-        new_aff.at<double>(1, 2) -= (new_aff.at<double>(1, 1) * T[1]);
-        r_temp = inmat * old_r_mat * threads::ThreadContext::last_old_Rotation_.inv() * inmat.inv();
+        new_aff = new_aff * trans_by_r;
+//        new_aff.at<double>(0, 2) -= (new_aff.at<double>(0, 0) * T[0]);
+//        new_aff.at<double>(1, 2) -= (new_aff.at<double>(1, 1) * T[1]);
+        r_temp = inmat * temp * inmat.inv();
     } else {
         r_temp = cv::Mat::eye(3, 3, CV_64F);
     }
     threads::ThreadContext::last_old_Rotation_ = old_r_mat;
 
-    new_aff = r_temp * new_aff;
+    new_aff =  new_aff * r_temp;
     trans_que.push(new_aff);
     bool readyToPull = filter.push(new_aff.clone());
     if (readyToPull) {
         cv::Mat gooda = filter.pop();
 
 //        WriteToFile(file_before, file_after, gooda, frame_count, old_trans_mat);
-        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];
+        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_].inv();
 
 
         ////*************测试***********************////

@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.Point;
 import android.hardware.Sensor;
@@ -42,6 +43,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -67,6 +69,7 @@ import android.widget.Toast;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -78,6 +81,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import static java.lang.System.out;
 
 public class Camera2BasicFragment extends Fragment
         implements ActivityCompat.OnRequestPermissionsResultCallback {
@@ -137,8 +142,8 @@ public class Camera2BasicFragment extends Fragment
     private static final int MAX_PREVIEW_HEIGHT = 1080;
 
 
-//    private static long timeDelay = 15062017;
-    private static long timeDelay = 16000000;
+    private static long timeDelay = 12000000;
+//    private static long timeDelay = 16000000;
     public static boolean isSensorUseRTCTime = true;
 
     private SensorManager mSensorManager;
@@ -272,6 +277,26 @@ public class Camera2BasicFragment extends Fragment
         public void onImageAvailable(ImageReader reader) {
 //            Log.i(TAG, "image come");
             Image image = reader.acquireNextImage();
+//            int imageWidth = image.getWidth();
+//            int imageHeight = image.getHeight();
+//            byte[] data68 = ImageUtil.getBytesFromImageAsType(image,2);
+//            int rgb[] = ImageUtil.decodeYUV420SP(data68, imageWidth, imageHeight);
+//            Bitmap bitmap2 = Bitmap.createBitmap(rgb, 0, imageWidth,
+//                    imageWidth, imageHeight,
+//                    android.graphics.Bitmap.Config.ARGB_8888);
+//            try {
+//                File newFile = new File("/data/data/me.zhehua.gryostable/data/pic.png");
+//                BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(newFile));
+//                bitmap2.compress(Bitmap.CompressFormat.PNG, 100, bos);
+//                bos.flush();
+//                bos.close();
+//                bitmap2.recycle();
+//            } catch (Exception e) {
+//
+//            }
+
+
+
             Log.d(TAG, "onImageAvailable: "+image);
             if (image == null) {
                 Log.e(TAG, "image null");
@@ -659,6 +684,7 @@ public class Camera2BasicFragment extends Fragment
                 // coordinate.
                 int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
                 //noinspection ConstantConditions
+                Log.d(TAG, "setUpCameraOutputs: "+displayRotation+" "+mSensorOrientation);
                 mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
                 boolean swappedDimensions = false;
                 switch (displayRotation) {
@@ -857,6 +883,7 @@ public class Camera2BasicFragment extends Fragment
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRanges[2]);
+                                mPreviewRequestBuilder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, 1);
                                 // Flash is automatically enabled when necessary.
                                 setAutoFlash(mPreviewRequestBuilder);
 

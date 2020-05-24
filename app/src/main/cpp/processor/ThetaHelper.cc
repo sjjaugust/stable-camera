@@ -52,9 +52,9 @@ cv::Vec<double, 3> ThetaHelper::getTheta()
     if(findex>0)
     {
         double lastftime= Timeframe[findex - 1];
-        theta[0]=-lastx*(gtime-lastftime)+lastt[0];
-        theta[1]=-lasty*(gtime-lastftime)+lastt[1];
-        theta[2]=-lastz*(gtime-lastftime)+lastt[2];
+        theta[0]=lastx*(gtime-lastftime)+lastt[0];
+        theta[1]=lasty*(gtime-lastftime)+lastt[1];
+        theta[2]=lastz*(gtime-lastftime)+lastt[2];
 
 
         // NSLog(@"frame:%f",lastftime);
@@ -73,19 +73,19 @@ cv::Vec<double, 3> ThetaHelper::getTheta()
         if(gtimenext<ftime)
         {
             // double gtimenext=[[Timeg objectAtIndex:gyindex+1] doubleValue];
-            theta[0]=theta[0]+(-anglevx)*(gtimenext-gtime);
-            theta[1]=theta[1]+(-anglevy)*(gtimenext-gtime);
-            theta[2]=theta[2]+(-anglevz)*(gtimenext-gtime);
+            theta[0]=theta[0]+(anglevx)*(gtimenext-gtime);
+            theta[1]=theta[1]+(anglevy)*(gtimenext-gtime);
+            theta[2]=theta[2]+(anglevz)*(gtimenext-gtime);
             gtime=gtimenext;
             gyindex++;
         }
         else
         {
-            theta[0]=theta[0]+(-anglevx)*(ftime-gtime);
+            theta[0]=theta[0]+(anglevx)*(ftime-gtime);
             lastx=anglevx;
-            theta[1]=theta[1]+(-anglevy)*(ftime-gtime);
+            theta[1]=theta[1]+(anglevy)*(ftime-gtime);
             lasty=anglevy;
-            theta[2]=theta[2]+(-anglevz)*(ftime-gtime);
+            theta[2]=theta[2]+(anglevz)*(ftime-gtime);
             lastz=anglevz;
             gyindex++;
             break;
@@ -176,13 +176,13 @@ cv::Mat ThetaHelper::getRotationMat(cv::Vec<double, 3> theta)
     //cout<<w<<' '<<x<<' '<<y<<' '<<z<<endl;
     //计算旋转矩阵
     skew_mat.at<double>(0,0)=0;
-    skew_mat.at<double>(0,1)=-theta[2];
-    skew_mat.at<double>(0,2)=theta[1];
-    skew_mat.at<double>(1,0)=theta[2];
+    skew_mat.at<double>(0,1)=theta[2];
+    skew_mat.at<double>(0,2)=-theta[1];
+    skew_mat.at<double>(1,0)=-theta[2];
     skew_mat.at<double>(1,1)=0;
-    skew_mat.at<double>(1,2)=-theta[0];
-    skew_mat.at<double>(2,0)=-theta[1];
-    skew_mat.at<double>(2,1)=theta[0];
+    skew_mat.at<double>(1,2)=theta[0];
+    skew_mat.at<double>(2,0)=theta[1];
+    skew_mat.at<double>(2,1)=-theta[0];
     skew_mat.at<double>(2,2)=0;
 
     cv::Mat e=cv::Mat::eye(3,3,CV_64F);
@@ -302,12 +302,12 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
     LOGD("angle11111:%f, %f, %f", oldtheta[0], oldtheta[1], oldtheta[2]);
 //    WriteToFile(file, oldtheta[0], oldtheta[1], oldtheta[2], frame_count);
     threads::ThreadContext::rTheta.push(oldtheta);
+    oldtheta[2] = 0;
     oldx.push_back(oldtheta[0]);//[oldx addObject:[NSNumber numberWithDouble: oldtheta[0]]];
     oldy.push_back(oldtheta[1]);//[oldy addObject:[NSNumber numberWithDouble: oldtheta[1]]];
     oldz.push_back(oldtheta[2]);//[oldz addObject:[NSNumber numberWithDouble: oldtheta[2]]];
     angledex++;
     cv::Vec<double, 3> newtheta=getNewTheta(oldtheta);//[self getNewTheta:oldtheta];
-    oldtheta[2] = 0;
     cv::Mat oldRotation=getRotationMat(oldtheta);//[self getRotationMat:oldtheta];
     cv::Mat newRotation=getRotationMat(newtheta);//[self getRotationMat:newtheta];
     RR = getRR(oldRotation, newRotation);
@@ -356,9 +356,9 @@ std::vector<cv::Vec<double, 4>> ThetaHelper::GetRsTheta() {
     if(rs_frame_index_ > 0){
         double last_time = Timeframe[rs_frame_index_ - 1];
         temp[0] = 0;
-        temp[1] = -rs_last_x_ * (gyro_time - last_time) + rs_last_theta_[1];
-        temp[2] = -rs_last_y_ * (gyro_time - last_time) + rs_last_theta_[2];
-        temp[3] = -rs_last_z_ * (gyro_time - last_time) + rs_last_theta_[3];
+        temp[1] = rs_last_x_ * (gyro_time - last_time) + rs_last_theta_[1];
+        temp[2] = rs_last_y_ * (gyro_time - last_time) + rs_last_theta_[2];
+        temp[3] = rs_last_z_ * (gyro_time - last_time) + rs_last_theta_[3];
     }
     while (gyro_time < frame_time){
         double angle_x = roxl[rs_gyro_index_];
@@ -368,17 +368,17 @@ std::vector<cv::Vec<double, 4>> ThetaHelper::GetRsTheta() {
 
         if(gyro_time_next < frame_time){
             temp[0] = gyro_time;
-            temp[1] = temp[1] + (gyro_time_next - gyro_time) * (-angle_x);
-            temp[2] = temp[2] + (gyro_time_next - gyro_time) * (-angle_y);
-            temp[3] = temp[3] + (gyro_time_next - gyro_time) * (-angle_z);
+            temp[1] = temp[1] + (gyro_time_next - gyro_time) * (angle_x);
+            temp[2] = temp[2] + (gyro_time_next - gyro_time) * (angle_y);
+            temp[3] = temp[3] + (gyro_time_next - gyro_time) * (angle_z);
             rs_gyro_theta.push_back(temp);
             __android_log_print(ANDROID_LOG_DEBUG, "ThetaHelper:", "temp111:%f, %f, %f", temp[1], temp[2], temp[3]);
             rs_gyro_index_++;
         }else {
             temp[0] = gyro_time;
-            temp[1] = temp[1] + (frame_time - gyro_time) * (-angle_x);
-            temp[2] = temp[2] + (frame_time - gyro_time) * (-angle_y);
-            temp[3] = temp[3] + (frame_time - gyro_time) * (-angle_z);
+            temp[1] = temp[1] + (frame_time - gyro_time) * (angle_x);
+            temp[2] = temp[2] + (frame_time - gyro_time) * (angle_y);
+            temp[3] = temp[3] + (frame_time - gyro_time) * (angle_z);
             rs_gyro_theta.push_back(temp);
 
             rs_last_x_ = angle_x;
@@ -436,12 +436,12 @@ void ThetaHelper::putValue(double timestamp, float x, float y, float z) {
 //            roxl.push_back(y - y_drift_);
 //            royl.push_back(z - z_drift_);
 //            rozl.push_back(x - x_drift_);
-            roxl.push_back(xa_[1]);
-            royl.push_back(xa_[2]);
-            rozl.push_back(xa_[0]);
 //            roxl.push_back(xa_[1]);
-//            royl.push_back(-xa_[0]);
-//            rozl.push_back(xa_[2]);
+//            royl.push_back(xa_[2]);
+//            rozl.push_back(xa_[0]);
+            roxl.push_back(xa_[1]);
+            royl.push_back(-xa_[0]);
+            rozl.push_back(xa_[2]);
 
         }
     }else{
