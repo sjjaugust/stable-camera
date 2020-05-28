@@ -21,6 +21,7 @@ import java.util.Arrays;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+
 /**
  * Created by zhehua on 05/11/2017.
  */
@@ -323,77 +324,7 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
     @Override
     public void onDrawFrame(GL10 gl) {
         isFree = false;
-
-        if (isReady && outputMat != null) {
-            videoHeight = outputMat.rows() / 3 * 2; // TODO
-            videoWidth = outputMat.cols();
-
-            if (yPlane == null || yBytes == null) {
-                yPlane = ByteBuffer.allocateDirect(videoHeight * videoWidth);
-                uPlane = ByteBuffer.allocateDirect(videoHeight * videoWidth / 2); // TODO
-//                vPlane = ByteBuffer.allocateDirect(videoHeight * videoWidth / 2); // TODO
-                yBytes = new byte[videoWidth * videoHeight];
-                uBytes = new byte[videoWidth * videoHeight / 2]; // TODO
-//                vBytes = new byte[videoWidth * videoHeight / 2]; // TODO
-            }
-            yPlane.clear();
-            uPlane.clear();
-//            vPlane.clear();
-//            outputMat.get(0, 0, bytes);
-            outputMat.get(0, 0, yBytes);
-            outputMat.get(videoHeight, 0, uBytes);
-            GLES30.glUniformMatrix3fv(transformHandle, 1, true, transformMat, 0);
-
-            changeVertex(rsMat);
-            Log.d(TAG, "onDrawFrame: "+rsMat.dump());
-
-            vertexBuffer = ByteBuffer.allocateDirect(vertex.length * 4)
-                    .order(ByteOrder.nativeOrder())
-                    .asFloatBuffer()
-                    .put(vertex);
-            vertexBuffer.position(0);
-            GLES30.glVertexAttribPointer(positionHandle, 3, GLES30.GL_FLOAT, false, 3 * 4, vertexBuffer);
-
-//            outputMat.get(videoHeight / 2 * 3, 0, vBytes); // TODO
-
-            yPlane.put(yBytes);
-            uPlane.put(uBytes);
-//            vPlane.put(vBytes);
-
-            yPlane.position(0);
-            uPlane.position(0);
-//            vPlane.position(0);
-
-            GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
-            GLES30.glUseProgram(program);
-            GLES30.glUniform1i(texSamplerYHandle, 0);
-            GLES30.glUniform1i(texSamplerUHandle, 1);
-            GLES30.glUniform1i(texSamplerVHandle, 2);
-            GLES30.glEnableVertexAttribArray(positionHandle);
-            GLES30.glEnableVertexAttribArray(texPosHandle);
-
-            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
-//            GLES30.glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texName[0]);
-            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, videoWidth, videoHeight, 0,
-                    GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, yPlane);
-            GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
-//            GLES30.glPixelStorei(GL_UNPACK_ROW_LENGTH, 1);
-            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texName[1]);
-            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE_ALPHA, videoWidth / 2, videoHeight / 2, 0,
-                    GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, uPlane); // TODO
-//            GLES30.glActiveTexture(GLES30.GL_TEXTURE2);
-//            GLES30.glPixelStorei(GL_UNPACK_ROW_LENGTH, 1);
-//            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texName[2]);
-//            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, videoWidth, videoHeight / 2, 0,
-//                    GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, uPlane); // TODO
-//            Log.i(TAG, transVec.dump());
-            GLES30.glDrawElements(GLES30.GL_TRIANGLES, indices.length, GLES30.GL_UNSIGNED_SHORT, indexBuffer);
-
-            GLES30.glDisableVertexAttribArray(positionHandle);
-            GLES30.glDisableVertexAttribArray(texPosHandle);
-            GLES30.glFlush();
-        }
+        draw();
         isFree = true;
     }
 
@@ -479,5 +410,71 @@ public class CameraViewRenderer implements GLSurfaceView.Renderer {
         return dst;
 
 
+    }
+    void draw() {
+        if (isReady && outputMat != null) {
+            videoHeight = outputMat.rows() / 3 * 2; // TODO
+            videoWidth = outputMat.cols();
+
+            if (yPlane == null || yBytes == null) {
+                yPlane = ByteBuffer.allocateDirect(videoHeight * videoWidth);
+                uPlane = ByteBuffer.allocateDirect(videoHeight * videoWidth / 2); // TODO
+//                vPlane = ByteBuffer.allocateDirect(videoHeight * videoWidth / 2); // TODO
+                yBytes = new byte[videoWidth * videoHeight];
+                uBytes = new byte[videoWidth * videoHeight / 2]; // TODO
+//                vBytes = new byte[videoWidth * videoHeight / 2]; // TODO
+            }
+            yPlane.clear();
+            uPlane.clear();
+//            vPlane.clear();
+//            outputMat.get(0, 0, bytes);
+            outputMat.get(0, 0, yBytes);
+            outputMat.get(videoHeight, 0, uBytes);
+            GLES30.glUniformMatrix3fv(transformHandle, 1, true, transformMat, 0);
+
+            changeVertex(rsMat);
+            Log.d(TAG, "onDrawFrame: " + rsMat.dump());
+
+            vertexBuffer = ByteBuffer.allocateDirect(vertex.length * 4)
+                    .order(ByteOrder.nativeOrder())
+                    .asFloatBuffer()
+                    .put(vertex);
+            vertexBuffer.position(0);
+            GLES30.glVertexAttribPointer(positionHandle, 3, GLES30.GL_FLOAT, false, 3 * 4, vertexBuffer);
+
+//            outputMat.get(videoHeight / 2 * 3, 0, vBytes); // TODO
+
+            yPlane.put(yBytes);
+            uPlane.put(uBytes);
+//            vPlane.put(vBytes);
+
+            yPlane.position(0);
+            uPlane.position(0);
+//            vPlane.position(0);
+
+            GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
+            GLES30.glUseProgram(program);
+            GLES30.glUniform1i(texSamplerYHandle, 0);
+            GLES30.glUniform1i(texSamplerUHandle, 1);
+            GLES30.glUniform1i(texSamplerVHandle, 2);
+            GLES30.glEnableVertexAttribArray(positionHandle);
+            GLES30.glEnableVertexAttribArray(texPosHandle);
+
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
+//            GLES30.glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texName[0]);
+            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE, videoWidth, videoHeight, 0,
+                    GLES30.GL_LUMINANCE, GLES30.GL_UNSIGNED_BYTE, yPlane);
+            GLES30.glActiveTexture(GLES30.GL_TEXTURE1);
+//            GLES30.glPixelStorei(GL_UNPACK_ROW_LENGTH, 1);
+            GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, texName[1]);
+            GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_LUMINANCE_ALPHA, videoWidth / 2, videoHeight / 2, 0,
+                    GLES30.GL_LUMINANCE_ALPHA, GLES30.GL_UNSIGNED_BYTE, uPlane); // TODO
+            GLES30.glDrawElements(GLES30.GL_TRIANGLES, indices.length, GLES30.GL_UNSIGNED_SHORT, indexBuffer);
+
+            GLES30.glDisableVertexAttribArray(positionHandle);
+            GLES30.glDisableVertexAttribArray(texPosHandle);
+            GLES30.glFlush();
+        }
     }
 }

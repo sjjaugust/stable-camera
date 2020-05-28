@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <me.zhehua.gryostable.widget.GlRenderView
+        android:id = "@+id/render_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <Button
+        android:id="@+id/bt_crop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        android:text="crop" />
+
+    <SeekBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:id="@+id/sb_time"
+        android:max="80"/>
+
+    <TextView
+        android:id="@+id/tv_timedelay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="30dp"
+        android:background="#f0f"
+        android:text="TextView" />
+    <me.zhehua.gryostable.widget.RecordButton
+        android:id="@+id/btn_record"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:gravity="center"
+        android:background="#f0f"
+        android:text="按住拍" />
+
+</RelativeLayout>

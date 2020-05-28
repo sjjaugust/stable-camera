@@ -1,0 +1,50 @@
+package me.zhehua.gryostable.widget;
+
+import android.content.Context;
+import android.support.annotation.Nullable;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
+import android.widget.TextView;
+import android.support.v7.widget.AppCompatTextView;
+public class RecordButton  extends TextView {
+    private OnRecordListener mListener;
+
+    public RecordButton(Context context) {
+        super(context);
+    }
+
+    public RecordButton(Context context, @Nullable AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (mListener == null) {
+            return false;
+        }
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                setPressed(true);
+                mListener.onRecordStart();
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                setPressed(false);
+                mListener.onRecordStop();
+                break;
+        }
+        return true;
+    }
+
+
+    public void setOnRecordListener(OnRecordListener listener) {
+        mListener = listener;
+    }
+
+    public interface OnRecordListener {
+        void onRecordStart();
+
+        void onRecordStop();
+    }
+}
