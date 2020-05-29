@@ -3,6 +3,8 @@ package me.zhehua.gryostable.filter;
 import android.content.Context;
 import android.opengl.GLES30;
 
+import java.nio.ByteBuffer;
+
 import me.zhehua.gryostable.util.OpenGlUtils;
 
 public class AbstractFBOFilter extends BaseFilter {
@@ -26,6 +28,7 @@ public class AbstractFBOFilter extends BaseFilter {
         if(mFrameBuffers != null){
             destroyFrameBuffers();
         }
+
         mFrameBuffers = new int[1];
         GLES30.glGenFramebuffers(mFrameBuffers.length, mFrameBuffers, 0);
         //穿件FBO中的纹理
@@ -37,11 +40,18 @@ public class AbstractFBOFilter extends BaseFilter {
         GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA, mOutputWidth, mOutputHeight,
         0, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, null);
 
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, mFBOTextures[1]);
+        //指定FBO纹理的输出图像的格式 RGBA
+        GLES30.glTexImage2D(GLES30.GL_TEXTURE_2D, 0, GLES30.GL_RGBA, mOutputWidth, mOutputHeight,
+                0, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, null);
+
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBuffers[0]);
 
         //将fbo绑定到2d的纹理上
         GLES30.glFramebufferTexture2D(GLES30.GL_FRAMEBUFFER, GLES30.GL_COLOR_ATTACHMENT0,
                 GLES30.GL_TEXTURE_2D, mFBOTextures[0], 0);
+        GLES30.glFramebufferTexture2D(GLES30.GL_FRAMEBUFFER, GLES30.GL_COLOR_ATTACHMENT1,
+                GLES30.GL_TEXTURE_2D, mFBOTextures[1], 0);
 
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0);
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0);

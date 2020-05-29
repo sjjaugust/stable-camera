@@ -40,7 +40,6 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="20dp"
         android:gravity="center"
-        android:background="#f0f"
-        android:text="按住拍" />
+        android:background="@mipmap/record" />
 
 </RelativeLayout>

@@ -17,7 +17,7 @@ public class GlRenderView extends GLSurfaceView {
     private String TAG = "GlRenderView";
     private String savePath;
     private OnRecordListener onRecordListener;
-    private GlRenderWrapper glRender;
+    public GlRenderWrapper glRender;
     public final Object syncObj = new Object();
     public StableProcessor stableProcessor;
     public int mFrameHeight = 1080;
@@ -83,7 +83,7 @@ public class GlRenderView extends GLSurfaceView {
                 if(stableProcessor != null){
 
                     stableProcessor.dequeueOutputBuffer(transMat, framePic, rsMat);
-                    Log.d(TAG, "run+++++: "+transMat.dump());
+                    Log.d(TAG, "run+++++: "+rsMat.dump());
                 }
 
                 if(framePic.empty()){
@@ -100,9 +100,10 @@ public class GlRenderView extends GLSurfaceView {
                 }
 
 //                glRender.cameraFilter.transformMatrix = transDataF;
-//                glRender.screenFilter.transformMatrix = transDataF;
-                glRender.cameraFilter.outputMat = framePic;
+                glRender.screenFilter.transformMatrix = transDataF;
+//                glRender.cameraFilter.outputMat = framePic;
                 glRender.screenFilter.outputMat = framePic;
+                glRender.screenFilter.rsMat = rsMat;
 
                 if(glRender.isready){
                     GlRenderView.this.requestRender();

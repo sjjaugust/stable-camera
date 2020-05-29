@@ -6,8 +6,12 @@ import android.opengl.EGLContext;
 import android.opengl.EGLDisplay;
 import android.opengl.EGLExt;
 import android.opengl.EGLSurface;
+import android.util.Log;
 import android.view.Surface;
 
+import java.util.Arrays;
+
+import me.zhehua.gryostable.filter.RecordFilter;
 import me.zhehua.gryostable.filter.ScreenFilter;
 
 public class EglConfigBase {
@@ -15,7 +19,8 @@ public class EglConfigBase {
     private EGLConfig mEglConfig;
     private EGLContext mCurrentEglContext;
     private final EGLSurface eglSurface;
-    private final ScreenFilter screenFilter;
+    public RecordFilter recordFilter;
+    private String TAG = "EglConfigBase";
 
     public EglConfigBase(Context context, int width, int height, Surface surface, EGLContext eglContext){
         createEGLContext(eglContext);
@@ -33,8 +38,8 @@ public class EglConfigBase {
             throw new RuntimeException("eglMakeCurrent 失败！");
         }
 
-        screenFilter = new ScreenFilter(context);
-        screenFilter.prepare(width, height, 0, 0);
+        recordFilter = new RecordFilter(context);
+        recordFilter.prepare(width, height, 0, 0);
     }
 
     private void createEGLContext(EGLContext eglContext){
@@ -72,7 +77,7 @@ public class EglConfigBase {
 
         int[] ctx_attrib_list = {
                 //TODO
-                EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
+                EGL14.EGL_CONTEXT_CLIENT_VERSION, 3,
                 EGL14.EGL_NONE
         };
 
@@ -85,16 +90,18 @@ public class EglConfigBase {
     }
 
     public void draw(int[] textureId, long timestamp){
+
         if (!EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, mCurrentEglContext)) {
             throw new RuntimeException("eglMakeCurrent 失败！");
         }
 
 
-        screenFilter.onDrawFrame(textureId);
+        recordFilter.onDrawFrame(textureId);
 
         EGLExt.eglPresentationTimeANDROID(eglDisplay, eglSurface, timestamp);
         //交换数据，输出到mediacodec InputSurface中
         EGL14.eglSwapBuffers(eglDisplay, eglSurface);
+
     }
     public void release() {
         EGL14.eglDestroySurface(eglDisplay, eglSurface);

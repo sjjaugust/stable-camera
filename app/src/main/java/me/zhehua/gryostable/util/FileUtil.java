@@ -92,7 +92,7 @@ public class FileUtil {
             String absolutePath = null;
 
             absolutePath = getExternalPath(context);
-
+            Log.d(TAG, "createExternalDir: "+absolutePath);
             File dir = new File(absolutePath, dirName);
             if (dir.exists()) {
                 if (!dir.isDirectory()) {
@@ -114,13 +114,18 @@ public class FileUtil {
 
         File[] externalFilesDirs = context.getExternalFilesDirs("");
         if (externalFilesDirs.length > 1) {
-            absolutePath = externalFilesDirs[1].getAbsolutePath();
+//            absolutePath = externalFilesDirs[1].getAbsolutePath();
+            absolutePath = Environment.getExternalStorageDirectory().getAbsolutePath()+File.separator
+                    +Environment.DIRECTORY_DCIM+File.separator;
+            Log.d(TAG, "onRecordStart: "+absolutePath);
         }
 
 //        absolutePath = getStoragePath(context, true);
         if (TextUtils.isEmpty(absolutePath)) {
             if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                absolutePath = Environment.getExternalStorageDirectory().getAbsolutePath();
+//                absolutePath = Environment.getExternalStorageDirectory().getAbsolutePath();
+                absolutePath = Environment.getExternalStorageDirectory().getAbsolutePath()+File.separator
+                        +Environment.DIRECTORY_DCIM+File.separator;
             } else {
                 try {
                     throw new NoExternalStorageMountedException("外部存储卡未挂载");

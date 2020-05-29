@@ -26,7 +26,7 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
 
     private final String TAG = "GlRenderWrapper";
     private final GlRenderView glRenderView;
-    private Camera2Helper camera2Helper;
+    public Camera2Helper camera2Helper;
     private int[] mTextures;
     private SurfaceTexture mSurfaceTexture;
     public ScreenFilter screenFilter;
@@ -41,6 +41,8 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
     private OnRecordListener onRecordListener;
     private float[] mtx = new float[16];
     public boolean isready = false;
+
+    private long timeStamp = 0;
 
     public GlRenderWrapper(GlRenderView glRenderView){
         this.glRenderView = glRenderView;
@@ -82,7 +84,7 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
 
         EGLContext eglContext = EGL14.eglGetCurrentContext();
 
-        avcRecorder = new AvcRecorder(glRenderView.getContext(), mPreviewHeight, mPreviewWdith, eglContext);
+        avcRecorder = new AvcRecorder(glRenderView.getContext(), 1080, 1920, eglContext);
         avcRecorder.setOnRecordListener(onRecordListener);
 
         isready = true;
@@ -95,18 +97,26 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
 //        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
 //        mSurfaceTexture.updateTexImage();
 //
-//        mSurfaceTexture.getTransformMatrix(mtx);
+        mSurfaceTexture.getTransformMatrix(mtx);
 //        Log.d(TAG, "onDrawFrame: "+Arrays.toString(mtx));
         //cameraFiler需要一个矩阵，是Surface和我们手机屏幕的一个坐标之间的关系
 
 //        cameraFilter.setMatrix(mtx);
+        int[] id = screenFilter.onDrawFrame(mTextures);
 //        textureId = cameraFilter.onDrawFrame(mTextures);
 
-        int[] id = screenFilter.onDrawFrame(mTextures);
         Log.d(TAG, "onDrawFrame22222: " + Arrays.toString(id));
 
+        //给录制的filter传数据
+        if(avcRecorder.eglConfigBase != null ){
+            if(avcRecorder.eglConfigBase.recordFilter != null){
+                avcRecorder.eglConfigBase.recordFilter.transformMatrix = screenFilter.transformMatrix;
+                avcRecorder.eglConfigBase.recordFilter.rsMat = screenFilter.rsMat;
+            }
 
-//        avcRecorder.encodeFrame(id, mSurfaceTexture.getTimestamp());
+        }
+
+        avcRecorder.encodeFrame(id, timeStamp);
 
 
     }
@@ -152,6 +162,9 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
     public void setOnRecordListener(OnRecordListener onRecordListener) {
         this.onRecordListener = onRecordListener;
 
+    }
+    public void getTimeStamp(long timestamp){
+        this.timeStamp = timestamp;
     }
 
 

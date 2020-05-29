@@ -63,9 +63,9 @@ public class Camera2Helper {
     private SensorManager mSensorManager;
     private Sensor mGyroSensor;
     private ThetaHelper mThetaHelper;
-    private static long timeDelay = 12000000;
-    private StableProcessor stableProcessor;
-    private boolean isCrop = true;
+    public  long timeDelay = 12000000;
+    public StableProcessor stableProcessor;
+    public boolean isCrop = true;
     private TextView textView;
     private Button cropButton;
     private SeekBar seekBar;
@@ -384,12 +384,12 @@ public class Camera2Helper {
 
             // We set up a CaptureRequest.Builder with the output Surface.
             mPreviewRequestBuilder
-                    = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-//            mPreviewRequestBuilder.addTarget(surface);
+                    = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+            mPreviewRequestBuilder.addTarget(surface);
             mPreviewRequestBuilder.addTarget(imageReader.getSurface());
 
             // Here, we create a CameraCaptureSession for camera preview.
-            mCameraDevice.createCaptureSession(Arrays.asList(imageReader.getSurface()),
+            mCameraDevice.createCaptureSession(Arrays.asList(surface,imageReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {
 
                         @Override
@@ -551,7 +551,7 @@ public class Camera2Helper {
 //            }
 
             final long timeStamp = image.getTimestamp() + timeDelay;
-
+            glRenderView.glRender.getTimeStamp(timeStamp);
             if (curFrame == null) {
                 curFrame = new Mat(image.getHeight() / 2 * 3, image.getWidth(), CvType.CV_8U); // TODO
                 byteBuffer = new byte[image.getWidth() * image.getHeight()];

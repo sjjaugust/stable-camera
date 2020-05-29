@@ -7,11 +7,13 @@ import android.media.MediaMuxer;
 import android.opengl.EGLContext;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 import android.view.Surface;
 
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import me.zhehua.gryostable.util.OnRecordListener;
 
@@ -28,11 +30,12 @@ public class AvcRecorder {
     private Handler mHandler;
     private boolean isPlaying;
 
-    private EglConfigBase eglConfigBase;
-    private MediaCodec mediaCodec;
+    public EglConfigBase eglConfigBase;
+    public MediaCodec mediaCodec;
     private int avcIndex;
     private OnRecordListener onRecordListener;
-    private int fps = 20;
+    private int fps = 60;
+    private String TAG = "AvcRecorder";
 
     public AvcRecorder(Context context, int width, int height, EGLContext eglContext){
         mWidth = width;
@@ -58,7 +61,9 @@ public class AvcRecorder {
 
             mediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC);
 
+            Log.d(TAG, "start: wtfwtfwtfwtfwtfwtfwtfwtf"+mHeight);
             mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+
 
             inputSurface = mediaCodec.createInputSurface();
 
@@ -92,8 +97,11 @@ public class AvcRecorder {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
+
                 eglConfigBase.draw(textureId, timeStamp);
                 getCodec(false);
+                Log.d(TAG, "run: 88888888888888"+ Arrays.toString(textureId));
+
             }
         });
 

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES30;
 
+import java.nio.ByteBuffer;
+
 import me.zhehua.gryostable.R;
 
 public class CameraFilter extends AbstractFBOFilter {
@@ -16,7 +18,29 @@ public class CameraFilter extends AbstractFBOFilter {
 
     @Override
     public int[] onDrawFrame(int[] textureId) {
-        GLES30.glViewport(0, 0, mOutputWidth, mOutputHeight);
+//        GLES30.glViewport(0, 0, mOutputWidth, mOutputHeight);
+
+        if(outputMat != null){
+
+            videoHeight = outputMat.rows() / 3 * 2;
+            videoWidth = outputMat.cols();
+            if (yPlane == null || yBytes == null) {
+                yPlane = ByteBuffer.allocateDirect(videoHeight * videoWidth);
+                uPlane = ByteBuffer.allocateDirect(videoHeight * videoWidth / 2);
+                yBytes = new byte[videoWidth * videoHeight];
+                uBytes = new byte[videoWidth * videoHeight / 2];
+            }
+            yPlane.clear();
+            uPlane.clear();
+            outputMat.get(0, 0, yBytes);
+            outputMat.get(videoHeight, 0, uBytes);
+            yPlane.put(yBytes);
+            uPlane.put(uBytes);
+            yPlane.position(0);
+            uPlane.position(0);
+        }
+
+
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, mFrameBuffers[0]);
         GLES30.glUseProgram(mProgramId);
         //传入顶点坐标
