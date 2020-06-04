@@ -43,7 +43,7 @@ ThreadCompensation::~ThreadCompensation() {
 void ThreadCompensation::start() {
     file_before = fopen("/data/data/me.zhehua.gryostable/data/track_before.txt", "a");
     file_after = fopen("/data/data/me.zhehua.gryostable/data/track_after.txt", "a");
-    filter = Filter(10, 20, Filter::delta_T);
+    filter = Filter(16, 20, Filter::delta_T);
     last_homography_ = cv::Mat::eye(3, 3, CV_64F);
     worker_thread_ = thread(&ThreadCompensation::worker, this);
 }
@@ -71,7 +71,7 @@ void ThreadCompensation::worker()
         frameCompensate();
         //LOGI("loop end");
 
-        ex_index_ = (ex_index_ + 1) % ThreadContext::SEGSIZE;
+//        ex_index_ = (ex_index_ + 1) % ThreadContext::SEGSIZE;
         cm_las_index_ = (cm_las_index_ + 1) % ThreadContext::BUFFERSIZE;
         cm_cur_index_ = (cm_cur_index_ + 1) % ThreadContext::BUFFERSIZE;
         //ThreadContext::out_semaphore->Signal();//唤醒显示和保存线程
@@ -197,7 +197,7 @@ void ThreadCompensation::track_feature()
             lastFeaturesTmp.push_back(lfp);
         }
     }
-    feature_by_r_.push(curFeaturesTmp);
+//    feature_by_r_.push(curFeaturesTmp);
 }
 
 Mat ThreadCompensation::moveAndScale()
@@ -559,26 +559,28 @@ bool ThreadCompensation::stable_count(double e)
 Mat ThreadCompensation::computeAffine()
 {
     //LOGI("step1");
+    HomoExtractor homoExtractor;
     Mat lastFrame = ThreadContext::frameVec[cm_las_index_];
     Mat frame = ThreadContext::frameVec[cm_cur_index_];
     frameSize.height=frame.rows;
     frameSize.width=frame.cols;
-    LOGI("frameSize:%d, %d", frameSize.width, frameSize.height);
 
-    //LOGI("step2");
-    curGray = frame.rowRange(0,frame.rows * 2 / 3);
-    LOGE("curGray size: %d, %d", curGray.cols, curGray.rows);
-    resize(curGray, curGray, cv::Size(curGray.cols / ThreadContext::DOWNSAMPLE_SCALE, curGray.rows / ThreadContext::DOWNSAMPLE_SCALE));
-
-    if (ex_index_ == 0) {
-        //LOGI("step3");
-        lastGray = lastFrame.rowRange(0,lastFrame.rows * 2 / 3);
-        resize(lastGray, lastGray, cv::Size(lastGray.cols / ThreadContext::DOWNSAMPLE_SCALE, lastGray.rows / ThreadContext::DOWNSAMPLE_SCALE));
-        detect_feature();
-    }
-
-    //特征点中心化
-    track_feature();
+//    LOGI("frameSize:%d, %d", frameSize.width, frameSize.height);
+//
+//    //LOGI("step2");
+//    curGray = frame.rowRange(0,frame.rows * 2 / 3);
+//    LOGE("curGray size: %d, %d", curGray.cols, curGray.rows);
+//    resize(curGray, curGray, cv::Size(curGray.cols / ThreadContext::DOWNSAMPLE_SCALE, curGray.rows / ThreadContext::DOWNSAMPLE_SCALE));
+//
+//    if (ex_index_ == 0) {
+//        //LOGI("step3");
+//        lastGray = lastFrame.rowRange(0,lastFrame.rows * 2 / 3);
+//        resize(lastGray, lastGray, cv::Size(lastGray.cols / ThreadContext::DOWNSAMPLE_SCALE, lastGray.rows / ThreadContext::DOWNSAMPLE_SCALE));
+//        detect_feature();
+//    }
+//
+//    //特征点中心化
+//    track_feature();
 
 
     if(is_first_use_rtheta){
@@ -607,14 +609,17 @@ Mat ThreadCompensation::computeAffine()
     }
     else
     {
-        aff = calHomography();
+        aff = homoExtractor.extractHomo(lastFrame, frame);
+        LOGI("i am here for youyou:[%f, %f, %f, %f, %f, %f, %f, %f, %f]", aff.at<double>(0, 0), aff.at<double>(0, 1), aff.at<double>(0, 2),
+             aff.at<double>(1, 0), aff.at<double>(1, 1), aff.at<double>(1, 2),
+             aff.at<double>(2, 0), aff.at<double>(2, 1), aff.at<double>(2, 2));
     }
 
     //LOGI("step6");
-    lastFeatures.clear();
-    lastFeatures.assign(curFeatures.begin(), curFeatures.end());
-
-    curGray.copyTo(lastGray);
+//    lastFeatures.clear();
+//    lastFeatures.assign(curFeatures.begin(), curFeatures.end());
+//
+//    curGray.copyTo(lastGray);
 
 //    for(auto p : curFeaturesTmp){
 //        cv::circle(ThreadContext::frameVec[cm_cur_index_], p, 3, cv::Scalar(255, 0, 0),5);
@@ -635,9 +640,16 @@ void ThreadCompensation::frameCompensate()
     cv::Mat r_temp;
     if(!is_stable_ ){
         cv::Mat temp =  old_r_mat * threads::ThreadContext::last_old_Rotation_.inv();
+        cv::Point2f center(lastGray.cols/2, lastGray.rows/2);
+        cv::Mat transbb;
+        cv::Mat perp, sca, shear, rot;
+        decomposeHomo(inmat * temp * inmat.inv(), center, perp, sca, shear, rot, transbb);
+        LOGI("trans by decompose:%f ,%f", transbb.at<double>(0, 2), transbb.at<double>(1, 2));
+        transbb.at<double>(0, 2) = -transbb.at<double>(0, 2);
+        transbb.at<double>(1, 2) = -transbb.at<double>(1, 2);
         auto T = CalTranslationByR(temp);
-        LOGI("11111tx:%f, ty:%f， %f, %f", T[0], T[1], aff.at<double>(0, 2), aff.at<double>(1, 2));
-        cv::Mat trans_by_r = (cv::Mat_<double>(3, 3) << 1, 0, -T[0], 0, 1, -T[1], 0, 0, 1);
+        LOGI("trans by decompose:%f, ty:%f， %f, %f", T[0], T[1], aff.at<double>(0, 2), aff.at<double>(1, 2));
+        cv::Mat trans_by_r = (cv::Mat_<double>(3, 3) << 1, 0, (-T[0]+transbb.at<double>(0, 2))/2, 0, 1, (-T[1]+transbb.at<double>(1, 2))/2, 0, 0, 1);
         new_aff = aff;
         new_aff = new_aff * trans_by_r;
 //        new_aff.at<double>(0, 2) -= (new_aff.at<double>(0, 0) * T[0]);
@@ -649,13 +661,14 @@ void ThreadCompensation::frameCompensate()
     threads::ThreadContext::last_old_Rotation_ = old_r_mat;
 
     new_aff =  new_aff * r_temp;
+//    aff = aff * r_temp;
     trans_que.push(new_aff);
     bool readyToPull = filter.push(new_aff.clone());
     if (readyToPull) {
         cv::Mat gooda = filter.pop();
 
 //        WriteToFile(file_before, file_after, gooda, frame_count, old_trans_mat);
-        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_].inv();
+        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];
 
 
         ////*************测试***********************////
@@ -945,8 +958,8 @@ void ThreadCompensation::WriteToFile(FILE* old_file, FILE* new_file, cv::Mat mat
     fwrite(content_after, sizeof(char), strlen(content_after), new_file);
 }
 cv::Vec2f ThreadCompensation::CalTranslationByR(cv::Mat r) {
-    std::vector<cv::Point2f> feature = feature_by_r_.front();
-    feature_by_r_.pop();
+    std::vector<cv::Point2f> feature = threads::ThreadContext::feature_by_r_.front();
+    threads::ThreadContext::feature_by_r_.pop();
     float t_x = 0;
     float t_y = 0;
     for(auto p : feature){
@@ -1022,4 +1035,106 @@ cv::Mat ThreadCompensation::calHomography() {
 
     return homography;
 
+}
+
+void ThreadCompensation::decomposeHomo(cv::Mat h, Point2f cen, cv::Mat &perp, cv::Mat &sca,
+                                        cv::Mat &shear, cv::Mat &rot, cv::Mat &trans) {
+    double hm[3][3];
+    double fax, fay, tx, ty, sh, theta, lamx, lamy;
+    double cx = cen.x;
+    double cy = cen.y;
+    for(int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            hm[i][j] = h.at<double>(i,j)/h.at<double>(2,2);
+        }
+    }
+
+    fax = hm[2][0]/(cx*hm[2][0] + cy*hm[2][1] + 1);
+    fay = hm[2][1]/(cx*hm[2][0] + cy*hm[2][1] + 1);
+    cout << "fax: " << fax << " fay: " << fay << endl;
+
+    double n = 1 - cx*fax - cy*fay;
+
+    double ctx = n*hm[0][2] + cx*n*hm[0][0] + cy*n*hm[0][1];
+    double cty = n*hm[1][2] + cx*n*hm[1][0] + cy*n*hm[1][1];
+    cout << "n: " << n << " ctx: " << ctx << " cty: " << cty << endl;
+
+    tx = ctx - cx;
+    ty = cty - cy;
+
+    double xc = n*hm[0][0] - fax*n*hm[0][2] - cx*fax*n*hm[0][0] - cy*fax*n*hm[0][1];
+    double xs = n*hm[1][0] - fax*n*hm[1][2] - cx*fax*n*hm[1][0] - cy*fax*n*hm[1][1];
+    double ysmc = - n*hm[0][1] + fay*n*hm[0][2] + cx*fay*n*hm[0][0] + cy*fay*n*hm[0][1];
+    double ycps = n*hm[1][1] - fay*n*hm[1][2] - cx*fay*n*hm[1][0] - cy*fay*n*hm[1][1];
+    cout << "xc: " << xc << " xs: " << xs << " ysmc: " << ysmc << " ycps: " << ycps << endl;
+    if(xs == 0)
+        xs=1e-8;
+
+    sh = -(xc*ysmc - xs*ycps)/(xc*ycps + xs*ysmc);
+    double z = xc*xc + xs*xs;
+    double theta1 = -2*atan( (xc+sqrt(z)) / xs );
+    double theta2 = -2*atan( (xc-sqrt(z)) / xs );
+    if(xs == 0)
+    {
+        theta1 = 0;
+        theta2 = 0;
+    }
+    if(abs(theta1)<abs(theta2))
+    {
+        theta = theta1;
+        lamx = -sqrt(z);
+        lamy = (xc*xc*ycps - xc*ycps*(xc+sqrt(z)) - xs*ysmc*(xc+sqrt(z)) + xc*xs*ysmc) / z;
+    }
+    else
+    {
+        theta = theta2;
+        lamx = sqrt(z);
+        lamy = (xc*xc*ycps - xc*ycps*(xc-sqrt(z)) - xs*ysmc*(xc-sqrt(z)) + xc*xs*ysmc) / z;
+    }
+
+    cout << "theta: " << theta << " lamx: " << lamx << " lamy: " << lamy << endl;
+
+    Mat M1=(cv::Mat_<double>(3, 3) <<
+                                   1.0, 0.0, -cx,
+            0.0, 1.0, -cy,
+            0.0, 0.0, 1.0);
+
+    Mat M2=(cv::Mat_<double>(3, 3) <<
+                                   1.0, 0.0, cx,
+            0.0, 1.0, cy,
+            0.0, 0.0, 1.0);
+
+    Mat PE=(cv::Mat_<double>(3, 3) <<
+                                   1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            fax, fay, 1.0);
+
+    Mat SC=(cv::Mat_<double>(3, 3) <<
+                                   lamx, 0.0, 0.0,
+            0.0, lamy, 0.0,
+            0.0, 0.0, 1.0);
+
+    Mat SH=(cv::Mat_<double>(3, 3) <<
+                                   1.0, sh, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0);
+
+    Mat RO=(cv::Mat_<double>(3, 3) <<
+                                   cos(theta), -sin(theta), 0.0,
+            sin(theta), cos(theta), 0.0,
+            0.0, 0.0, 1.0);
+
+    Mat TR=(cv::Mat_<double>(3, 3) <<
+                                   1.0, 0.0, tx,
+            0.0, 1.0, ty,
+            0.0, 0.0, 1.0);
+
+    perp = M2 * PE * M1;
+    perp = perp / perp.at<double>(2,2);
+    sca = M2 * SC * M1;
+    shear = M2 * SH * M1;
+    rot = M2 * RO * M1;
+    trans = TR.clone();
 }

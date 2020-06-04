@@ -99,6 +99,7 @@ public class EglConfigBase {
         recordFilter.onDrawFrame(textureId);
 
         EGLExt.eglPresentationTimeANDROID(eglDisplay, eglSurface, timestamp);
+        Log.d(TAG, "draw111: "+timestamp);
         //交换数据，输出到mediacodec InputSurface中
         EGL14.eglSwapBuffers(eglDisplay, eglSurface);
 

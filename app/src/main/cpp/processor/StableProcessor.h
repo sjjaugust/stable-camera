@@ -5,7 +5,6 @@
 #ifndef VIDEOSTABLE_STABLEPROCESSOR_H
 #define VIDEOSTABLE_STABLEPROCESSOR_H
 
-#include "ThreadKlt.h"
 #include "ThreadCompensation.h"
 #include "ThreadContext.h"
 #include "ThreadRollingShutter.h"

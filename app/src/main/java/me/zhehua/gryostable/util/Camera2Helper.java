@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
+import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.SurfaceTexture;
 import android.hardware.Sensor;
@@ -23,6 +24,7 @@ import android.media.ImageReader;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -52,7 +54,6 @@ import me.zhehua.gryostable.R;
 import me.zhehua.gryostable.StableProcessor;
 import me.zhehua.gryostable.ThetaHelper;
 import me.zhehua.gryostable.widget.GlRenderView;
-
 public class Camera2Helper {
     private Activity mContext;
     private final String TAG = "Camera2Helper";
@@ -70,6 +71,9 @@ public class Camera2Helper {
     private Button cropButton;
     private SeekBar seekBar;
     private GlRenderView glRenderView;
+    private Handler mainHandler;
+
+    private long lastImageTime = 0;
 
     public Camera2Helper(Activity mContext, GlRenderView glRenderView) {
         this.mContext = mContext;
@@ -77,6 +81,8 @@ public class Camera2Helper {
         mGyroSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         mThetaHelper = new ThetaHelper();
         stableProcessor = new StableProcessor();
+
+
 //        textView = mContext.findViewById(R.id.tv_timedelay);
 //        textView.setText(String.valueOf((int)(timeDelay/1000/1000)));
 //        cropButton = mContext.findViewById(R.id.bt_crop);
@@ -405,6 +411,7 @@ public class Camera2Helper {
                                 // Auto focus should be continuous for camera preview.
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+                                mPreviewRequestBuilder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, 0);
                                 // Flash is automatically enabled when necessary.
 
                                 // Finally, we start displaying the camera preview.
@@ -519,6 +526,7 @@ public class Camera2Helper {
     }
 
     private ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
+
         Mat curFrame;
         byte[] byteBuffer;
         byte[] byteBuffer2;
@@ -528,6 +536,7 @@ public class Camera2Helper {
         Mat R;
         @Override
         public void onImageAvailable(ImageReader reader) {
+            Log.d(TAG, "Camera2Helper: cur_thread:"+Thread.currentThread().getId());
             Image image = reader.acquireNextImage();
             if (image == null) {
                 return;
@@ -551,7 +560,12 @@ public class Camera2Helper {
 //            }
 
             final long timeStamp = image.getTimestamp() + timeDelay;
-            glRenderView.glRender.getTimeStamp(timeStamp);
+
+            long curTimeStamp = image.getTimestamp();
+            Log.d(TAG, "fps1111: "+ 1/((float)(curTimeStamp - lastImageTime)/1000/1000/1000));
+            lastImageTime = curTimeStamp;
+            Log.d(TAG, "onImageAvailable: timestamp"+image.getTimestamp());
+//            glRenderView.glRender.getTimeStamp(timeStamp);
             if (curFrame == null) {
                 curFrame = new Mat(image.getHeight() / 2 * 3, image.getWidth(), CvType.CV_8U); // TODO
                 byteBuffer = new byte[image.getWidth() * image.getHeight()];

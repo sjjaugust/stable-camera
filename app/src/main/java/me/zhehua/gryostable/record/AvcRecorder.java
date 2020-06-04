@@ -90,10 +90,10 @@ public class AvcRecorder {
         }
     }
 
-    public void encodeFrame(final int[] textureId, final long timeStamp) {
+    public boolean encodeFrame(final int[] textureId, final long timeStamp) {
 
-        if (!isPlaying) return;
-
+        if (!isPlaying) return false;
+        Log.d(TAG, "onDrawFrame: timestamp"+timeStamp);
         mHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -104,6 +104,7 @@ public class AvcRecorder {
 
             }
         });
+        return true;
 
     }
 

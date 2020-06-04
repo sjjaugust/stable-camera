@@ -9,6 +9,8 @@ import android.view.SurfaceHolder;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
+import java.util.logging.Handler;
+
 import me.zhehua.gryostable.CameraBridgeViewBase;
 import me.zhehua.gryostable.StableProcessor;
 import me.zhehua.gryostable.util.OnRecordListener;

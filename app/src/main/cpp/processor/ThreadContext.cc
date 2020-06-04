@@ -21,6 +21,7 @@ Mat ThreadContext::stableRVec[ThreadContext::BUFFERSIZE];
 Mat ThreadContext::rs_out_theta_[ThreadContext::BUFFERSIZE];
 Mat ThreadContext::rs_Mat_[ThreadContext::BUFFERSIZE][ThreadContext::KRsStripNum_];
 double ThreadContext::guass_weight_[11];
+std::queue<std::vector<cv::Point2f>> ThreadContext::feature_by_r_;
 ////**************测试****************////
 std::queue<cv::Mat> ThreadContext::r_convert_que;
 std::queue<cv::Mat> ThreadContext::r_convert_new_que;

@@ -14,6 +14,7 @@
 #include <list>
 #include <queue>
 #include "ThreadRollingShutter.h"
+#include "HomoExtractor.h"
 
 namespace threads {
     class ThreadCompensation {
@@ -42,6 +43,8 @@ namespace threads {
         bool is_first_cal_features = true;
         cv::Mat last_homography_;
 
+//        HomoExtractor homoExtractor;
+
         void worker();
         void detect_feature();
         void track_feature();
@@ -62,11 +65,13 @@ namespace threads {
 //        cv::Mat inmat=(cv::Mat_<double>(3, 3)<<1492.89950430177,0.0,940.850079740057, 0.0,1496.13805384036,552.228021875255,0.0,0.0,1.0);//demo board
 
         bool is_stable_;
-        std::queue<std::vector<cv::Point2f>> feature_by_r_;
+
         cv::Vec2f CalTranslationByR(cv::Mat r);
         cv::Mat calHomography();
         Mat RR2stableVec = (cv::Mat_<double>(3, 3)<<0.0, 1.0, 0.0, -1.0, 0.0, 1080.0, 0.0, 0.0, 1.0);
         Mat stableVec2RR = (cv::Mat_<double>(3, 3)<<0.0, -1.0, 1080.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+
+        void decomposeHomo(cv::Mat h, Point2f cen, cv::Mat &perp, cv::Mat &sca, cv::Mat &shear, cv::Mat &rot, cv::Mat &trans);
     public:
         void start();
 

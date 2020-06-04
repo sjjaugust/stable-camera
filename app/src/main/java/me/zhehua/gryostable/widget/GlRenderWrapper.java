@@ -42,7 +42,7 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
     private float[] mtx = new float[16];
     public boolean isready = false;
 
-    private long timeStamp = 0;
+    public long timeStamp = 0;
 
     public GlRenderWrapper(GlRenderView glRenderView){
         this.glRenderView = glRenderView;
@@ -108,15 +108,25 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
         Log.d(TAG, "onDrawFrame22222: " + Arrays.toString(id));
 
         //给录制的filter传数据
-        if(avcRecorder.eglConfigBase != null ){
+//        if(avcRecorder.eglConfigBase != null ){
+//            if(avcRecorder.eglConfigBase.recordFilter != null){
+//                avcRecorder.eglConfigBase.recordFilter.transformMatrix = screenFilter.transformMatrix;
+//                avcRecorder.eglConfigBase.recordFilter.rsMat = screenFilter.rsMat;
+//            }
+//
+//        }
+        if(avcRecorder.eglConfigBase != null){
             if(avcRecorder.eglConfigBase.recordFilter != null){
-                avcRecorder.eglConfigBase.recordFilter.transformMatrix = screenFilter.transformMatrix;
-                avcRecorder.eglConfigBase.recordFilter.rsMat = screenFilter.rsMat;
+                avcRecorder.eglConfigBase.recordFilter.setIsOpenRollingShutter(false);
             }
-
         }
 
-        avcRecorder.encodeFrame(id, timeStamp);
+        boolean flag = avcRecorder.encodeFrame(id, timeStamp);
+        if(flag){
+            timeStamp += 33000000;
+        }
+
+
 
 
     }
