@@ -111,3 +111,7 @@ void StableProcessor::setCrop(bool isCrop)
 {
     cm_thread_ -> cropControlFlag = isCrop;
 }
+
+void StableProcessor::setDrawStatus(bool is_draw) {
+    cm_thread_ -> drawFlag = is_draw;
+}

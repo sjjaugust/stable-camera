@@ -26,7 +26,7 @@ Java_me_zhehua_gryostable_StableProcessor_n_1StableProcessor(JNIEnv *env, jobjec
 
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1Init(JNIEnv *env, jobject instance, jint width,
-                                                      jint height) {
+                                                  jint height) {
     n_sp.Init(Size(width, height));
 }
 
@@ -34,34 +34,36 @@ JNIEXPORT jint JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1dequeueInputBuffer(JNIEnv *env, jobject instance) {
     return n_sp.dequeueInputBuffer();
 }
-static Mat RR2stableVec = (cv::Mat_<double>(3, 3)<<0.0, 1.0, 0.0, -1.0, 0.0, 1620.0, 0.0, 0.0, 1.0);
-static Mat stableVec2RR = (cv::Mat_<double>(3, 3)<<0.0, -1.0, 1620.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+static Mat RR2stableVec = (cv::Mat_<double>(3, 3)
+        << 0.0, 1.0, 0.0, -1.0, 0.0, 1620.0, 0.0, 0.0, 1.0);
+static Mat stableVec2RR = (cv::Mat_<double>(3, 3)
+        << 0.0, -1.0, 1620.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1enqueueInputBuffer(JNIEnv *env, jobject instance,
-                                                                    jint buffer_index,
-                                                                    jlong new_frame,
-                                                                    jlong RR,
-                                                                    jlong rs_out_mat) {
-    Mat* inFrame = (Mat*) new_frame;
-    Mat* R = (Mat*) RR;
+                                                                jint buffer_index,
+                                                                jlong new_frame,
+                                                                jlong RR,
+                                                                jlong rs_out_mat) {
+    Mat *inFrame = (Mat *) new_frame;
+    Mat *R = (Mat *) RR;
     *R = RR2stableVec * (*R) * stableVec2RR;
-    n_sp.enqueueInputBuffer(buffer_index, inFrame, R, (Mat*)rs_out_mat);
+    n_sp.enqueueInputBuffer(buffer_index, inFrame, R, (Mat *) rs_out_mat);
 }
 
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1enqueueOutputBuffer(JNIEnv *env,
-                                                                      jobject instance) {
+                                                                 jobject instance) {
     n_sp.enqueueOutputBuffer();
 }
 
 JNIEXPORT void JNICALL
 Java_me_zhehua_gryostable_StableProcessor_n_1dequeueOutputBuffer(JNIEnv *env, jobject instance,
-                                                                     jlong stableVec, jlong frame,
-                                                                     jlong rsMat) {
-    Mat* nStableVec = (Mat*) stableVec;
-    Mat* nFrame = (Mat*) frame;
-    n_sp.dequeueOutputBuffer(nStableVec, nFrame, (Mat*)rsMat);
+                                                                 jlong stableVec, jlong frame,
+                                                                 jlong rsMat) {
+    Mat *nStableVec = (Mat *) stableVec;
+    Mat *nFrame = (Mat *) frame;
+    n_sp.dequeueOutputBuffer(nStableVec, nFrame, (Mat *) rsMat);
 }
 
 JNIEXPORT void JNICALL
@@ -70,9 +72,13 @@ Java_me_zhehua_gryostable_StableProcessor_n_1setCrop(JNIEnv *env, jobject instan
     n_sp.setCrop(isCrop);
 }
 
+JNIEXPORT void JNICALL
+Java_me_zhehua_gryostable_StableProcessor_n_1setDrawStatus(JNIEnv *env, jobject instance,
+                                                           jboolean isDraw) {
+    n_sp.setDrawStatus(isDraw);
 }
 
-
+}
 
 extern "C"
 JNIEXPORT void JNICALL

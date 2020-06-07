@@ -116,18 +116,18 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
         Log.d(TAG, "onDrawFrame22222: " + Arrays.toString(id));
 
         //给录制的filter传数据
-        if(avcRecorder.eglConfigBase != null ){
-            if(avcRecorder.eglConfigBase.recordFilter != null){
-                avcRecorder.eglConfigBase.recordFilter.transformMatrix = screenFilter.transformMatrix;
-                avcRecorder.eglConfigBase.recordFilter.rsMat = screenFilter.rsMat;
-            }
-
-        }
-//        if(avcRecorder.eglConfigBase != null){
+//        if(avcRecorder.eglConfigBase != null ){
 //            if(avcRecorder.eglConfigBase.recordFilter != null){
-//                avcRecorder.eglConfigBase.recordFilter.setIsOpenRollingShutter(false);
+//                avcRecorder.eglConfigBase.recordFilter.transformMatrix = screenFilter.transformMatrix;
+//                avcRecorder.eglConfigBase.recordFilter.rsMat = screenFilter.rsMat;
 //            }
+//
 //        }
+        if(avcRecorder.eglConfigBase != null){
+            if(avcRecorder.eglConfigBase.recordFilter != null){
+                avcRecorder.eglConfigBase.recordFilter.setIsOpenRollingShutter(false);
+            }
+        }
 
         boolean flag = avcRecorder.encodeFrame(id, timeStamp);
         if(flag){

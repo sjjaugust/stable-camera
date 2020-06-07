@@ -39,6 +39,8 @@ public class MainCameraActivity extends AppCompatActivity implements OnRecordLis
     private Button cropButton;
     private SeekBar seekBar;
     private PermissionsUtil permissionsUtil;
+    private Button infoButton;
+    private boolean isDraw = true;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -60,6 +62,14 @@ public class MainCameraActivity extends AppCompatActivity implements OnRecordLis
                     ((Button) v).setText("Not Crop");
                 }
                 mRenderView.glRender.camera2Helper.stableProcessor.setCrop(mRenderView.glRender.camera2Helper.isCrop);
+            }
+        });
+        infoButton = findViewById(R.id.bt_draw);
+        infoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isDraw = !isDraw;
+                mRenderView.glRender.camera2Helper.stableProcessor.setDrawStatus(isDraw);
             }
         });
         seekBar = findViewById(R.id.sb_time);

@@ -1,17 +1,5 @@
-[1/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
-[2/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o
-[3/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
-[4/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o
-[5/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/HomoExtractor.cpp.o
-[6/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o
-[7/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o
-D:\Repositories\stable-camera\app\src\main\cpp\native-lib.cpp:13:10: warning: 'LOG_TAG' macro redefined [-Wmacro-redefined]
-#define  LOG_TAG    "accelerometergraph"
-         ^
-D:\Repositories\stable-camera\app\src\main\cpp/processor/ThreadRollingShutter.h:13:9: note: previous definition is here
-#define LOG_TAG    "cThreadRollingShutter"
-        ^
-1 warning generated.
+[1/3] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
+[2/3] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/HomoExtractor.cpp.o
 D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:11:9: warning: 'LOG_TAG' macro redefined [-Wmacro-redefined]
 #define LOG_TAG    "c_ThreadCompensation"
         ^
@@ -19,4 +7,4 @@ D:\Repositories\stable-camera\app\src\main\cpp\processor/ThreadRollingShutter.h:
 #define LOG_TAG    "cThreadRollingShutter"
         ^
 1 warning generated.
-[8/8] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\armeabi-v7a\libnative-lib.so
+[3/3] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\armeabi-v7a\libnative-lib.so

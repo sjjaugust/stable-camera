@@ -560,6 +560,7 @@ Mat ThreadCompensation::computeAffine()
 {
     //LOGI("step1");
     HomoExtractor homoExtractor;
+    homoExtractor.setDrawStatus(drawFlag);
     Mat lastFrame = ThreadContext::frameVec[cm_las_index_];
     Mat frame = ThreadContext::frameVec[cm_cur_index_];
     frameSize.height=frame.rows;
@@ -603,7 +604,7 @@ Mat ThreadCompensation::computeAffine()
     sc = stable_count(error);
     is_stable_ = sc;
     LOGI("see error : %f, %d ", error, is_stable_);
-
+    LOGI("i am herayayayayayayay");
     //LOGI("step5");
     Mat aff;
     if(sc)
@@ -618,7 +619,10 @@ Mat ThreadCompensation::computeAffine()
              aff.at<double>(1, 0), aff.at<double>(1, 1), aff.at<double>(1, 2),
              aff.at<double>(2, 0), aff.at<double>(2, 1), aff.at<double>(2, 2));
     }
-    cv::putText(frame, gyro_info, cv::Point(200,300), cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 0), 2, 8, 0);
+    if(homoExtractor.draw_information){
+//        cv::putText(frame, gyro_info, cv::Point(200,300), cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 0), 2, 8, 0);
+    }
+
     //LOGI("step6");
 //    lastFeatures.clear();
 //    lastFeatures.assign(curFeatures.begin(), curFeatures.end());
@@ -636,22 +640,27 @@ void ThreadCompensation::frameCompensate()
     /*为旋转插值准备数据，即计算仿射矩阵，计算本段非关键帧到前关键帧的仿射矩阵与前关键帧到后关键帧的仿射矩阵*/
     //LOGI("cal aff");
     Mat aff = computeAffine();
+//    cv::Mat perp, sca, shear, rot, trans;
+//    cv::Point2f center(lastGray.cols/2, lastGray.rows/2);
+//    decomposeHomo(aff, center, perp, sca, shear, rot, trans);
+//    aff = trans * shear * sca * perp;
 
     cv::Mat old_r_mat = threads::ThreadContext::r_convert_que.front();
     threads::ThreadContext::r_convert_que.pop();
+
     auto new_aff = aff;
 
     cv::Mat r_temp;
     if(!is_stable_ ){
-        cv::Mat temp =  old_r_mat * threads::ThreadContext::last_old_Rotation_.inv();
-        cv::Point2f center(lastGray.cols/2, lastGray.rows/2);
-        cv::Mat transbb;
-        cv::Mat perp, sca, shear, rot;
-        decomposeHomo(inmat * temp * inmat.inv(), center, perp, sca, shear, rot, transbb);
 
-        LOGI("trans by decompose:%f ,%f, %f", transbb.at<double>(0, 2), transbb.at<double>(1, 2), acos(rot.at<double>(0, 0)));
-        transbb.at<double>(0, 2) = -transbb.at<double>(0, 2);
-        transbb.at<double>(1, 2) = -transbb.at<double>(1, 2);
+        cv::Mat temp =  old_r_mat * threads::ThreadContext::last_old_Rotation_.inv();
+
+//
+//        decomposeHomo(inmat * temp * inmat.inv(), center, perp, sca, shear, rot, transbb);
+
+//        LOGI("trans by decompose:%f ,%f, %f", transbb.at<double>(0, 2), transbb.at<double>(1, 2), acos(rot.at<double>(0, 0)));
+//        transbb.at<double>(0, 2) = -transbb.at<double>(0, 2);
+//        transbb.at<double>(1, 2) = -transbb.at<double>(1, 2);
         auto T = CalTranslationByR(temp);
         LOGI("trans by decompose:%f, ty:%f， %f, %f", T[0], T[1], aff.at<double>(0, 2), aff.at<double>(1, 2));
         cv::Mat trans_by_r = (cv::Mat_<double>(3, 3) << 1, 0, -T[0], 0, 1, -T[1], 0, 0, 1);
@@ -677,8 +686,8 @@ void ThreadCompensation::frameCompensate()
 
 
         ////*************测试***********************////
-        cv::Mat new_r_mat = threads::ThreadContext::r_convert_new_que.front();
-        threads::ThreadContext::r_convert_new_que.pop();
+//        cv::Mat new_r_mat = threads::ThreadContext::r_convert_new_que.front();
+//        threads::ThreadContext::r_convert_new_que.pop();
         ////*************测试***********************////
 //        cv::Mat goodar = ThreadContext::stableRVec[out_index_];
 //        cv::Mat goodar = gooda;

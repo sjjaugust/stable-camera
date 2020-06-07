@@ -48,6 +48,10 @@ public class StableProcessor {
         n_setCrop(isCrop);
     }
 
+    public void setDrawStatus(boolean isDraw){
+        n_setDrawStatus(isDraw);
+    }
+
     private native long n_StableProcessor();
     private native void n_Init(int width, int height);
     private native int n_dequeueInputBuffer();
@@ -55,4 +59,5 @@ public class StableProcessor {
     private native void n_enqueueOutputBuffer();
     private native void n_dequeueOutputBuffer(long stableVec, long frame, long rsMat);
     private native void n_setCrop(boolean isCrop);
+    private native void n_setDrawStatus(boolean isDraw);
 }

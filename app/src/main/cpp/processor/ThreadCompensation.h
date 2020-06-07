@@ -22,6 +22,7 @@ namespace threads {
     public:
         Size videoSize, frameSize;
         bool cropControlFlag = true;//裁剪控制
+        bool drawFlag = true;
         float cropRation;//裁剪率
         bool shakeDetect;//抖动检测
     private:
