@@ -691,7 +691,7 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
 
     if(ex_index_ == 0){
 //        cv::Mat img1_r;
-        lastGray = img1.rowRange(0,img2.rows * 2 / 3);
+        lastGray = img1.rowRange(0,img1.rows * 2 / 3);
         cv::resize(lastGray, lastGray, cv::Size(lastGray.cols / ThreadContext::DOWNSAMPLE_SCALE, lastGray.rows / ThreadContext::DOWNSAMPLE_SCALE));
 //        cv::cvtColor(img1_r, lastGray , cv::COLOR_BGR2GRAY );
         detectFeature();
@@ -774,6 +774,16 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
 
     }
 
+    if(draw_information){
+        int tsize=curFeaturesTmp.size()>lastFeaturesTmp.size() ? lastFeaturesTmp.size() : curFeaturesTmp.size();
+        for(int i = 0; i < tsize; i++){
+            cv::Point2f p1 = lastFeaturesTmp[i];
+            cv::Point2f p2 = curFeaturesTmp[i];
+            cv::circle(img2,p1,10,cv::Scalar(255,255,0),2);
+            cv::circle(img2,p2,10,cv::Scalar(255,0,0),2);
+            cv::line(img2,p1,p2,cv::Scalar(0,0,255),8);
+        }
+    }
     threads::ThreadContext::feature_by_r_.push(curFeaturesTmp);
     lastFeatures.clear();
     lastFeatures.assign(curFeatures.begin(), curFeatures.end());
@@ -782,6 +792,9 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
     if(ex_index_ == ThreadContext::SEGSIZE){
         ex_index_ = 0;
     }
+
+
+
     return H;
 
 

@@ -1,1 +1,43 @@
-ninja: no work to do.
+[1/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
+[2/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o
+[3/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
+[4/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o
+[5/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o
+[6/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o
+[7/8] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/HomoExtractor.cpp.o
+D:\Repositories\stable-camera\app\src\main\cpp\native-lib.cpp:13:10: warning: 'LOG_TAG' macro redefined [-Wmacro-redefined]
+#define  LOG_TAG    "accelerometergraph"
+         ^
+D:\Repositories\stable-camera\app\src\main\cpp/processor/ThreadRollingShutter.h:13:9: note: previous definition is here
+#define LOG_TAG    "cThreadRollingShutter"
+        ^
+1 warning generated.
+D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:11:9: warning: 'LOG_TAG' macro redefined [-Wmacro-redefined]
+#define LOG_TAG    "c_ThreadCompensation"
+        ^
+D:\Repositories\stable-camera\app\src\main\cpp\processor/ThreadRollingShutter.h:13:9: note: previous definition is here
+#define LOG_TAG    "cThreadRollingShutter"
+        ^
+D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:1012:28: warning: format specifies type 'int' but the argument has type 'std::__ndk1::vector<cv::Point_<float>, std::__ndk1::allocator<cv::Point_<float> > >::size_type' (aka 'unsigned long') [-Wformat]
+    LOGI("new_aff:%d, %d", lastFeaturesTmp.size(), curFeaturesTmp.size());
+                  ~~       ^~~~~~~~~~~~~~~~~~~~~~
+                  %lu
+D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:12:67: note: expanded from macro 'LOGI'
+#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+                                                                  ^~~~~~~~~~~
+D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:1012:52: warning: format specifies type 'int' but the argument has type 'std::__ndk1::vector<cv::Point_<float>, std::__ndk1::allocator<cv::Point_<float> > >::size_type' (aka 'unsigned long') [-Wformat]
+    LOGI("new_aff:%d, %d", lastFeaturesTmp.size(), curFeaturesTmp.size());
+                      ~~                           ^~~~~~~~~~~~~~~~~~~~~
+                      %lu
+D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:12:67: note: expanded from macro 'LOGI'
+#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+                                                                  ^~~~~~~~~~~
+D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:1024:74: warning: format specifies type 'int' but the argument has type 'std::__ndk1::vector<cv::Point_<float>, std::__ndk1::allocator<cv::Point_<float> > >::size_type' (aka 'unsigned long') [-Wformat]
+                LOGI("new_aff:%d, [%f, %f, %f, %f, %f, %f, %f, %f, %f]", curFeaturesTmp.size(),
+                              ~~                                         ^~~~~~~~~~~~~~~~~~~~~
+                              %lu
+D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:12:67: note: expanded from macro 'LOGI'
+#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+                                                                  ^~~~~~~~~~~
+4 warnings generated.
+[8/8] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\arm64-v8a\libnative-lib.so

@@ -591,6 +591,10 @@ Mat ThreadCompensation::computeAffine()
     ThreadContext::rTheta.pop();
     Vec<double, 3> er = lastRot-rot;
     lastRot = rot;
+    std::string gyro_info = "theta:";
+    gyro_info = gyro_info + std::to_string(er[0]/PI*180)+" "+std::to_string(er[1]/PI*180)+" "+std::to_string(er[2]/PI*180);
+
+
     //LOGI("see r : %f, %f, %f ", er[0], er[1], er[2]);
     double error = er[0]*er[0] + er[1]*er[1] + er[2]*er[2];
 
@@ -614,7 +618,7 @@ Mat ThreadCompensation::computeAffine()
              aff.at<double>(1, 0), aff.at<double>(1, 1), aff.at<double>(1, 2),
              aff.at<double>(2, 0), aff.at<double>(2, 1), aff.at<double>(2, 2));
     }
-
+    cv::putText(frame, gyro_info, cv::Point(200,300), cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 0), 2, 8, 0);
     //LOGI("step6");
 //    lastFeatures.clear();
 //    lastFeatures.assign(curFeatures.begin(), curFeatures.end());
@@ -644,16 +648,17 @@ void ThreadCompensation::frameCompensate()
         cv::Mat transbb;
         cv::Mat perp, sca, shear, rot;
         decomposeHomo(inmat * temp * inmat.inv(), center, perp, sca, shear, rot, transbb);
-        LOGI("trans by decompose:%f ,%f", transbb.at<double>(0, 2), transbb.at<double>(1, 2));
+
+        LOGI("trans by decompose:%f ,%f, %f", transbb.at<double>(0, 2), transbb.at<double>(1, 2), acos(rot.at<double>(0, 0)));
         transbb.at<double>(0, 2) = -transbb.at<double>(0, 2);
         transbb.at<double>(1, 2) = -transbb.at<double>(1, 2);
         auto T = CalTranslationByR(temp);
         LOGI("trans by decompose:%f, ty:%f， %f, %f", T[0], T[1], aff.at<double>(0, 2), aff.at<double>(1, 2));
-        cv::Mat trans_by_r = (cv::Mat_<double>(3, 3) << 1, 0, (-T[0]+transbb.at<double>(0, 2))/2, 0, 1, (-T[1]+transbb.at<double>(1, 2))/2, 0, 0, 1);
+        cv::Mat trans_by_r = (cv::Mat_<double>(3, 3) << 1, 0, -T[0], 0, 1, -T[1], 0, 0, 1);
         new_aff = aff;
-        new_aff = new_aff * trans_by_r;
-//        new_aff.at<double>(0, 2) -= (new_aff.at<double>(0, 0) * T[0]);
-//        new_aff.at<double>(1, 2) -= (new_aff.at<double>(1, 1) * T[1]);
+//        new_aff = new_aff  *  shear * sca * perp;
+        new_aff = new_aff * trans_by_r ;
+
         r_temp = inmat * temp * inmat.inv();
     } else {
         r_temp = cv::Mat::eye(3, 3, CV_64F);
@@ -668,7 +673,7 @@ void ThreadCompensation::frameCompensate()
         cv::Mat gooda = filter.pop();
 
 //        WriteToFile(file_before, file_after, gooda, frame_count, old_trans_mat);
-        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];
+//        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];
 
 
         ////*************测试***********************////
@@ -678,7 +683,7 @@ void ThreadCompensation::frameCompensate()
 //        cv::Mat goodar = ThreadContext::stableRVec[out_index_];
 //        cv::Mat goodar = gooda;
 
-        goodar = gooda;
+        cv::Mat goodar = gooda;
 //        goodar = ThreadContext::stableRVec[out_index_];
 
         if( cropControlFlag )
@@ -697,6 +702,18 @@ void ThreadCompensation::frameCompensate()
             move.at<double>(1,2) = -mh;
 
             goodar = scale * move * goodar;
+        } else {
+            cropControl(cropRation, frameSize, goodar);
+            cv::Point2d p1(crop_vertex.at<double>(0, 0), crop_vertex.at<double>(1, 0));
+            cv::Point2d p2(crop_vertex.at<double>(0, 1), crop_vertex.at<double>(1, 1));
+            cv::Point2d p3(crop_vertex.at<double>(0, 2), crop_vertex.at<double>(1, 2));
+            cv::Point2d p4(crop_vertex.at<double>(0, 3), crop_vertex.at<double>(1, 3));
+            cv::Mat frame = threads::ThreadContext::frameVec[cm_cur_index_];
+
+            cv::line(frame,p1,p2,cv::Scalar(0,255,0),8);
+            cv::line(frame,p2,p3,cv::Scalar(0,255,0),8);
+            cv::line(frame,p3,p4,cv::Scalar(0,255,0),8);
+            cv::line(frame,p4,p1,cv::Scalar(0,255,0),8);
         }
 
         goodar.copyTo(ThreadContext::stableTransformVec[out_index_]);
@@ -796,6 +813,7 @@ bool ThreadCompensation::cropControl( float cropr , Size size , Mat &affine )
 
         allInside = isInside(cropvertex,newvertex);
     }
+    crop_vertex = newvertex;
 
     if(doCrop)
     {

@@ -7,6 +7,7 @@ import android.opengl.EGL14;
 import android.opengl.EGLContext;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -43,6 +44,9 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
     public boolean isready = false;
 
     public long timeStamp = 0;
+
+    private long renderTimeStamp = 0;
+    private long lastRenderTimeStamp = 0;
 
     public GlRenderWrapper(GlRenderView glRenderView){
         this.glRenderView = glRenderView;
@@ -97,6 +101,10 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
 //        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT);
 //        mSurfaceTexture.updateTexImage();
 //
+        renderTimeStamp = SystemClock.elapsedRealtimeNanos();
+        Log.d(TAG, "fps render1111: "+ 1/((float)(renderTimeStamp - lastRenderTimeStamp)/1000/1000/1000));
+        lastRenderTimeStamp = renderTimeStamp;
+
         mSurfaceTexture.getTransformMatrix(mtx);
 //        Log.d(TAG, "onDrawFrame: "+Arrays.toString(mtx));
         //cameraFiler需要一个矩阵，是Surface和我们手机屏幕的一个坐标之间的关系
@@ -108,18 +116,18 @@ public class GlRenderWrapper implements GLSurfaceView.Renderer, SurfaceTexture.O
         Log.d(TAG, "onDrawFrame22222: " + Arrays.toString(id));
 
         //给录制的filter传数据
-//        if(avcRecorder.eglConfigBase != null ){
-//            if(avcRecorder.eglConfigBase.recordFilter != null){
-//                avcRecorder.eglConfigBase.recordFilter.transformMatrix = screenFilter.transformMatrix;
-//                avcRecorder.eglConfigBase.recordFilter.rsMat = screenFilter.rsMat;
-//            }
-//
-//        }
-        if(avcRecorder.eglConfigBase != null){
+        if(avcRecorder.eglConfigBase != null ){
             if(avcRecorder.eglConfigBase.recordFilter != null){
-                avcRecorder.eglConfigBase.recordFilter.setIsOpenRollingShutter(false);
+                avcRecorder.eglConfigBase.recordFilter.transformMatrix = screenFilter.transformMatrix;
+                avcRecorder.eglConfigBase.recordFilter.rsMat = screenFilter.rsMat;
             }
+
         }
+//        if(avcRecorder.eglConfigBase != null){
+//            if(avcRecorder.eglConfigBase.recordFilter != null){
+//                avcRecorder.eglConfigBase.recordFilter.setIsOpenRollingShutter(false);
+//            }
+//        }
 
         boolean flag = avcRecorder.encodeFrame(id, timeStamp);
         if(flag){

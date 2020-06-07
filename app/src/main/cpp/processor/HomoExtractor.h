@@ -26,6 +26,7 @@ private:
     bool stable_move=true, stable_move2=false;
     std::vector<cv::Mat> hom_s,homo_n,homo_a1,homo_a2;
     std::vector<int> block_index_;
+    bool draw_information = true;
 
     void detectFeature();
     void trackFeature(const cv::Mat& img1, const cv::Mat& img2);

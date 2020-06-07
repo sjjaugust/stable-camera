@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.util.Log;
+import android.util.Range;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
@@ -81,6 +82,7 @@ public class Camera2Helper {
         mGyroSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
         mThetaHelper = new ThetaHelper();
         stableProcessor = new StableProcessor();
+        glRenderView.startDisplayThread();
 
 
 //        textView = mContext.findViewById(R.id.tv_timedelay);
@@ -261,6 +263,10 @@ public class Camera2Helper {
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
+
+        imageReaderThread = new HandlerThread("imageReader handlerThread");
+        imageReaderThread.start();
+        imageReaderHandler = new Handler(imageReaderThread.getLooper());
     }
 
 
@@ -286,6 +292,9 @@ public class Camera2Helper {
      * @param height The height of available size for camera preview
      */
     @SuppressWarnings("SuspiciousNameCombination")
+    private HandlerThread imageReaderThread;
+    private Handler imageReaderHandler;
+    private Range<Integer>[] fpsRange;
     private void setUpCameraOutputs(int width, int height) {
 
         CameraManager manager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
@@ -307,6 +316,8 @@ public class Camera2Helper {
 
                 Point displaySize = new Point();
                 mContext.getWindowManager().getDefaultDisplay().getSize(displaySize);
+
+                fpsRange = characteristics.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES);
                 int rotatedPreviewWidth = width;
                 int rotatedPreviewHeight = height;
                 int maxPreviewWidth = displaySize.x;
@@ -332,8 +343,8 @@ public class Camera2Helper {
                 stableProcessor.init(mPreviewSize.getWidth(), mPreviewSize.getHeight());
                 mCameraId = cameraId;
 
-                glRenderView.startDisplayThread();
 
+                glRenderView.postDisplayThread();
                 return;
             }
         } catch (CameraAccessException e) {
@@ -386,16 +397,16 @@ public class Camera2Helper {
 
             mSurfaceTexture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
 
-            Surface surface = new Surface(mSurfaceTexture);
+//            Surface surface = new Surface(mSurfaceTexture);
 
             // We set up a CaptureRequest.Builder with the output Surface.
             mPreviewRequestBuilder
                     = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
-            mPreviewRequestBuilder.addTarget(surface);
+//            mPreviewRequestBuilder.addTarget(surface);
             mPreviewRequestBuilder.addTarget(imageReader.getSurface());
 
             // Here, we create a CameraCaptureSession for camera preview.
-            mCameraDevice.createCaptureSession(Arrays.asList(surface,imageReader.getSurface()),
+            mCameraDevice.createCaptureSession(Arrays.asList(imageReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {
 
                         @Override
@@ -412,6 +423,7 @@ public class Camera2Helper {
                                 mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
                                 mPreviewRequestBuilder.set(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, 0);
+                                mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange[fpsRange.length-1]);
                                 // Flash is automatically enabled when necessary.
 
                                 // Finally, we start displaying the camera preview.

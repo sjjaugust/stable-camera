@@ -2,6 +2,10 @@ package me.zhehua.gryostable.widget;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -9,7 +13,6 @@ import android.view.SurfaceHolder;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
-import java.util.logging.Handler;
 
 import me.zhehua.gryostable.CameraBridgeViewBase;
 import me.zhehua.gryostable.StableProcessor;
@@ -24,6 +27,9 @@ public class GlRenderView extends GLSurfaceView {
     public StableProcessor stableProcessor;
     public int mFrameHeight = 1080;
     public int mFrameWidth = 1920;
+    private HandlerThread renderHandlerThread;
+    public Handler renderHandler;
+
 
 
     public GlRenderView(Context context){
@@ -59,20 +65,26 @@ public class GlRenderView extends GLSurfaceView {
     }
 
     public void startDisplayThread() {
-        new Thread(new GlRenderView.DisplayThread()).start();
-    }
-    public class DisplayThread implements Runnable{
+        renderHandlerThread = new HandlerThread("render handler thread");
+        renderHandlerThread.start();
+        Looper looper = renderHandlerThread.getLooper();
+        renderHandler = new Handler(looper);
 
+//        new Thread(new GlRenderView.DisplayThread()).start();
+
+    }
+    public void postDisplayThread(){
+        renderHandler.post(runnable);
+    }
+
+    private Runnable runnable = new Runnable() {
         Mat transMat = new Mat(3, 3, CvType.CV_64F);
         Mat framePic = new Mat(mFrameHeight, mFrameWidth, CvType.CV_8UC3);
         double[] transData = new double[9];
         float[] transDataF = new float[9];
         Mat rsMat = new Mat(30, 3, CvType.CV_64F);
-
         @Override
         public void run() {
-            Thread.currentThread().setName("getTransVec Thread");
-
             while (true){
                 synchronized (syncObj){
                     try{
@@ -115,10 +127,69 @@ public class GlRenderView extends GLSurfaceView {
                 if(stableProcessor != null){
                     stableProcessor.enqueueOutputBuffer();
                 }
-
-
-
             }
         }
-    }
+    };
+
+
+//    public class DisplayThread implements Runnable{
+//
+//        Mat transMat = new Mat(3, 3, CvType.CV_64F);
+//        Mat framePic = new Mat(mFrameHeight, mFrameWidth, CvType.CV_8UC3);
+//        double[] transData = new double[9];
+//        float[] transDataF = new float[9];
+//        Mat rsMat = new Mat(30, 3, CvType.CV_64F);
+//
+//        @Override
+//        public void run() {
+//            Thread.currentThread().setName("getTransVec Thread");
+//
+//            while (true){
+//                synchronized (syncObj){
+//                    try{
+//                        syncObj.wait(30);
+//                    } catch (InterruptedException e){
+//                        e.printStackTrace();
+//                    }
+//                }
+//
+//                if(stableProcessor != null){
+//
+//                    stableProcessor.dequeueOutputBuffer(transMat, framePic, rsMat);
+//                    Log.d(TAG, "run+++++: "+rsMat.dump());
+//                }
+//
+//                if(framePic.empty()){
+//                    Log.i(TAG, "yes, get empty output Mat");
+//                    break;
+//                }
+//                if (transMat.type() != CvType.CV_64F) {
+//                    Log.e(TAG, "WTF?? " + transMat.dump() + framePic.dump());
+//                    Log.e(TAG, transMat + " " + transMat);
+//                }
+//                transMat.get(0 ,0 , transData);
+//                for (int i = 0; i < 9; i++) {
+//                    transDataF[i] = (float) transData[i];
+//                }
+//
+////                glRender.cameraFilter.transformMatrix = transDataF;
+//                glRender.screenFilter.transformMatrix = transDataF;
+////                glRender.cameraFilter.outputMat = framePic;
+//                glRender.screenFilter.outputMat = framePic;
+//                glRender.screenFilter.rsMat = rsMat;
+//
+//                if(glRender.isready){
+//                    GlRenderView.this.requestRender();
+//                }
+//
+//
+//                if(stableProcessor != null){
+//                    stableProcessor.enqueueOutputBuffer();
+//                }
+//
+//
+//
+//            }
+//        }
+//    }
 }

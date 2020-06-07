@@ -15,6 +15,7 @@
 #include <queue>
 #include "ThreadRollingShutter.h"
 #include "HomoExtractor.h"
+#include <string>
 
 namespace threads {
     class ThreadCompensation {
@@ -71,6 +72,7 @@ namespace threads {
         Mat RR2stableVec = (cv::Mat_<double>(3, 3)<<0.0, 1.0, 0.0, -1.0, 0.0, 1080.0, 0.0, 0.0, 1.0);
         Mat stableVec2RR = (cv::Mat_<double>(3, 3)<<0.0, -1.0, 1080.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 
+        cv::Mat crop_vertex;
         void decomposeHomo(cv::Mat h, Point2f cen, cv::Mat &perp, cv::Mat &sca, cv::Mat &shear, cv::Mat &rot, cv::Mat &trans);
     public:
         void start();
