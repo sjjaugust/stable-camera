@@ -36,6 +36,7 @@ namespace threads {
         void dequeueOutputBuffer(Mat* const stableVec, Mat* const frame, Mat* const rsMat);
         void setCrop(bool isCrop);
         void setDrawStatus(bool is_draw);
+        void setWriteStatus(bool is_write);
     };
 }
 

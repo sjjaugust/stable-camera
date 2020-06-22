@@ -239,7 +239,7 @@ public class BaseFilter {
         mGlVertexBuffer.position(0);
         GLES30.glVertexAttribPointer(vPosition, 3, GLES30.GL_FLOAT, false, 3*4, mGlVertexBuffer);
         GLES30.glEnableVertexAttribArray(vPosition);
-        Log.d(TAG, "onDrawFramebuffer: "+mGlTextureBuffer.get(43));
+//        Log.d(TAG, "onDrawFramebuffer: "+mGlTextureBuffer.get(43));
         //传入纹理坐标
         mGlTextureBuffer.position(0);
         GLES30.glVertexAttribPointer(inTexCoord, 4, GLES30.GL_FLOAT, false, 2*4, mGlTextureBuffer);

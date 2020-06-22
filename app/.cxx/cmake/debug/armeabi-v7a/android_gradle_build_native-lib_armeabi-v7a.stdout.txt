@@ -1,10 +1,17 @@
-[1/3] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
-[2/3] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/HomoExtractor.cpp.o
+[1/2] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
+In file included from D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:5:
+In file included from D:\Repositories\stable-camera\app\src\main\cpp\processor/ThreadCompensation.h:19:
+D:\Repositories\stable-camera\app\src\main\cpp\processor/AutoFilter.h:14:9: warning: 'PI' macro redefined [-Wmacro-redefined]
+#define PI (2 * acos(0))
+        ^
+D:\Repositories\stable-camera\app\src\main\cpp\processor/HomoExtractor.h:16:9: note: previous definition is here
+#define PI 3.1415926535
+        ^
 D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:11:9: warning: 'LOG_TAG' macro redefined [-Wmacro-redefined]
 #define LOG_TAG    "c_ThreadCompensation"
         ^
 D:\Repositories\stable-camera\app\src\main\cpp\processor/ThreadRollingShutter.h:13:9: note: previous definition is here
 #define LOG_TAG    "cThreadRollingShutter"
         ^
-1 warning generated.
-[3/3] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\armeabi-v7a\libnative-lib.so
+2 warnings generated.
+[2/2] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\debug\obj\armeabi-v7a\libnative-lib.so

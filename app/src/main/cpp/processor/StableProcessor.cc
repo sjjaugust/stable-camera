@@ -25,7 +25,7 @@ void StableProcessor::Init(Size videoSize) {
     cm_thread_ -> videoSize = videoSize;
     cm_thread_ -> cropControlFlag = true;//在此设置是否进行裁剪控制
     cm_thread_ -> shakeDetect = false;//在此设置是否进行抖动检测
-    cm_thread_ -> cropRation = 0.85;
+    cm_thread_ -> cropRation = 0.7;
 
     //klt_thread_->start();
     cm_thread_->start();
@@ -114,4 +114,8 @@ void StableProcessor::setCrop(bool isCrop)
 
 void StableProcessor::setDrawStatus(bool is_draw) {
     cm_thread_ -> drawFlag = is_draw;
+}
+
+void StableProcessor::setWriteStatus(bool is_write) {
+    cm_thread_ -> is_write_to_file_ = is_write;
 }

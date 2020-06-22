@@ -16,6 +16,7 @@
 #include "ThreadRollingShutter.h"
 #include "HomoExtractor.h"
 #include <string>
+#include "AutoFilter.h"
 
 namespace threads {
     class ThreadCompensation {
@@ -25,6 +26,7 @@ namespace threads {
         bool drawFlag = true;
         float cropRation;//裁剪率
         bool shakeDetect;//抖动检测
+        bool is_write_to_file_ = false;
     private:
         const char* TAG = "CompensationThread";
         thread worker_thread_;
@@ -44,6 +46,10 @@ namespace threads {
         bool is_first_use_rtheta = true;
         bool is_first_cal_features = true;
         cv::Mat last_homography_;
+        AutoFilter filter1;
+
+
+
 
 //        HomoExtractor homoExtractor;
 
@@ -61,7 +67,7 @@ namespace threads {
         bool affPointSimplify_tri( vector<Point2f> &last_out , vector<Point2f> &cur_out );
         Mat moveAndScale();
         double computeMaxDegree( vector<Point2f> img_line , vector<Point2f> crop_line , double degree , Point2f center );
-        void WriteToFile(FILE* old_file, FILE* new_file, cv::Mat mat, int count, cv::Mat old_mat);
+        void WriteToFile(FILE* old_file, cv::Mat mat);
         cv::Mat cumulative_path_;
         cv::Mat inmat=(cv::Mat_<double>(3, 3)<<1430.2,0.0,505.7, 0.0,1422.9,922.1,0.0,0.0,1.0);//OnePlus 6T
 //        cv::Mat inmat=(cv::Mat_<double>(3, 3)<<1492.89950430177,0.0,940.850079740057, 0.0,1496.13805384036,552.228021875255,0.0,0.0,1.0);//demo board

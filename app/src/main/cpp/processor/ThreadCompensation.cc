@@ -18,7 +18,7 @@ using namespace threads;
 static int frame_count = 0;
 static cv::Mat point_before = (cv::Mat_<double>(3, 1) << 960, 540, 0);
 static cv::Mat point_after = (cv::Mat_<double>(3, 1) << 960, 540, 0);
-static FILE* file_before;
+static FILE* file;
 static FILE* file_after;
 static std::queue<cv::Mat> trans_que;
 static std::queue<cv::Mat> r_temp_queue;
@@ -41,9 +41,9 @@ ThreadCompensation::~ThreadCompensation() {
 }
 
 void ThreadCompensation::start() {
-    file_before = fopen("/data/data/me.zhehua.gryostable/data/track_before.txt", "a");
-    file_after = fopen("/data/data/me.zhehua.gryostable/data/track_after.txt", "a");
-    filter = Filter(16, 20, Filter::delta_T);
+    file = fopen("/data/data/me.zhehua.gryostable/data/rotatemat.txt", "a");
+//    file_after = fopen("/data/data/me.zhehua.gryostable/data/track_after.txt", "a");
+    filter = Filter(20, 40, Filter::delta_T);
     last_homography_ = cv::Mat::eye(3, 3, CV_64F);
     worker_thread_ = thread(&ThreadCompensation::worker, this);
 }
@@ -593,7 +593,7 @@ Mat ThreadCompensation::computeAffine()
     Vec<double, 3> er = lastRot-rot;
     lastRot = rot;
     std::string gyro_info = "theta:";
-    gyro_info = gyro_info + std::to_string(er[0]/PI*180)+" "+std::to_string(er[1]/PI*180)+" "+std::to_string(er[2]/PI*180);
+    gyro_info = gyro_info + std::to_string(rot[0]/PI*180)+" "+std::to_string(rot[1]/PI*180)+" "+std::to_string(rot[2]/PI*180);
 
 
     //LOGI("see r : %f, %f, %f ", er[0], er[1], er[2]);
@@ -620,7 +620,7 @@ Mat ThreadCompensation::computeAffine()
              aff.at<double>(2, 0), aff.at<double>(2, 1), aff.at<double>(2, 2));
     }
     if(homoExtractor.draw_information){
-//        cv::putText(frame, gyro_info, cv::Point(200,300), cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 0), 2, 8, 0);
+        cv::putText(frame, gyro_info, cv::Point(200,300), cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 0), 2, 8, 0);
     }
 
     //LOGI("step6");
@@ -640,8 +640,8 @@ void ThreadCompensation::frameCompensate()
     /*为旋转插值准备数据，即计算仿射矩阵，计算本段非关键帧到前关键帧的仿射矩阵与前关键帧到后关键帧的仿射矩阵*/
     //LOGI("cal aff");
     Mat aff = computeAffine();
-//    cv::Mat perp, sca, shear, rot, trans;
-//    cv::Point2f center(lastGray.cols/2, lastGray.rows/2);
+
+    cv::Point2f center(lastGray.cols/2, lastGray.rows/2);
 //    decomposeHomo(aff, center, perp, sca, shear, rot, trans);
 //    aff = trans * shear * sca * perp;
 
@@ -651,12 +651,13 @@ void ThreadCompensation::frameCompensate()
     auto new_aff = aff;
 
     cv::Mat r_temp;
+    cv::Mat temp = cv::Mat::eye(3, 3, CV_64F);
     if(!is_stable_ ){
 
-        cv::Mat temp =  old_r_mat * threads::ThreadContext::last_old_Rotation_.inv();
+        temp =  old_r_mat * threads::ThreadContext::last_old_Rotation_.inv();
 
-//
-//        decomposeHomo(inmat * temp * inmat.inv(), center, perp, sca, shear, rot, transbb);
+        cv::Mat perp, sca, shear, rot, trans;
+        decomposeHomo(inmat * temp * inmat.inv(), center, perp, sca, shear, rot, trans);
 
 //        LOGI("trans by decompose:%f ,%f, %f", transbb.at<double>(0, 2), transbb.at<double>(1, 2), acos(rot.at<double>(0, 0)));
 //        transbb.at<double>(0, 2) = -transbb.at<double>(0, 2);
@@ -675,16 +676,17 @@ void ThreadCompensation::frameCompensate()
     threads::ThreadContext::last_old_Rotation_ = old_r_mat;
 
     new_aff =  new_aff * r_temp;
+    if(is_write_to_file_){
+        WriteToFile(file, temp);
+    }
+
 //    aff = aff * r_temp;
     trans_que.push(new_aff);
-    bool readyToPull = filter.push(new_aff.clone());
+    bool readyToPull = filter1.push(new_aff.clone());
     if (readyToPull) {
-        cv::Mat gooda = filter.pop();
+        cv::Mat gooda = filter1.pop();
 
-//        WriteToFile(file_before, file_after, gooda, frame_count, old_trans_mat);
 //        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];
-
-
         ////*************测试***********************////
 //        cv::Mat new_r_mat = threads::ThreadContext::r_convert_new_que.front();
 //        threads::ThreadContext::r_convert_new_que.pop();
@@ -697,7 +699,8 @@ void ThreadCompensation::frameCompensate()
 
         if( cropControlFlag )
         {
-            cropControl(cropRation, frameSize, goodar);
+//            cropRation = 0.6;
+//            cropControl(cropRation, frameSize, goodar);
 
             cv::Mat scale = cv::Mat::eye(3,3,CV_64F);
             cv::Mat move = cv::Mat::eye(3,3,CV_64F);
@@ -712,23 +715,23 @@ void ThreadCompensation::frameCompensate()
 
             goodar = scale * move * goodar;
         } else {
-            cropControl(cropRation, frameSize, goodar);
-            cv::Point2d p1(crop_vertex.at<double>(0, 0), crop_vertex.at<double>(1, 0));
-            cv::Point2d p2(crop_vertex.at<double>(0, 1), crop_vertex.at<double>(1, 1));
-            cv::Point2d p3(crop_vertex.at<double>(0, 2), crop_vertex.at<double>(1, 2));
-            cv::Point2d p4(crop_vertex.at<double>(0, 3), crop_vertex.at<double>(1, 3));
-            cv::Mat frame = threads::ThreadContext::frameVec[cm_cur_index_];
-
-            cv::line(frame,p1,p2,cv::Scalar(0,255,0),8);
-            cv::line(frame,p2,p3,cv::Scalar(0,255,0),8);
-            cv::line(frame,p3,p4,cv::Scalar(0,255,0),8);
-            cv::line(frame,p4,p1,cv::Scalar(0,255,0),8);
+//            cropControl(cropRation, frameSize, goodar);
+//            cv::Point2d p1(crop_vertex.at<double>(0, 0), crop_vertex.at<double>(1, 0));
+//            cv::Point2d p2(crop_vertex.at<double>(0, 1), crop_vertex.at<double>(1, 1));
+//            cv::Point2d p3(crop_vertex.at<double>(0, 2), crop_vertex.at<double>(1, 2));
+//            cv::Point2d p4(crop_vertex.at<double>(0, 3), crop_vertex.at<double>(1, 3));
+//            cv::Mat frame = threads::ThreadContext::frameVec[cm_cur_index_];
+//
+//            cv::line(frame,p1,p2,cv::Scalar(0,255,0),8);
+//            cv::line(frame,p2,p3,cv::Scalar(0,255,0),8);
+//            cv::line(frame,p3,p4,cv::Scalar(0,255,0),8);
+//            cv::line(frame,p4,p1,cv::Scalar(0,255,0),8);
         }
 
         goodar.copyTo(ThreadContext::stableTransformVec[out_index_]);
         out_index_ = (out_index_ + 1) % ThreadContext::BUFFERSIZE;
 
-        frame_count++;
+//        frame_count++;
         ThreadRollingShutter::getStableStatus(is_stable_);
         ThreadContext::rs_semaphore_->Signal();
     }
@@ -771,7 +774,7 @@ bool isInside(cv::Mat cropvertex ,cv::Mat newvertex)
 //经过平移旋转后仍包括裁剪窗口返回true，否则返回false，且修改affine
 bool ThreadCompensation::cropControl( float cropr , Size size , Mat &affine )
 {
-    bool doCrop = false;
+    bool doCrop = true;
     int out=0;
     Mat vertex=(cv::Mat_<double>(3, 4)<<0.0,0.0,size.width-1,size.width-1,0.0,size.height-1,size.height-1,0.0,1.0,1.0,1.0,1.0);
     double croph=size.height*cropr;
@@ -806,7 +809,7 @@ bool ThreadCompensation::cropControl( float cropr , Size size , Mat &affine )
         cv::Mat transtemp=stableVec/pow(transdet, 1.0/3);
         resultVec=I*(1-ratio)+transtemp*ratio;
 
-        ratio=ratio-0.01;
+        ratio=ratio-0.1;
         newvertex=resultVec*vertex;
         newvertex.at<double>(0,0)=newvertex.at<double>(0,0)/newvertex.at<double>(2,0);
         newvertex.at<double>(1,0)=newvertex.at<double>(1,0)/newvertex.at<double>(2,0);
@@ -822,6 +825,8 @@ bool ThreadCompensation::cropControl( float cropr , Size size , Mat &affine )
 
         allInside = isInside(cropvertex,newvertex);
     }
+    LOGI("ratio11:%f", ratio);
+
     crop_vertex = newvertex;
 
     if(doCrop)
@@ -970,19 +975,14 @@ double ThreadCompensation::computeMaxDegree( vector<Point2f> img_line , vector<P
         }
     }
 }
-void ThreadCompensation::WriteToFile(FILE* old_file, FILE* new_file, cv::Mat mat, int count, cv::Mat old_mat) {
-    point_before = old_mat * point_before;
-    cv::Mat pointafter = mat * point_before;
-    LOGI("gooda:[%f, %f,%f,%f,%f,%f,%f,%f,%f]",
-         mat.at<double>(0, 0), mat.at<double>(0, 1), mat.at<double>(0, 2),
-         mat.at<double>(1, 0), mat.at<double>(1, 1), mat.at<double>(1, 2),
-         mat.at<double>(2, 0), mat.at<double>(2, 1), mat.at<double>(2, 2));
-    char content_before[60];
-    char content_after[60];
-    sprintf(content_before, "%d %f %f\n", frame_count, point_before.at<double>(0, 0), point_before.at<double>(1, 0));
-    sprintf(content_after, "%d %f %f\n", frame_count, pointafter.at<double>(0, 0), pointafter.at<double>(1, 0));
+void ThreadCompensation::WriteToFile(FILE* old_file, cv::Mat mat) {
+    char content_before[600];
+    sprintf(content_before, "%d %f %f %f %f %f %f %f %f %f\n", frame_count,
+            mat.at<double>(0, 0), mat.at<double>(0, 1), mat.at<double>(0, 2),
+            mat.at<double>(1, 0), mat.at<double>(1, 1), mat.at<double>(1, 2),
+            mat.at<double>(2, 0), mat.at<double>(2, 1), mat.at<double>(2, 2));
     fwrite(content_before, sizeof(char), strlen(content_before), old_file);
-    fwrite(content_after, sizeof(char), strlen(content_after), new_file);
+    frame_count++;
 }
 cv::Vec2f ThreadCompensation::CalTranslationByR(cv::Mat r) {
     std::vector<cv::Point2f> feature = threads::ThreadContext::feature_by_r_.front();

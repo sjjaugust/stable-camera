@@ -17,7 +17,7 @@ using namespace cv;
 namespace threads {
     class ThreadContext {
     public:
-        const static int SEGSIZE = 10;
+        const static int SEGSIZE = 4;
         const static int BUFFERSIZE = SEGSIZE * 4;
         const static int MIN_DISTANCE = 20;
         constexpr const static float TRANSLATE_AMPLITUDE = 0.4f;

@@ -59,6 +59,7 @@ bool HomoExtractor::judge_area() {
     block_index_.clear();
     bool redetect = false;
     int num[16] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+
     for (int i = 0; i < 16; i++) {
         if (point_num[i] < num[i]) {
             redetect = true;
@@ -124,38 +125,38 @@ bool HomoExtractor::judge_recal_simple(cv::Mat img1, std::vector<char> ifselect)
 void HomoExtractor::detectFeature(const cv::Mat& img, int pic_index) {
     double quality_level = 0.1;
     double min_distance = 8;
-    int max_corners = 2;
+    int max_corners = 8;
 
     std::vector<cv::Point2f> lastFeatures_a[16], startp;
 //    lastFeatures.clear();
     last_features_[pic_index].clear();
 
-    int half_w=img.cols/4 , half_h=img.rows/4;
+    int half_w=img.cols/2 , half_h=img.rows/2;
     startp.push_back(cv::Point2f(0, 0));
     startp.push_back(cv::Point2f(0, half_h));
-    startp.push_back(cv::Point2f(0, 2*half_h));
-    startp.push_back(cv::Point2f(0, 3*half_h));
+//    startp.push_back(cv::Point2f(0, 2*half_h));
+//    startp.push_back(cv::Point2f(0, 3*half_h));
 
     startp.push_back(cv::Point2f(half_w, 0));
     startp.push_back(cv::Point2f(half_w, half_h));
-    startp.push_back(cv::Point2f(half_w, 2*half_h));
-    startp.push_back(cv::Point2f(half_w, 3*half_h));
+//    startp.push_back(cv::Point2f(half_w, 2*half_h));
+//    startp.push_back(cv::Point2f(half_w, 3*half_h));
 
-    startp.push_back(cv::Point2f(2*half_w, 0));
-    startp.push_back(cv::Point2f(2*half_w, half_h));
-    startp.push_back(cv::Point2f(2*half_w, 2*half_h));
-    startp.push_back(cv::Point2f(2*half_w, 3*half_h));
-
-    startp.push_back(cv::Point2f(3*half_w, 0));
-    startp.push_back(cv::Point2f(3*half_w, half_h));
-    startp.push_back(cv::Point2f(3*half_w, 2*half_h));
-    startp.push_back(cv::Point2f(3*half_w, 3*half_h));
+//    startp.push_back(cv::Point2f(2*half_w, 0));
+//    startp.push_back(cv::Point2f(2*half_w, half_h));
+//    startp.push_back(cv::Point2f(2*half_w, 2*half_h));
+//    startp.push_back(cv::Point2f(2*half_w, 3*half_h));
+//
+//    startp.push_back(cv::Point2f(3*half_w, 0));
+//    startp.push_back(cv::Point2f(3*half_w, half_h));
+//    startp.push_back(cv::Point2f(3*half_w, 2*half_h));
+//    startp.push_back(cv::Point2f(3*half_w, 3*half_h));
 
     cv::Rect rect[16];
     cv::Mat lastGray_a[16];
 
 
-    for(int i=0;i<16;i++)
+    for(int i=0;i<4;i++)
     {
         rect[i]=cv::Rect(startp[i].x, startp[i].y, half_w, half_h);//左上角坐标以及矩形宽和高
         lastGray_a[i] = img(rect[i]);
@@ -204,7 +205,7 @@ std::vector<cv::Point2f> HomoExtractor::detectCertainFeature(const std::vector<i
 }
 
 void HomoExtractor::trackCertainFeature( std::vector<cv::Point2f> &last_add_feature) {
-    double rate = 1.0;
+    double rate = 1.4;
     double min_rate = 0.8;
     double max_rate = 1.4;
     std::vector<cv::Point2f> cur_add_feature;
@@ -217,8 +218,8 @@ void HomoExtractor::trackCertainFeature( std::vector<cv::Point2f> &last_add_feat
     for(int i=0;i<max;i++)
     {
         dis_sum += point_distance(last_add_feature[i],cur_add_feature[i]);
-        gradient += abs((cur_add_feature[i].y - last_add_feature[i].y)
-                        /(cur_add_feature[i].x - last_add_feature[i].x));
+//        gradient += (cur_add_feature[i].y - last_add_feature[i].y)
+//                        /point_distance(last_add_feature[i],cur_add_feature[i]);
     }
     double dis_avg=0;
     dis_avg=dis_sum/max;
@@ -230,9 +231,9 @@ void HomoExtractor::trackCertainFeature( std::vector<cv::Point2f> &last_add_feat
         {
             add_status[i] = 0;
         }
-        gradient = abs((cur_add_feature[i].y - last_add_feature[i].y)
-                       /(cur_add_feature[i].x - last_add_feature[i].x));
-        if(gradient < min_rate * avg_gradient || gradient > max_rate * avg_gradient){
+//        gradient += (cur_add_feature[i].y - last_add_feature[i].y)
+//                        /point_distance(last_add_feature[i],cur_add_feature[i]);
+        if(gradient < avg_gradient){
             add_status[i] = 0;
         }
     }
@@ -306,8 +307,8 @@ void HomoExtractor::trackFeature(const cv::Mat &img1, const cv::Mat &img2, const
     for(int i=0;i<max;i++)
     {
         dis_sum += point_distance(last_features_[pic_index][i],cur_features_[pic_index][i]);
-        gradient += abs((cur_features_[pic_index][i].y - last_features_[pic_index][i].y)
-                        /(cur_features_[pic_index][i].x - last_features_[pic_index][i].x));
+//        gradient += (cur_features_[pic_index][i].x - last_features_[pic_index][i].x)
+//                        /point_distance(last_features_[pic_index][i],cur_features_[pic_index][i]);
     }
     double dis_avg=0;
     dis_avg=dis_sum/max;
@@ -320,9 +321,9 @@ void HomoExtractor::trackFeature(const cv::Mat &img1, const cv::Mat &img2, const
         {
             status[i] = 0;
         }
-        gradient = abs((cur_features_[pic_index][i].y - last_features_[pic_index][i].y)
-                       /(cur_features_[pic_index][i].x - last_features_[pic_index][i].x));
-        if(gradient < min_rate * avg_gradient || gradient > max_rate * avg_gradient){
+//       gradient += (cur_features_[pic_index][i].x - last_features_[pic_index][i].x)
+//                        /point_distance(last_features_[pic_index][i],cur_features_[pic_index][i]);
+        if(gradient < avg_gradient){
             status[i] = 0;
         }
     }//如果大于特征点之间的距离大于平均距离的1.4倍，则舍弃
@@ -656,16 +657,16 @@ void HomoExtractor::stab_feature_25(cv::Mat img1, cv::Mat img2) {
         curFeaturesTmp.push_back(cur_add[i]);
     }
 
-    for(int i=0;i<last_add.size();i++)
-    {
-        lastFeaturesTmp.push_back(last_add[i]);
-        curFeaturesTmp.push_back(cur_add[i]);
-    }
-    for(int i=0;i<last_add.size();i++)
-    {
-        lastFeaturesTmp.push_back(last_add[i]);
-        curFeaturesTmp.push_back(cur_add[i]);
-    }
+//    for(int i=0;i<last_add.size();i++)
+//    {
+//        lastFeaturesTmp.push_back(last_add[i]);
+//        curFeaturesTmp.push_back(cur_add[i]);
+//    }
+//    for(int i=0;i<last_add.size();i++)
+//    {
+//        lastFeaturesTmp.push_back(last_add[i]);
+//        curFeaturesTmp.push_back(cur_add[i]);
+//    }
 }
 
 void HomoExtractor::stab_feature_25_H(cv::Mat img1, cv::Mat img2) {
@@ -712,16 +713,16 @@ void HomoExtractor::stab_feature_25_H(cv::Mat img1, cv::Mat img2) {
         curFeaturesTmp.push_back(cur_add[i]);
     }
 
-    for(int i=0;i<last_add.size();i++)
-    {
-        lastFeaturesTmp.push_back(last_add[i]);
-        curFeaturesTmp.push_back(cur_add[i]);
-    }
-    for(int i=0;i<last_add.size();i++)
-    {
-        lastFeaturesTmp.push_back(last_add[i]);
-        curFeaturesTmp.push_back(cur_add[i]);
-    }
+//    for(int i=0;i<last_add.size();i++)
+//    {
+//        lastFeaturesTmp.push_back(last_add[i]);
+//        curFeaturesTmp.push_back(cur_add[i]);
+//    }
+//    for(int i=0;i<last_add.size();i++)
+//    {
+//        lastFeaturesTmp.push_back(last_add[i]);
+//        curFeaturesTmp.push_back(cur_add[i]);
+//    }
 }
 
 cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
@@ -729,6 +730,7 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
 //    cv::Mat img2_r;
     curGray = img2.rowRange(0,img2.rows * 2 / 3);
     cv::resize(curGray, curGray, cv::Size(curGray.cols / ThreadContext::DOWNSAMPLE_SCALE, curGray.rows / ThreadContext::DOWNSAMPLE_SCALE));
+//    cv::GaussianBlur(curGray, curGray, cv::Size(15, 15), 0, 0);
 
     cv::Rect rect_lu(0, 0, curGray.cols/2, curGray.rows/2);
     cv::Rect rect_ru(curGray.cols/2, 0, curGray.cols/2, curGray.rows/2);
@@ -738,6 +740,7 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
 //        cv::Mat img1_r;
         lastGray = img1.rowRange(0,img1.rows * 2 / 3);
         cv::resize(lastGray, lastGray, cv::Size(lastGray.cols / ThreadContext::DOWNSAMPLE_SCALE, lastGray.rows / ThreadContext::DOWNSAMPLE_SCALE));
+//        cv::GaussianBlur(lastGray, lastGray, cv::Size(15, 15), 0, 0);
 
         last_lu_ = lastGray(rect_lu);
         last_ru_ = lastGray(rect_ru);
@@ -792,6 +795,12 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
             trackCertainFeature(last_add_feature);
         }
     }
+    LOGI("point_num:[%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d], %d",
+         point_num[0], point_num[1], point_num[2], point_num[3],
+         point_num[4], point_num[5], point_num[6], point_num[7],
+         point_num[8], point_num[9], point_num[10], point_num[11],
+         point_num[12], point_num[13], point_num[14], point_num[15], re);
+
 
     std::vector<char> ifselect;
     calcul_Homo(ifselect,2000,0);
@@ -839,18 +848,18 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
         sumup_H_err2 += h_err;
     }
 
-    if(h_err > 5 && jiaozheng)
-    {
-        addp_frame++;
-        if(h_err>13)
-            stab_feature_25(img1,img2);
-        else
-            stab_feature_25_H(img1,img2);
-
-        calcul_Homo(ifselect,2000,0);
-        LOGI("redo detect and track");
-
-    }
+//    if(h_err > 5 && jiaozheng)
+//    {
+//        addp_frame++;
+//        if(h_err>13)
+//            stab_feature_25(img1,img2);
+//        else
+//            stab_feature_25_H(img1,img2);
+//
+//        calcul_Homo(ifselect,2000,0);
+//        LOGI("redo detect and track");
+//
+//    }
 
     if(draw_information){
         int tsize=curFeaturesTmp.size()>lastFeaturesTmp.size() ? lastFeaturesTmp.size() : curFeaturesTmp.size();

@@ -78,6 +78,12 @@ Java_me_zhehua_gryostable_StableProcessor_n_1setDrawStatus(JNIEnv *env, jobject 
     n_sp.setDrawStatus(isDraw);
 }
 
+JNIEXPORT void JNICALL
+Java_me_zhehua_gryostable_StableProcessor_n_1setWriteStatus(JNIEnv *env, jobject instance,
+                                                            jboolean isWrite){
+    n_sp.setWriteStatus(isWrite);
+}
+
 }
 
 extern "C"

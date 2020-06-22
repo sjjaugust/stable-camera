@@ -102,6 +102,7 @@ public class MainCameraActivity extends AppCompatActivity implements OnRecordLis
                     mRenderView.setSavePath(file.getAbsolutePath());
                     Log.d(TAG, "onRecordStart: "+file.getAbsolutePath());
                     mRenderView.startRecord();
+                    mRenderView.glRender.camera2Helper.stableProcessor.setWriteStatus(true);
                 }catch (FileUtil.NoExternalStoragePermissionException e) {
                     e.printStackTrace();
                 } catch (FileUtil.NoExternalStorageMountedException e) {
@@ -117,6 +118,7 @@ public class MainCameraActivity extends AppCompatActivity implements OnRecordLis
             @Override
             public void onRecordStop() {
                 mRenderView.stopRecord();
+                mRenderView.glRender.camera2Helper.stableProcessor.setWriteStatus(false);
             }
         });
     }

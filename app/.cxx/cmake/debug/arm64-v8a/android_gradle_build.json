@@ -77,6 +77,12 @@
 					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
 					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/processor/HomoExtractor.cpp",
 					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
+				},
+				
+				{
+					"flags" : "  --target=aarch64-none-linux-android21 --gcc-toolchain=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=D:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include  -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security  -frtti -fexceptions -O0 -fno-limit-debug-info  -fPIC   -std=gnu++11  -c ",
+					"src" : "D:/Repositories/stable-camera/app/src/main/cpp/processor/AutoFilter.cpp",
+					"workingDirectory" : "D:/Repositories/stable-camera/app/.cxx/cmake/debug/arm64-v8a"
 				}
 			],
 			"output" : "D:/Repositories/stable-camera/app/build/intermediates/cmake/debug/obj/arm64-v8a/libnative-lib.so",
