@@ -3,9 +3,113 @@
 //
 
 #include "HomoExtractor.h"
-#define LOG_TAG    "c_ThreadCompensation"
+#define LOG_TAG    "c_HomoExtractor"
 #define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+void decomposeHomo2(cv::Mat h, cv::Point2f cen, cv::Mat &perp, cv::Mat &sca, cv::Mat &shear, cv::Mat &rot, cv::Mat &trans)
+{
+    double hm[3][3];
+    double fax, fay, tx, ty, sh, theta, lamx, lamy;
+    double cx = cen.x;
+    double cy = cen.y;
+    for(int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            hm[i][j] = h.at<double>(i,j)/h.at<double>(2,2);
+        }
+    }
+
+    fax = hm[2][0]/(cx*hm[2][0] + cy*hm[2][1] + 1);
+    fay = hm[2][1]/(cx*hm[2][0] + cy*hm[2][1] + 1);
+    std::cout << "fax: " << fax << " fay: " << fay << std::endl;
+
+    double n = 1 - cx*fax - cy*fay;
+
+    double ctx = n*hm[0][2] + cx*n*hm[0][0] + cy*n*hm[0][1];
+    double cty = n*hm[1][2] + cx*n*hm[1][0] + cy*n*hm[1][1];
+    std::cout << "n: " << n << " ctx: " << ctx << " cty: " << cty << std::endl;
+
+    tx = ctx - cx;
+    ty = cty - cy;
+
+    double xc = n*hm[0][0] - fax*n*hm[0][2] - cx*fax*n*hm[0][0] - cy*fax*n*hm[0][1];
+    double xs = n*hm[1][0] - fax*n*hm[1][2] - cx*fax*n*hm[1][0] - cy*fax*n*hm[1][1];
+    double ysmc = - n*hm[0][1] + fay*n*hm[0][2] + cx*fay*n*hm[0][0] + cy*fay*n*hm[0][1];
+    double ycps = n*hm[1][1] - fay*n*hm[1][2] - cx*fay*n*hm[1][0] - cy*fay*n*hm[1][1];
+    std::cout << "xc: " << xc << " xs: " << xs << " ysmc: " << ysmc << " ycps: " << ycps << std::endl;
+    if(xs == 0)
+        xs=1e-8;
+
+    sh = -(xc*ysmc - xs*ycps)/(xc*ycps + xs*ysmc);
+    double z = xc*xc + xs*xs;
+    double theta1 = -2*atan( (xc+sqrt(z)) / xs );
+    double theta2 = -2*atan( (xc-sqrt(z)) / xs );
+    if(xs == 0)
+    {
+        theta1 = 0;
+        theta2 = 0;
+    }
+    if(abs(theta1)<abs(theta2))
+    {
+        theta = theta1;
+        lamx = -sqrt(z);
+        lamy = (xc*xc*ycps - xc*ycps*(xc+sqrt(z)) - xs*ysmc*(xc+sqrt(z)) + xc*xs*ysmc) / z;
+    }
+    else
+    {
+        theta = theta2;
+        lamx = sqrt(z);
+        lamy = (xc*xc*ycps - xc*ycps*(xc-sqrt(z)) - xs*ysmc*(xc-sqrt(z)) + xc*xs*ysmc) / z;
+    }
+
+    std::cout << "theta: " << theta << " lamx: " << lamx << " lamy: " << lamy << std::endl;
+
+    cv::Mat M1=(cv::Mat_<double>(3, 3) <<
+                                       1.0, 0.0, -cx,
+            0.0, 1.0, -cy,
+            0.0, 0.0, 1.0);
+
+    cv::Mat M2=(cv::Mat_<double>(3, 3) <<
+                                       1.0, 0.0, cx,
+            0.0, 1.0, cy,
+            0.0, 0.0, 1.0);
+
+    cv::Mat PE=(cv::Mat_<double>(3, 3) <<
+                                       1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            fax, fay, 1.0);
+
+    cv::Mat SC=(cv::Mat_<double>(3, 3) <<
+                                       lamx, 0.0, 0.0,
+            0.0, lamy, 0.0,
+            0.0, 0.0, 1.0);
+
+    cv::Mat SH=(cv::Mat_<double>(3, 3) <<
+                                       1.0, sh, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0);
+
+    cv::Mat RO=(cv::Mat_<double>(3, 3) <<
+                                       cos(theta), -sin(theta), 0.0,
+            sin(theta), cos(theta), 0.0,
+            0.0, 0.0, 1.0);
+
+    cv::Mat TR=(cv::Mat_<double>(3, 3) <<
+                                       1.0, 0.0, tx,
+            0.0, 1.0, ty,
+            0.0, 0.0, 1.0);
+
+    perp = M2 * PE * M1;
+    perp = perp / perp.at<double>(2,2);
+    sca = M2 * SC * M1;
+    shear = M2 * SH * M1;
+    rot = M2 * RO * M1;
+    trans = TR.clone();
+
+}
+
 double HomoExtractor::point_distance(cv::Point2f p1, cv::Point2f p2) {
     cv::Point2f d = p1 - p2;
     double d_mu;
@@ -453,6 +557,7 @@ void HomoExtractor::calcul_Homo(std::vector<char> &ifselect, int niter, int type
             }
         }
     }
+
 }
 
 cv::Point2f HomoExtractor::goround(cv::Point2f p1, cv::Point2f p0, double degree) {
@@ -605,6 +710,90 @@ double HomoExtractor::calcul_H_error(int c_h, int c_w) {
     }
 
     return mindis;
+
+    /*int height=100;
+    int width=100;
+    double error_rate=1.1;
+    bool aff_adj=false;
+
+    cv::Mat  vertex=(cv::Mat_<double>(3, 4)<<c_w-width, c_w-width, c_w+width, c_w+width, c_h-height, c_h+height, c_h+height, c_h-height, 1.0, 1.0, 1.0, 1.0);
+
+    cv::Mat perp, sca, shear, rot, trans;
+    cv::Point2f center(c_w, c_h);
+    std::cout<<"("<<c_w<<","<<c_h<<")"<<std::endl;
+    decomposeHomo2(H, center, perp, sca, shear, rot, trans);
+    cv::Mat simH = trans * rot * sca;
+
+    cv::Point2f cp1, cp2, cp3, cp4;
+    std::vector<cv::Point2f> l, c;
+
+    cv::Mat newvertex = H * vertex;
+    cp1.x = newvertex.at<double>(0, 0) / newvertex.at<double>(2, 0);
+    cp1.y = newvertex.at<double>(1, 0) / newvertex.at<double>(2, 0);
+
+    cp2.x = newvertex.at<double>(0, 1) / newvertex.at<double>(2, 1);
+    cp2.y = newvertex.at<double>(1, 1) / newvertex.at<double>(2, 1);
+
+    cp3.x = newvertex.at<double>(0, 2) / newvertex.at<double>(2, 2);
+    cp3.y = newvertex.at<double>(1, 2) / newvertex.at<double>(2, 2);
+
+    cp4.x = newvertex.at<double>(0, 3) / newvertex.at<double>(2, 3);
+    cp4.y = newvertex.at<double>(1, 3) / newvertex.at<double>(2, 3);
+
+    double c_x=(cp1.x + cp2.x + cp3.x + cp4.x)/4;
+    double c_y=(cp1.y + cp2.y + cp3.y + cp4.y)/4;
+    cv::Point2f pc(c_x,c_y);
+
+
+    if(true)
+    {
+        double d1=vec_cos(cp1,cp2,cp4);
+        double d2=vec_cos(cp2,cp1,cp3);
+        double d3=vec_cos(cp3,cp2,cp4);
+        double d4=vec_cos(cp4,cp1,cp3);
+
+        stable_move=true;
+        stable_move2=false;
+        if((d1<0 && d2<0) || (d2<0 && d3<0) || (d3<0 && d4<0) || (d4<0 && d1<0))
+        {
+            stable_move=false;
+        }
+        double limit2=0.015;
+        if((d1>limit2 && d3>limit2) || (d2>limit2 && d4>limit2))
+        {
+            stable_move2=true;
+        }
+    }
+
+    if(true)
+    {
+
+        second_H = trans * rot * sca;
+    }
+
+    cv::Point2f sp1, sp2, sp3, sp4;
+
+    newvertex = second_H * vertex;
+    sp1.x = newvertex.at<double>(0, 0) / newvertex.at<double>(2, 0);
+    sp1.y = newvertex.at<double>(1, 0) / newvertex.at<double>(2, 0);
+
+    sp2.x = newvertex.at<double>(0, 1) / newvertex.at<double>(2, 1);
+    sp2.y = newvertex.at<double>(1, 1) / newvertex.at<double>(2, 1);
+
+    sp3.x = newvertex.at<double>(0, 2) / newvertex.at<double>(2, 2);
+    sp3.y = newvertex.at<double>(1, 2) / newvertex.at<double>(2, 2);
+
+    sp4.x = newvertex.at<double>(0, 3) / newvertex.at<double>(2, 3);
+    sp4.y = newvertex.at<double>(1, 3) / newvertex.at<double>(2, 3);
+
+    double l1 = point_distance(cp1,sp1);
+    double l2 = point_distance(cp2,sp2);
+    double l3 = point_distance(cp3,sp3);
+    double l4 = point_distance(cp4,sp4);
+
+    double mindis=l1+l2+l3+l4;
+
+    return mindis;*/
 }
 
 void HomoExtractor::stab_feature_25(cv::Mat img1, cv::Mat img2) {
@@ -805,7 +994,7 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
     std::vector<char> ifselect;
     calcul_Homo(ifselect,2000,0);
 
-
+    LOGI("Point size : %d; H Matinthread: %f, %f, %f, %f, %f, %f, %f, %f, %f", lastFeaturesTmp.size(), H.at<double>(0,0), H.at<double>(0,1), H.at<double>(0,2), H.at<double>(1,0), H.at<double>(1,1), H.at<double>(1,2), H.at<double>(2,0), H.at<double>(2,1), H.at<double>(2,2));
 
     int height=img1.rows;
     int width=img1.cols;
@@ -826,18 +1015,26 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
     double ifinrate2=ifinliner/ifselect.size();
     bool re2 = false;
     re2= judge_recal_simple(img1, ifselect);
-    if(re2){
-        calcul_Homo(ifselect,2000,1);
-    }
 
     H_ori = H.clone();
     double h_err = calcul_H_error(height/2, width/2);
-    LOGI("h_err:%f", h_err);
+    LOGI("H Matinthread h_err:%f", h_err);
 
-    bool jiaozheng=true;
-    if(ifinrate2>0.95)
-    {
-        jiaozheng=false;
+    if(h_err > 15 || re2) {
+
+        if (h_err < 150) {
+            if (h_err > 30)
+                stab_feature_25(img1, img2);
+            else
+                stab_feature_25_H(img1, img2);
+
+            calcul_Homo(ifselect, 2000, 0);
+        } else
+        {
+            H = cv::Mat::eye(3, 3, CV_64F);
+        }
+        LOGI("Point size : %d; recal_H Matinthread: %f, %f, %f, %f, %f, %f, %f, %f, %f", lastFeaturesTmp.size(), H.at<double>(0,0), H.at<double>(0,1), H.at<double>(0,2), H.at<double>(1,0), H.at<double>(1,1), H.at<double>(1,2), H.at<double>(2,0), H.at<double>(2,1), H.at<double>(2,2));
+
     }
 
     if(ex_index_ < ThreadContext::SEGSIZE/2)

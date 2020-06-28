@@ -563,7 +563,7 @@ Mat ThreadCompensation::computeAffine()
     homoExtractor.setDrawStatus(drawFlag);
     Mat lastFrame = ThreadContext::frameVec[cm_las_index_];
     Mat frame = ThreadContext::frameVec[cm_cur_index_];
-    frameSize.height=frame.rows;
+    frameSize.height=frame.rows * 2 / 3;
     frameSize.width=frame.cols;
 
 //    LOGI("frameSize:%d, %d", frameSize.width, frameSize.height);
@@ -604,7 +604,7 @@ Mat ThreadCompensation::computeAffine()
     sc = stable_count(error);
     is_stable_ = sc;
     LOGI("see error : %f, %d ", error, is_stable_);
-    LOGI("i am herayayayayayayay");
+    //LOGI("i am herdadadadada");
     //LOGI("step5");
     Mat aff;
     if(sc)
@@ -615,9 +615,9 @@ Mat ThreadCompensation::computeAffine()
     else
     {
         aff = homoExtractor.extractHomo(lastFrame, frame);
-        LOGI("i am here for youyou:[%f, %f, %f, %f, %f, %f, %f, %f, %f]", aff.at<double>(0, 0), aff.at<double>(0, 1), aff.at<double>(0, 2),
-             aff.at<double>(1, 0), aff.at<double>(1, 1), aff.at<double>(1, 2),
-             aff.at<double>(2, 0), aff.at<double>(2, 1), aff.at<double>(2, 2));
+        //LOGI("i am here for youyou:[%f, %f, %f, %f, %f, %f, %f, %f, %f]", aff.at<double>(0, 0), aff.at<double>(0, 1), aff.at<double>(0, 2),
+        //     aff.at<double>(1, 0), aff.at<double>(1, 1), aff.at<double>(1, 2),
+        //     aff.at<double>(2, 0), aff.at<double>(2, 1), aff.at<double>(2, 2));
     }
     if(homoExtractor.draw_information){
         cv::putText(frame, gyro_info, cv::Point(200,300), cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 0), 2, 8, 0);
@@ -649,6 +649,7 @@ void ThreadCompensation::frameCompensate()
     threads::ThreadContext::r_convert_que.pop();
 
     auto new_aff = aff;
+    LOGI("new_aff before_Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", new_aff.at<double>(0,0), new_aff.at<double>(0,1), new_aff.at<double>(0,2), new_aff.at<double>(1,0), new_aff.at<double>(1,1), new_aff.at<double>(1,2), new_aff.at<double>(2,0), new_aff.at<double>(2,1), new_aff.at<double>(2,2));
 
     cv::Mat r_temp;
     cv::Mat temp = cv::Mat::eye(3, 3, CV_64F);
@@ -675,7 +676,13 @@ void ThreadCompensation::frameCompensate()
     }
     threads::ThreadContext::last_old_Rotation_ = old_r_mat;
 
+    LOGI("new_aff Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", new_aff.at<double>(0,0), new_aff.at<double>(0,1), new_aff.at<double>(0,2), new_aff.at<double>(1,0), new_aff.at<double>(1,1), new_aff.at<double>(1,2), new_aff.at<double>(2,0), new_aff.at<double>(2,1), new_aff.at<double>(2,2));
+    LOGI("r_temp Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", r_temp.at<double>(0,0), r_temp.at<double>(0,1), r_temp.at<double>(0,2), r_temp.at<double>(1,0), r_temp.at<double>(1,1), r_temp.at<double>(1,2), r_temp.at<double>(2,0), r_temp.at<double>(2,1), r_temp.at<double>(2,2));
+
     new_aff =  new_aff * r_temp;
+
+    LOGI("new_aff after_Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", new_aff.at<double>(0,0), new_aff.at<double>(0,1), new_aff.at<double>(0,2), new_aff.at<double>(1,0), new_aff.at<double>(1,1), new_aff.at<double>(1,2), new_aff.at<double>(2,0), new_aff.at<double>(2,1), new_aff.at<double>(2,2));
+
     if(is_write_to_file_){
         WriteToFile(file, temp);
     }
@@ -685,6 +692,8 @@ void ThreadCompensation::frameCompensate()
     bool readyToPull = filter1.push(new_aff.clone());
     if (readyToPull) {
         cv::Mat gooda = filter1.pop();
+
+        //LOGI("gooda after_Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", gooda.at<double>(0,0), gooda.at<double>(0,1), gooda.at<double>(0,2), gooda.at<double>(1,0), gooda.at<double>(1,1), gooda.at<double>(1,2), gooda.at<double>(2,0), gooda.at<double>(2,1), gooda.at<double>(2,2));
 
 //        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];
         ////*************测试***********************////
@@ -714,6 +723,7 @@ void ThreadCompensation::frameCompensate()
             move.at<double>(1,2) = -mh;
 
             goodar = scale * move * goodar;
+            //goodar = scale * move;
         } else {
 //            cropControl(cropRation, frameSize, goodar);
 //            cv::Point2d p1(crop_vertex.at<double>(0, 0), crop_vertex.at<double>(1, 0));
