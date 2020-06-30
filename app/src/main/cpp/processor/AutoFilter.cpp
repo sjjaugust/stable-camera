@@ -3,9 +3,17 @@
 //
 
 #include "AutoFilter.h"
+#include "BSpline.h"
+#define LOG_TAG    "c_ThreadCompensation"
+#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
 static std::ofstream file_w("window.txt");
 static int frame_count = 1;
-
+static std::ofstream file_w1("middle.txt");
+static int frame_count_m = 1;
+static bool is_first = true;
+int AutoFilter::predict_num_ = 5;
 AutoFilter::AutoFilter(int max_size, double sigma)
 :max_size_(max_size), sigma_(sigma)
 {
@@ -26,10 +34,11 @@ AutoFilter::AutoFilter(int max_size, double sigma)
     double mh = (size_.height - croph) / 2;
     cropvertex_ = (cv::Mat_<double>(3, 4)<<mw,mw,cropw+mw,cropw+mw,mh,croph+mh,croph+mh,mh,1.0,1.0,1.0,1.0);
 
-    for(int i=0; i<50; i++)
+    for(int i=0; i<predict_num_; i++)
     {
-        f_num[i] = i+1;
+        f_num_[i] = i+1;
     }
+    num_que_ = 0;
 }
 
 bool AutoFilter::push(cv::Mat goodar) {
@@ -46,16 +55,25 @@ bool AutoFilter::push(cv::Mat goodar) {
         if(input_buffer_.size() >= delay_num_){
             int target = input_buffer_.size() - (delay_num_);
             int offset = max_size_ - input_buffer_.size();
-            putIntoWindow(target, offset);
-            return true;
+            if(putIntoWindow(target, offset)){
+                return true;
+            } else {
+                return false;
+            }
+
         } else{
             return false;
         }
     } else {
         int target = input_buffer_.size() - delay_num_;
-        putIntoWindow(target);
-        input_buffer_.pop_front();
-        return true;
+        if(putIntoWindow(target)){
+            input_buffer_.pop_front();
+            return true;
+        } else {
+            input_buffer_.pop_front();
+            return false;
+        }
+
     }
 
 }
@@ -70,7 +88,7 @@ cv::Mat AutoFilter::pop() {
 
 }
 
-void AutoFilter::putIntoWindow(int target, int offset) {
+bool AutoFilter::putIntoWindow(int target, int offset) {
     std::cout << "target:" << target << std::endl;
     window_.clear();
     window_.resize(input_buffer_.size());
@@ -88,13 +106,12 @@ void AutoFilter::putIntoWindow(int target, int offset) {
         sum_weight += weight_vec_[i + offset];
     }
     ret_mat /= sum_weight;
-//    cv::Mat glo_t = processGlobalTrans(ret_mat, target, offset);
-//    std::cout << "glot:" << glo_t << std::endl;
-//    cv::Mat new_gooda = glo_t * ret_mat;
-//    new_gooda = ret_mat;
-    cv::Mat new_gooda = processTrans(ret_mat, size_);
-    frame_count++;
-    output_buffer_.push(new_gooda.clone());
+    processCrop(ret_mat, size_);
+    if(ex_count < predict_num_){
+        ex_count++;
+        return false;
+    }
+    return true;
 
 }
 
@@ -129,247 +146,159 @@ bool AutoFilter::isInside(cv::Mat cropvertex, cv::Mat newvertex) {
     return aInside;
 }
 
-cv::Mat AutoFilter::calGlobalTrans(const cv::Mat &comp, double crop_rate, const cv::Size& videoSize) {
-    cv::Mat newvertex = comp * vertex_;
-    newvertex.at<double>(0, 0) = newvertex.at<double>(0, 0) / newvertex.at<double>(2, 0);
-    newvertex.at<double>(1, 0) = newvertex.at<double>(1, 0) / newvertex.at<double>(2, 0);
+void AutoFilter::processCrop(const cv::Mat &comp, const cv::Size &size) {
+    s_mat_.push(comp.clone());
+    cv::Point2d crop_window[4];
+    cv::Mat stable_mat = comp.clone();
+    cv::Mat box = stable_mat.inv() * cropvertex_;
+    crop_window[0].x=box.at<double>(0,0)/box.at<double>(2,0);
+    crop_window[0].y=box.at<double>(1,0)/box.at<double>(2,0);
 
-    newvertex.at<double>(0, 1) = newvertex.at<double>(0, 1) / newvertex.at<double>(2, 1);
-    newvertex.at<double>(1, 1) = newvertex.at<double>(1, 1) / newvertex.at<double>(2, 1);
+    crop_window[1].x=box.at<double>(0,1)/box.at<double>(2,1);
+    crop_window[1].y=box.at<double>(1,1)/box.at<double>(2,1);
 
-    newvertex.at<double>(0, 2) = newvertex.at<double>(0, 2) / newvertex.at<double>(2, 2);
-    newvertex.at<double>(1, 2) = newvertex.at<double>(1, 2) / newvertex.at<double>(2, 2);
+    crop_window[2].x=box.at<double>(0,2)/box.at<double>(2,2);
+    crop_window[2].y=box.at<double>(1,2)/box.at<double>(2,2);
 
-    newvertex.at<double>(0, 3) = newvertex.at<double>(0, 3) / newvertex.at<double>(2, 3);
-    newvertex.at<double>(1, 3) = newvertex.at<double>(1, 3) / newvertex.at<double>(2, 3);
+    crop_window[3].x=box.at<double>(0,3)/box.at<double>(2,3);
+    crop_window[3].y=box.at<double>(1,3)/box.at<double>(2,3);
 
-    cv::Point2d crop_p1(cropvertex_.at<double>(0, 0), cropvertex_.at<double>(1, 0));
-    cv::Point2d crop_p2(cropvertex_.at<double>(0, 1), cropvertex_.at<double>(1, 1));
-    cv::Point2d crop_p3(cropvertex_.at<double>(0, 2), cropvertex_.at<double>(1, 2));
-    cv::Point2d crop_p4(cropvertex_.at<double>(0, 3), cropvertex_.at<double>(1, 3));
-    cv::Point2d crop_cen((crop_p1.x + crop_p2.x + crop_p3.x + crop_p4.x)/4, (crop_p1.y + crop_p2.y + crop_p3.y + crop_p4.y)/4);
-
-    if(isInside(cropvertex_, newvertex)){
-        return cv::Mat::eye(3, 3, CV_64F);
-    }else{
-        cv::Mat comp_clone = comp.clone();
-        bool all_inside = false;
-        int loop = 0;
-        cv::Mat move = cv::Mat::eye(3, 3, CV_64F);
-        while (!all_inside && loop<5){
-            cv::Mat move_t = cv::Mat::eye(3, 3, CV_64F);
-            cv::Point2d p1(newvertex.at<double>(0, 0), newvertex.at<double>(1, 0));
-            cv::Point2d p2(newvertex.at<double>(0, 1), newvertex.at<double>(1, 1));
-            cv::Point2d p3(newvertex.at<double>(0, 2), newvertex.at<double>(1, 2));
-            cv::Point2d p4(newvertex.at<double>(0, 3), newvertex.at<double>(1, 3));
-            cv::Point2d comp_cen((p1.x + p2.x + p3.x + p4.x)/4, (p1.y + p2.y + p3.y + p4.y)/4);
-            move_t.at<double>(0, 2) = -((comp_cen - crop_cen).x);
-            move_t.at<double>(1, 2) = -((comp_cen - crop_cen).y);
-            move = move * move_t;
-            cv::Mat test = comp_clone * move * vertex_;
-            test.at<double>(0, 0) = test.at<double>(0, 0) / test.at<double>(2, 0);
-            test.at<double>(1, 0) = test.at<double>(1, 0) / test.at<double>(2, 0);
-
-            test.at<double>(0, 1) = test.at<double>(0, 1) / test.at<double>(2, 1);
-            test.at<double>(1, 1) = test.at<double>(1, 1) / test.at<double>(2, 1);
-
-            test.at<double>(0, 2) = test.at<double>(0, 2) / test.at<double>(2, 2);
-            test.at<double>(1, 2) = test.at<double>(1, 2) / test.at<double>(2, 2);
-
-            test.at<double>(0, 3) = test.at<double>(0, 3) / test.at<double>(2, 3);
-            test.at<double>(1, 3) = test.at<double>(1, 3) / test.at<double>(2, 3);
-            all_inside = isInside(cropvertex_, test);
-            loop++;
-        }
-
-        return move;
-    }
-}
-
-cv::Mat AutoFilter::processGlobalTrans(const cv::Mat& comp, int target, int offset) {
-    std::vector<cv::Mat> trans_temp;
-    for(int i = 0; i < global_trans_.size(); i++){
-        trans_temp.push_back(global_trans_[i]);
-    }
-    cv::Mat trans = calGlobalTrans(comp, crop_rate_, cv::Size(1080, 1920));
-//    return trans;
-    trans_temp.push_back(trans);
-    int tar = trans_temp.size() - 1;
-    int global_trans_size = global_trans_.size();
-//    for(int i = 1; i <= global_trans_size; i++ ){
-//        cv::Mat tt = cv::Mat::zeros(3, 3, CV_64F);
-//        double sum_weight = 0;
-//        for(int j = i, k = 0; j < window_.size() - i; j++, k++){
-//            tt += weight_vec_[k+offset+i] * window_[j];
-//            sum_weight += weight_vec_[k+offset+i];
-//        }
-//        tt /= sum_weight;
-//        trans = calGlobalTrans(tt, crop_rate_, cv::Size(1080, 1920));
-//        trans_temp.push_back(trans);
-//    }
-    std::vector<double> wei;
-    wei.resize(trans_temp.size());
-    for(int i = 0; i < trans_temp.size(); i++){
-        int k = i - tar;
-        wei[i] = filterWeight(k, 5);
-    }
-    cv::Mat glo_t = cv::Mat::zeros(3, 3, CV_64F);
-    double sum_weight = 0;
-    for(int i = 0; i < trans_temp.size(); i++){
-        glo_t += wei[i] * trans_temp[i];
-        sum_weight += wei[i];
-    }
-    glo_t /= sum_weight;
-    std::cout << "sum_weitht:" << sum_weight << std::endl;
-    if(global_trans_.size() == 24){
-        global_trans_.pop_front();
-    }
-    global_trans_.push_back(glo_t);
-    return glo_t;
-}
-
-cv::Mat AutoFilter::processTrans(const cv::Mat &comp, const cv::Size &size) {
-    cv::Point2d pb[4];
-    cv::Mat stableVec = comp.clone();
-    cv::Mat s_inv = stableVec.inv();
-    cv::Mat box = s_inv * cropvertex_;
-    pb[0].x=box.at<double>(0,0)/box.at<double>(2,0);
-    pb[0].y=box.at<double>(1,0)/box.at<double>(2,0);
-
-    pb[1].x=box.at<double>(0,1)/box.at<double>(2,1);
-    pb[1].y=box.at<double>(1,1)/box.at<double>(2,1);
-
-    pb[2].x=box.at<double>(0,2)/box.at<double>(2,2);
-    pb[2].y=box.at<double>(1,2)/box.at<double>(2,2);
-
-    pb[3].x=box.at<double>(0,3)/box.at<double>(2,3);
-    pb[3].y=box.at<double>(1,3)/box.at<double>(2,3);
-    double xmin = 0 - pb[0].x ;
-    double xmax = size.width - pb[0].x ;
-    double ymin = 0 - pb[0].y ;
-    double ymax = size.height - pb[0].y ;
+    double xmin = 0 - crop_window[0].x ;
+    double xmax = size.width - crop_window[0].x ;
+    double ymin = 0 - crop_window[0].y ;
+    double ymax = size.height - crop_window[0].y ;
 
     for(int j=1; j<4; j++)
     {
-        if(xmin < 0 - pb[j].x)
-            xmin = 0 - pb[j].x;
-        if(xmax > size.width - pb[j].x)
-            xmax = size.width - pb[j].x;
-        if(ymin < 0 - pb[j].y)
-            ymin = 0 - pb[j].y;
-        if(ymax > size.height - pb[j].y)
-            ymax = size.height - pb[j].y;
+        if(xmin < 0 - crop_window[j].x)
+            xmin = 0 - crop_window[j].x;
+        if(xmax > size.width - crop_window[j].x)
+            xmax = size.width - crop_window[j].x;
+        if(ymin < 0 - crop_window[j].y)
+            ymin = 0 - crop_window[j].y;
+        if(ymax > size.height - crop_window[j].y)
+            ymax = size.height - crop_window[j].y;
     }
-//    file_w << frame_count <<" " << xmin << " " << xmax << " " << ymin << " " << ymax << " ";
-    cv::Mat newvertex = stableVec * vertex_;
-    newvertex.at<double>(0, 0) = newvertex.at<double>(0, 0) /newvertex.at<double>(2, 0);
-    newvertex.at<double>(1, 0) = newvertex.at<double>(1, 0) /newvertex.at<double>(2, 0);
+    limit temp_limit;
+    temp_limit.xmin = xmin;
+    temp_limit.xmax = xmax;
+    temp_limit.ymin = ymin;
+    temp_limit.ymax = ymax;
+    limit_que_.push(temp_limit);
+    LOGI("temp_limit:%d, %f, %f, %f, %f", frame_count, temp_limit.xmin, temp_limit.xmax,
+         temp_limit.ymin, temp_limit.ymax);
 
-    newvertex.at<double>(0, 1) = newvertex.at<double>(0, 1) /newvertex.at<double>(2, 1);
-    newvertex.at<double>(1, 1) = newvertex.at<double>(1, 1) /newvertex.at<double>(2, 1);
-
-    newvertex.at<double>(0, 2) = newvertex.at<double>(0, 2) /newvertex.at<double>(2, 2);
-    newvertex.at<double>(1, 2) = newvertex.at<double>(1, 2) /newvertex.at<double>(2, 2);
-
-    newvertex.at<double>(0, 3) = newvertex.at<double>(0, 3) /newvertex.at<double>(2, 3);
-    newvertex.at<double>(1, 3) = newvertex.at<double>(1, 3) /newvertex.at<double>(2, 3);
-
-    bool allInside=isInside(cropvertex_,newvertex);
-
-    cv::Mat resultVec=stableVec.clone();
-    if(!allInside) {
-        double ratio=1.0;
-        cv::Mat I=cv::Mat::eye(3, 3, CV_64F);
-        while ((!allInside) && (ratio >= 0)) {
-            double transdet = determinant(stableVec);
-            cv::Mat transtemp = stableVec / pow(transdet, 1.0 / 3);
-            resultVec = I * (1 - ratio) + transtemp * ratio;
-
-            ratio = ratio - 0.01;
-            newvertex = resultVec * vertex_;
-            newvertex.at<double>(0, 0) = newvertex.at<double>(0, 0) / newvertex.at<double>(2, 0);
-            newvertex.at<double>(1, 0) = newvertex.at<double>(1, 0) / newvertex.at<double>(2, 0);
-
-            newvertex.at<double>(0, 1) = newvertex.at<double>(0, 1) / newvertex.at<double>(2, 1);
-            newvertex.at<double>(1, 1) = newvertex.at<double>(1, 1) / newvertex.at<double>(2, 1);
-
-            newvertex.at<double>(0, 2) = newvertex.at<double>(0, 2) / newvertex.at<double>(2, 2);
-            newvertex.at<double>(1, 2) = newvertex.at<double>(1, 2) / newvertex.at<double>(2, 2);
-
-            newvertex.at<double>(0, 3) = newvertex.at<double>(0, 3) / newvertex.at<double>(2, 3);
-            newvertex.at<double>(1, 3) = newvertex.at<double>(1, 3) / newvertex.at<double>(2, 3);
-
-            allInside = isInside(cropvertex_, newvertex);
-        }
-    }
-
+    double trans_x[predict_num_/2], trans_y[predict_num_/2];
     double x_m, y_m;
-    if(xmin > xmax || ymin > ymax)
-    {
-//        std::cout << xmin << " " << xmax << " " << ymin << " " << ymax << std::endl;
-//        std::cout<<"Size ERROR! use intr!"<<std::endl;
-        return resultVec;
+
+    if(num_que_ < predict_num_) {
+        num_que_++;
     }
-    else {
-        double x_mid = (xmin + xmax) / 10;
-        double y_mid = (ymin + ymax) / 10;
-//        if(count_%2 == 0){
-//            x_mid = 0;
-//            y_mid = 0;
-//        }
-        int q_posi = 0;
-
-        if (count_ < q_size) {
-            q_posi = count_;
-            count_++;
-        } else {
-            q_posi = q_size - 1;
-            count_++;
-        }
-
-        if (count_ < q_pow + 2) {
-            queue_in(x_q, q_posi, x_mid);
-            queue_in(y_q, q_posi, y_mid);
-            x_m = x_mid;
-            y_m = y_mid;
-
-        } else {
-            queue_in(x_q, q_posi, x_mid);
-            queue_in(y_q, q_posi, y_mid);
-            x_m = polyfit(f_num, x_q, q_posi + 1, q_pow, q_posi + 1);
-//            x_m = gfilte(x_q, q_posi+1, q_posi+1);
-            y_m = polyfit(f_num, y_q, q_posi + 1, q_pow, q_posi + 1);
-//            y_m = gfilte(y_q, q_posi+1, q_posi+1);
-
-        }
-
-
-//        std::cout << "Move adjust: " << " x: " << x_m << ", y:" << y_m << std::endl;
-
-        if (x_m < xmin) {
-            std::cout << "adjust x is too small" << std::endl;
-            x_m = xmin;
-        } else if (x_m > xmax) {
-            std::cout << "adjust x is too big" << std::endl;
-            x_m = xmax;
-        }
-
-        if (y_m < ymin) {
-            std::cout << "adjust y is too small" << std::endl;
-            y_m = ymin;
-        } else if (y_m > ymax) {
-            std::cout << "adjust y is too big" << std::endl;
-            y_m = ymax;
-        }
-//        file_w << x_m << " " << y_m << std::endl;
-
-        cv::Mat comp2 = cv::Mat::eye(3, 3, CV_64F);
-        comp2.at<double>(0, 2) = x_m;
-        comp2.at<double>(1, 2) = y_m;
-
-        cv::Mat news = (comp2 * s_inv).inv();
-        return news;
+    x_m = cur_x;
+    y_m = cur_y;
+    double x_d = xmax - xmin;
+    double y_d = ymax - ymin;
+    if(x_m < xmin){
+        x_m = xmin + x_d /4;
+        cur_x = x_m;
+    } else if(x_m > xmax){
+        x_m = xmax - x_d / 4;
+        cur_x = x_m;
     }
+    if(y_m < ymin){
+        y_m = ymin + y_d /4;
+        cur_y = y_m;
+    } else if(y_m > ymax){
+        y_m = ymax - y_d/4;
+        cur_y = y_m;
+    }
+    file_w << frame_count <<" " << xmin << " " << xmax << " " << ymin << " " << ymax << " "
+    << x_m << " " << y_m <<std::endl;
+    frame_count++;
+    queue_in(que_x_, num_que_ - 1, x_m);
+    queue_in(que_y_, num_que_ - 1, y_m);
+    if(num_que_ < predict_num_){
+        return ;
+    } else {
+        if(is_first){
+            cv::Mat temp = s_mat_.front().inv();
+            s_mat_.pop();
+            output_buffer_.push(temp);
+            limit_que_.pop();
+            is_first = false;
+        }
+        double result_x_3[predict_num_/2], result_y_3[predict_num_/2];
+        Bspline bspline_x, bspline_y;
+        for(int i = 0; i < predict_num_; i+=2){
+            bspline_x.push(cv::Point2d(index_, que_x_[i]));
+            bspline_y.push(cv::Point2d(index_, que_y_[i]));
+            index_ += 2;
+        }
+        bspline_x.calControlPoint();
+        bspline_y.calControlPoint();
+        double ratio = 0.25;
+        for(int i = 0; i < predict_num_/2; i++){
+            result_x_3[i] = bspline_x.genInterpolationPoint(ratio).y;
+            result_y_3[i] = bspline_y.genInterpolationPoint(ratio).y;
+            ratio += 0.25;
+        }
+        for(int i = 0; i < predict_num_/2; i++){
+            trans_x[i] = result_x_3[i];
+            trans_y[i] = result_y_3[i];
+        }
+//        file_w << trans_x << " " << trans_y << std::endl;
+        for(int i = 0; i < predict_num_/2; i++){
+            cv::Mat comp2 = cv::Mat::eye(3, 3, CV_64F);
+
+            limit li = limit_que_.front();
+            limit_que_.pop();
+            if(trans_x[i] < li.xmin){
+                trans_x[i] = li.xmin;
+            }else if(trans_x[i] > li.xmax){
+                trans_x[i] = li.xmax;
+            }
+            if(trans_y[i] < li.ymin){
+                trans_y[i] = li.ymin;
+            }else if(trans_y[i] > li.ymax){
+                trans_y[i] = li.ymax;
+            }
+            bool flag = false;
+            if(li.xmin > li.xmax){
+                LOGI("xmin is bigger than xmax!");
+                flag = true;
+            }
+            if(li.ymin > li.ymax){
+                LOGI("ymin is bigger than ymax!");
+                flag = true;
+            }
+
+            comp2.at<double>(0, 2) = trans_x[i];
+            comp2.at<double>(1, 2) = trans_y[i];
+            cv::Mat temp = s_mat_.front().inv();
+            s_mat_.pop();
+            cv::Mat news = (comp2 * temp).inv();
+            if(flag){
+                cv::Mat I = cv::Mat::eye(3, 3, CV_64F);
+                LOGI("not compensation!");
+                output_buffer_.push(I.clone());
+            } else {
+                output_buffer_.push(news.clone());
+            }
+            num_que_ = predict_num_/2 + 1;
+            file_w1 << frame_count_m << " " << trans_x[i] << " " << trans_y[i] << std::endl;
+            frame_count_m++;
+        }
+
+    }
+
+}
+
+double AutoFilter::calError(double *ori, double *aft, int n) {
+    double err = 0;
+    for(int i = 0; i < n; i++){
+        err += abs(sqrt(abs(pow(ori[i], 2) - pow(aft[i], 2))));
+    }
+    return err;
 }
 
 void AutoFilter::queue_in(double *q, int m, double x) {
@@ -381,17 +310,17 @@ void AutoFilter::queue_in(double *q, int m, double x) {
 }
 
 
-double AutoFilter::polyfit(double *arrX, double *arrY, int num, int n, double x) {
-    int size = num;
-    int x_num = n + 1;
+void AutoFilter::polyfit(double *arrX, double *arrY, int num, int n, double* result) {
+    int size = num;//vec里的个数
+    int x_num = n + 1;//次数+1
     //构造矩阵U和Y
-    cv::Mat mat_u(size, x_num, CV_64F);
-    cv::Mat mat_y(size, 1, CV_64F);
+    cv::Mat mat_u(size, x_num, CV_64F);//num行，n+1列
+    cv::Mat mat_y(size, 1, CV_64F);//num行，1列
 
     for (int i = 0; i < mat_u.rows; ++i)
         for (int j = 0; j < mat_u.cols; ++j)
         {
-            mat_u.at<double>(i, j) = pow(arrX[i], j);
+            mat_u.at<double>(i, j) = pow(arrX[i], j);//x^j次方
         }
 
     for (int i = 0; i < mat_y.rows; ++i)
@@ -405,10 +334,14 @@ double AutoFilter::polyfit(double *arrX, double *arrY, int num, int n, double x)
     //std::cout << mat_k << std::endl;
     //return mat_k;
 
-    double y = 0;
-    for (int j = 0; j < n + 1; ++j)
-    {
-        y += mat_k.at<double>(j, 0)*pow(x,j);
+    for(int i = 0; i < 3; i++){
+        result[i] = 0;
     }
-    return y;
+    for(int i = 0; i < 3; i++){
+        for (int j = 0; j < n + 1; ++j)
+        {
+            result[i] += mat_k.at<double>(j, 0)*pow(i+1,j);
+        }
+    }
+
 }

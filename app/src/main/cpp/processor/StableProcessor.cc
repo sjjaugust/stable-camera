@@ -25,7 +25,7 @@ void StableProcessor::Init(Size videoSize) {
     cm_thread_ -> videoSize = videoSize;
     cm_thread_ -> cropControlFlag = true;//在此设置是否进行裁剪控制
     cm_thread_ -> shakeDetect = false;//在此设置是否进行抖动检测
-    cm_thread_ -> cropRation = 0.7;
+    cm_thread_ -> cropRation = 0.75;
 
     //klt_thread_->start();
     cm_thread_->start();
