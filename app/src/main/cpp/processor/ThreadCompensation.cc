@@ -521,37 +521,12 @@ bool ThreadCompensation::stable_count(double e)
     }
 
     LOGE("stable and scale: %d / %d", numStable , numScale);
-    if(numStable > 10 || e < 1e-5)
+    if(e < 1e-7)
     {
         LOGE("is stable");
         H_scale = cv::Mat::eye(3, 3, CV_64F);
         return true;
     }
-    /*else if(numScale > numStable && numScale > 4)
-    {
-        int n = last_sc.size();
-        double nscale = 0;
-        for(int i = 0;i<n;i++)
-        {
-            double ll = point_distance(last_sc[i], cen);
-            double cl = point_distance(cur_sc[i], cen);
-            nscale += cl/ll;
-        }
-        nscale = nscale / n;
-
-        Mat move1 = Mat::eye(3,3,CV_64F);
-        move1.at<double>(0,2) = -cen.x;
-        move1.at<double>(1,2) = -cen.y;
-        Mat scale = Mat::eye(3,3,CV_64F);
-        scale.at<double>(0,0) = nscale;
-        scale.at<double>(1,1) = nscale;
-        Mat move2 = Mat::eye(3,3,CV_64F);
-        move2.at<double>(0,2) = cen.x;
-        move2.at<double>(1,2) = cen.y;
-        //H_scale = findHomography(last_sc, cur_sc, 0);
-        H_scale = move1 * scale * move2;
-        return true;
-    }*/
     else
     {
         return false;
@@ -592,7 +567,7 @@ Mat ThreadCompensation::computeAffine()
     }
     Vec<double, 3> rot = ThreadContext::rTheta.front();//前一帧的旋转矩阵
     ThreadContext::rTheta.pop();
-    file_angle << angle_frame_count << " " << rot[2] << " ";
+//    file_angle << angle_frame_count << " " << rot[2] << " ";
     Vec<double, 3> er = rot;
     lastRot = rot;
     std::string gyro_info = "theta:";
@@ -649,7 +624,7 @@ void ThreadCompensation::frameCompensate()
     cv::Mat perp, sca, shear, rot, trans;
     decomposeHomo(aff, center, perp, sca, shear, rot, trans);
     angle_frame_count++;
-    file_angle << asin(-rot.at<double>(0, 1)) << std::endl;
+//    file_angle << asin(-rot.at<double>(0, 1)) << std::endl;
 
     cv::Mat old_r_mat = threads::ThreadContext::r_convert_que.front();
     threads::ThreadContext::r_convert_que.pop();
