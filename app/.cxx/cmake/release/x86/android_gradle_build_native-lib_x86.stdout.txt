@@ -1,4 +1,76 @@
-[1/4] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
-[2/4] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
-[3/4] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o
-[4/4] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\release\obj\x86\libnative-lib.so
+[1/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
+[2/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/Filter.cc.o
+[3/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o
+[4/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/MySemaphore.cc.o
+[5/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o
+[6/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o
+[7/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/Quaternion.cpp.o
+[8/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o
+[9/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/Bspline.cpp.o
+[10/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/AutoFilter.cpp.o
+[11/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o
+[12/13] Building CXX object CMakeFiles/native-lib.dir/src/main/cpp/processor/HomoExtractor.cpp.o
+In file included from D:\Repositories\stable-camera\app\src\main\cpp\native-lib.cpp:3:
+In file included from D:\Repositories\stable-camera\app\src\main\cpp/processor/StableProcessor.h:8:
+In file included from D:\Repositories\stable-camera\app\src\main\cpp/processor/ThreadCompensation.h:19:
+D:\Repositories\stable-camera\app\src\main\cpp/processor/AutoFilter.h:13:10: warning: non-portable path to file '"Bspline.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+#include "BSpline.h"
+         ^~~~~~~~~~~
+         "Bspline.h"
+D:\Repositories\stable-camera\app\src\main\cpp/processor/AutoFilter.h:16:9: warning: 'PI' macro redefined [-Wmacro-redefined]
+#define PI (2 * acos(0))
+        ^
+D:\Repositories\stable-camera\app\src\main\cpp/processor/HomoExtractor.h:16:9: note: previous definition is here
+#define PI 3.1415926535
+        ^
+D:\Repositories\stable-camera\app\src\main\cpp\native-lib.cpp:13:10: warning: 'LOG_TAG' macro redefined [-Wmacro-redefined]
+#define  LOG_TAG    "accelerometergraph"
+         ^
+D:\Repositories\stable-camera\app\src\main\cpp/processor/ThreadRollingShutter.h:13:9: note: previous definition is here
+#define LOG_TAG    "cThreadRollingShutter"
+        ^
+3 warnings generated.
+In file included from D:\Repositories\stable-camera\app\src\main\cpp\processor\StableProcessor.cc:5:
+In file included from D:\Repositories\stable-camera\app\src\main\cpp\processor/StableProcessor.h:8:
+In file included from D:\Repositories\stable-camera\app\src\main\cpp\processor/ThreadCompensation.h:19:
+D:\Repositories\stable-camera\app\src\main\cpp\processor/AutoFilter.h:13:10: warning: non-portable path to file '"Bspline.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+#include "BSpline.h"
+         ^~~~~~~~~~~
+         "Bspline.h"
+D:\Repositories\stable-camera\app\src\main\cpp\processor/AutoFilter.h:16:9: warning: 'PI' macro redefined [-Wmacro-redefined]
+#define PI (2 * acos(0))
+        ^
+D:\Repositories\stable-camera\app\src\main\cpp\processor/HomoExtractor.h:16:9: note: previous definition is here
+#define PI 3.1415926535
+        ^
+2 warnings generated.
+In file included from D:\Repositories\stable-camera\app\src\main\cpp\processor\AutoFilter.cpp:5:
+D:\Repositories\stable-camera\app\src\main\cpp\processor/AutoFilter.h:13:10: warning: non-portable path to file '"Bspline.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+#include "BSpline.h"
+         ^~~~~~~~~~~
+         "Bspline.h"
+D:\Repositories\stable-camera\app\src\main\cpp\processor\AutoFilter.cpp:6:10: warning: non-portable path to file '"Bspline.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+#include "BSpline.h"
+         ^~~~~~~~~~~
+         "Bspline.h"
+2 warnings generated.
+In file included from D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:5:
+In file included from D:\Repositories\stable-camera\app\src\main\cpp\processor/ThreadCompensation.h:19:
+D:\Repositories\stable-camera\app\src\main\cpp\processor/AutoFilter.h:13:10: warning: non-portable path to file '"Bspline.h"'; specified path differs in case from file name on disk [-Wnonportable-include-path]
+#include "BSpline.h"
+         ^~~~~~~~~~~
+         "Bspline.h"
+D:\Repositories\stable-camera\app\src\main\cpp\processor/AutoFilter.h:16:9: warning: 'PI' macro redefined [-Wmacro-redefined]
+#define PI (2 * acos(0))
+        ^
+D:\Repositories\stable-camera\app\src\main\cpp\processor/HomoExtractor.h:16:9: note: previous definition is here
+#define PI 3.1415926535
+        ^
+D:\Repositories\stable-camera\app\src\main\cpp\processor\ThreadCompensation.cc:11:9: warning: 'LOG_TAG' macro redefined [-Wmacro-redefined]
+#define LOG_TAG    "c_ThreadCompensation"
+        ^
+D:\Repositories\stable-camera\app\src\main\cpp\processor/ThreadRollingShutter.h:13:9: note: previous definition is here
+#define LOG_TAG    "cThreadRollingShutter"
+        ^
+3 warnings generated.
+[13/13] Linking CXX shared library ..\..\..\..\build\intermediates\cmake\release\obj\x86\libnative-lib.so

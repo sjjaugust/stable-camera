@@ -6,8 +6,8 @@
 using namespace cv;
 using namespace std;
 using namespace threads;
-static Mat RR2stableVec = (cv::Mat_<double>(3, 3)<<0.0, 1.0, 0.0, -1.0, 0.0, 1620.0, 0.0, 0.0, 1.0);
-static Mat stableVec2RR = (cv::Mat_<double>(3, 3)<<0.0, -1.0, 1620.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+static Mat RR2stableVec = (cv::Mat_<double>(3, 3)<<0.0, 1.0, 0.0, -1.0, 0.0, 1080.0, 0.0, 0.0, 1.0);
+static Mat stableVec2RR = (cv::Mat_<double>(3, 3)<<0.0, -1.0, 1080.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 bool ThreadRollingShutter::is_stable_ = false;
 ThreadRollingShutter::~ThreadRollingShutter() {
     work_thread.join();
@@ -110,30 +110,13 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
                    vector<double> gyroInfoInFrameZ){
     Mat e = Mat::eye(3, 3, CV_64F);
     Mat orgMat(3, 3, CV_64F);
-    Mat skewOrgMat(3, 3, CV_64F);
 
-    gyroInfoInFrameX[0] = 0;
+//    gyroInfoInFrameX[0] = 0;
     gyroInfoInFrameY[0] = gyroInfoInFrameY[0];
     gyroInfoInFrameZ[0] = 0;
 //    计算第一条旋转矩阵
-    double thOrg = gyroInfoInFrameX[0]*gyroInfoInFrameX[0]+
-                   gyroInfoInFrameY[0]*gyroInfoInFrameY[0]+
-                   gyroInfoInFrameZ[0]*gyroInfoInFrameZ[0];
-    thOrg = sqrt(thOrg);
-
-    if(thOrg == 0){
-        thOrg = 1;
-    }
-    skewOrgMat.at<double>(0,0) = 0;
-    skewOrgMat.at<double>(0,1) = gyroInfoInFrameZ[0]/thOrg;
-    skewOrgMat.at<double>(0,2) = -gyroInfoInFrameY[0]/thOrg;
-    skewOrgMat.at<double>(1,0) = -gyroInfoInFrameZ[0]/thOrg;
-    skewOrgMat.at<double>(1,1) = 0;
-    skewOrgMat.at<double>(1,2) = gyroInfoInFrameX[0]/thOrg;
-    skewOrgMat.at<double>(2,0) = gyroInfoInFrameY[0]/thOrg;
-    skewOrgMat.at<double>(2,1) = -gyroInfoInFrameX[0]/thOrg;
-    skewOrgMat.at<double>(2,2) = 0;
-    orgMat = e+sin(thOrg)*skewOrgMat.t()+(1-cos(thOrg))*(skewOrgMat*skewOrgMat).t();
+    Quaternion q0 = Quaternion::EulerToQuaternion(gyroInfoInFrameX[0], gyroInfoInFrameY[0], gyroInfoInFrameZ[0]);
+    orgMat = Quaternion::QuaternionToR(q0);
 
     angle_.clear();
     angle_.resize(3);
@@ -145,7 +128,7 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
     std::vector<double> temp_z = gyroInfoInFrameZ;
     for(int i = 0; i < gyroInfoInFrameX.size(); i++){
         if(i != 0){
-            gyroInfoInFrameX[i] = 0;
+//            gyroInfoInFrameX[i] = 0;
             gyroInfoInFrameY[i] = gyroInfoInFrameY[i];
             gyroInfoInFrameZ[i] = 0;
         }
@@ -153,78 +136,14 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
         angle_[0] += abs(temp_x[i]-temp_x[0]);
         angle_[1] += abs(temp_y[i]-temp_y[0]);
         angle_[2] += abs(temp_z[i]-temp_z[0]);
-//        __android_log_print(ANDROID_LOG_DEBUG, "ThreadRollingShutter", "gyroInfo:%d, %lf, %lf", i, gyroInfoInFrameX[i], gyroInfoInFrameX[0]);
-//        __android_log_print(ANDROID_LOG_DEBUG, "ThreadRollingShutter", "gyroInfo:%d, %lf", i, gyroInfoInFrameX[i] - gyroInfoInFrameX[0]);
         Mat cvMat(3, 3, CV_64F);
-        Mat skewMat(3, 3, CV_64F);
-        double th = gyroInfoInFrameX[i]*gyroInfoInFrameX[i]+
-                gyroInfoInFrameY[i]*gyroInfoInFrameY[i]+
-                gyroInfoInFrameZ[i]*gyroInfoInFrameZ[i];
-        th = sqrt(th);
-        int eq = 0;
-        if(th == 0){
-            eq = 1;
-        }
-        th += eq;
-        gyroInfoInFrameX[i] /= th;
-        gyroInfoInFrameY[i] /= th;
-        gyroInfoInFrameZ[i] /= th;
-
-        skewMat.at<double>(0,0) = 0;
-        skewMat.at<double>(0,1) = gyroInfoInFrameZ[i];
-        skewMat.at<double>(0,2) = -gyroInfoInFrameY[i];
-        skewMat.at<double>(1,0) = -gyroInfoInFrameZ[i];
-        skewMat.at<double>(1,1) = 0;
-        skewMat.at<double>(1,2) = gyroInfoInFrameX[i];
-        skewMat.at<double>(2,0) = gyroInfoInFrameY[i];
-        skewMat.at<double>(2,1) = -gyroInfoInFrameX[i];
-        skewMat.at<double>(2,2) = 0;
-        cvMat = e+sin(th)*skewMat.t()+(1-cos(th))*(skewMat*skewMat).t();
-
-//        cv::Mat a1 = (cv::Mat_<double>(3, 3) << 0.0,1.0,0.0, -1.0,0.0,0.0, 0.0 ,0.0 ,1.0);
-//        cv::Mat a2 = (cv::Mat_<double>(3, 3) << 1,0,0, 0,-1,0, 0 ,0 ,-1);
-//        cv::Mat A=a1*a2;
-//        cv::Mat hom = cv::Mat::eye(cv::Size(3,3),CV_64F);
-//        Mat outMat = inmat*A.t()*cvMat*orgMat.t()*hom.t()*A*inmat.inv();
-        Mat outMat = RR2stableVec * inmat*orgMat*cvMat.inv()*inmat.inv() * stableVec2RR;
-//        outMat = outMat.inv();
-//        Mat outMat = inmat*orgMat*cvMat.inv()*inmat.inv() ;
+        Quaternion q = Quaternion::EulerToQuaternion(gyroInfoInFrameX[i], gyroInfoInFrameY[i], gyroInfoInFrameZ[i]);
+        Quaternion convert = Quaternion::Q1ToQ2(q, q0);
+        cvMat = Quaternion::QuaternionToR(convert);
+        Mat outMat = inmat * cvMat * inmat.inv();
 
         outMat.copyTo(*(rsOutTheta+i));
     }
-//    for(int i = 0; i < gyroInfoInFrameX.size(); i++){
-//        Mat cvMat(3, 3, CV_64F);
-//        Mat skewMat(3, 3, CV_64F);
-//        double angle_diff_x = -(gyroInfoInFrameX[i]-gyroInfoInFrameX[0]);
-//        double angle_diff_y = -(gyroInfoInFrameY[i]-gyroInfoInFrameY[0]);
-//        double angle_diff_z = -(gyroInfoInFrameZ[i]-gyroInfoInFrameZ[0]);
-//        double th = angle_diff_x * angle_diff_x +
-//                angle_diff_y * angle_diff_y +
-//                angle_diff_z * angle_diff_z;
-//        th = sqrt(th);
-//        int eq = 0;
-//        if(th == 0){
-//            eq = 1;
-//        }
-//        th += eq;
-//        gyroInfoInFrameX[i] /= th;
-//        gyroInfoInFrameY[i] /= th;
-//        gyroInfoInFrameZ[i] /= th;
-//
-//        skewMat.at<double>(0,0) = 0;
-//        skewMat.at<double>(0,1) = -angle_diff_z;
-//        skewMat.at<double>(0,2) = angle_diff_y;
-//        skewMat.at<double>(1,0) = angle_diff_z;
-//        skewMat.at<double>(1,1) = 0;
-//        skewMat.at<double>(1,2) = -angle_diff_x;
-//        skewMat.at<double>(2,0) = -angle_diff_y;
-//        skewMat.at<double>(2,1) = angle_diff_x;
-//        skewMat.at<double>(2,2) = 0;
-//        __android_log_print(ANDROID_LOG_DEBUG, "ThreadRollingShutter", "angle_diff:%f, %f ,%f", angle_diff_x, angle_diff_y, angle_diff_z);
-//        cvMat = e+sin(th)*skewMat.t()+(1-cos(th))*(skewMat*skewMat).t();
-//        Mat outMat = inmat*cvMat*inmat.inv();
-//        outMat.copyTo(*(rsOutTheta+i));
-//    }
 
 }
 

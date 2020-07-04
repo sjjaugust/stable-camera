@@ -6,6 +6,7 @@
 #include "ThreadContext.h"
 #include <android/log.h>
 #include <string>
+
 #define LOG_TAG    "ThetaHelper"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 static cv::Mat test_point_before = (cv::Mat_<double>(3, 1) << 1.0, 1.0, 1.0);
@@ -52,10 +53,12 @@ cv::Vec<double, 3> ThetaHelper::getTheta()
     if(findex>0)
     {
         double lastftime= Timeframe[findex - 1];
-        theta[0]=lastx*(gtime-lastftime)+lastt[0];
-        theta[1]=lasty*(gtime-lastftime)+lastt[1];
-        theta[2]=lastz*(gtime-lastftime)+lastt[2];
-
+//        theta[0]=lastx*(gtime-lastftime)+lastt[0];
+//        theta[1]=lasty*(gtime-lastftime)+lastt[1];
+//        theta[2]=lastz*(gtime-lastftime)+lastt[2];
+        theta[0]=lastx*(gtime-lastftime);
+        theta[1]=lasty*(gtime-lastftime);
+        theta[2]=lastz*(gtime-lastftime);
 
         // NSLog(@"frame:%f",lastftime);
         //NSLog(@"gyro:%f",gtime);
@@ -307,41 +310,17 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
     oldy.push_back(oldtheta[1]);//[oldy addObject:[NSNumber numberWithDouble: oldtheta[1]]];
     oldz.push_back(oldtheta[2]);//[oldz addObject:[NSNumber numberWithDouble: oldtheta[2]]];
     angledex++;
-//    cv::Vec<double, 3> newtheta=getNewTheta(oldtheta);//[self getNewTheta:oldtheta];
-    cv::Mat oldRotation=getRotationMat(oldtheta);//[self getRotationMat:oldtheta];
-//    cv::Mat newRotation=getRotationMat(newtheta);//[self getRotationMat:newtheta];
-//    RR = getRR(oldRotation, newRotation);
+    Quaternion q = Quaternion::EulerToQuaternion(oldtheta[0], oldtheta[1], oldtheta[2]);
+
+    cv::Mat oldRotation = Quaternion::QuaternionToR(q);
     RR = cv::Mat::eye(3, 3, CV_64F);
     RR.copyTo(*matR);
 
     cur_mat = oldRotation;
     cv::Mat temp = inmat * cur_mat * last_mat.inv() * inmat.inv();
     threads::ThreadContext::r_convert_que.push(oldRotation);
-//    threads::ThreadContext::r_convert_new_que.push(newRotation);
     last_mat = cur_mat;
-
-//    bool ready_to_pull = filter_.push(newRotation);
-//    old_rotation_queue_.push(oldRotation);
-//    if(ready_to_pull){
-//        cv::Mat new_rotation = filter_.pop();
-//        cv::Mat old_rotation = old_rotation_queue_.front();
-//        old_rotation_queue_.pop();
-//        RR = getRR(old_rotation, new_rotation);
-//        RR.copyTo(*matR);
-//    }else {
-//        RR = getRR(oldRotation, newRotation);
-//        RR.copyTo(*matR);
-//    }
-
-//    cv::Mat test_point_before1 = newRotation*test_point_before;
-//    cv::Mat test_point_after1 = RR*test_point_after;
-//    cv::Point2d temp_point_before(test_point_before1.at<double>(0, 0), test_point_before1.at<double>(1, 0));
-//    cv::Point2d temp_point_after(test_point_after1.at<double>(0, 0), test_point_after1.at<double>(1, 0));
-//    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "before:%d, %f", frame_count, point_distance(temp_point_before, test_point1));
-//    __android_log_print(ANDROID_LOG_DEBUG, "ThreadCompensation", "after:%d, %f", frame_count, point_distance(temp_point_after, test_point1));
     frame_count++;
-//    RR=getRR(oldRotation, newRotation);//[self getRR:oldRotation :newRotation];
-//    RR.copyTo(*matR);
     rs_gyro_theta_ = GetRsTheta();
 
 }
@@ -441,13 +420,13 @@ void ThetaHelper::putValue(double timestamp, float x, float y, float z) {
 //            royl.push_back(xa_[2]);
 //            rozl.push_back(xa_[0]);
             roxl.push_back(xa_[1]);
-            royl.push_back(-xa_[0]);
+            royl.push_back(xa_[0]);
             rozl.push_back(xa_[2]);
 
         }
     }else{
         roxl.push_back(y);
-        royl.push_back(-x);
+        royl.push_back(x);
         rozl.push_back(z);
     }
     gyro_count_++;

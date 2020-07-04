@@ -8,6 +8,7 @@
 #include "opencv2/opencv.hpp"
 #include "ThreadContext.h"
 #include "Filter.h"
+#include "Quaternion.h"
 using namespace cv;
 using namespace std;
 
@@ -75,12 +76,13 @@ private:
     cv::Vec<double, 4> rs_last_theta_;
     double rs_last_x_, rs_last_y_, rs_last_z_;
     std::vector<cv::Vec<double, 4>> rs_gyro_theta_;
-    const bool is_use_drift_ = true;
-    float x_drift_ = -0.945954f;
-    float y_drift_ = 0.227967;
-    float z_drift_ = 0.018109f;
+    const bool is_use_drift_ = false;
+    float x_drift_ = 0;
+    float y_drift_ = 0;
+    float z_drift_ = 0;
     Filter filter_;
     std::queue<cv::Mat> old_rotation_queue_;
+    Quaternion last_q_ = Quaternion::EulerToQuaternion(0, 0, 0);
 
     bool is_first_push_ = true;
     void WriteToFile(FILE* file, float x, float y, float z, int gyro_count_);
@@ -99,6 +101,7 @@ private:
 private:
     void GetNoise();
     void GetGyro(float x, float y, float z);
+
 };
 
 

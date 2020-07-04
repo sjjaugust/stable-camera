@@ -112,6 +112,22 @@ build CMakeFiles/native-lib.dir/src/main/cpp/processor/AutoFilter.cpp.o: CXX_COM
   IN_ABS = D:\Repositories\stable-camera\app\src\main\cpp\processor\AutoFilter.cpp
   OBJECT_DIR = CMakeFiles\native-lib.dir
   OBJECT_FILE_DIR = CMakeFiles\native-lib.dir\src\main\cpp\processor
+build CMakeFiles/native-lib.dir/src/main/cpp/processor/Bspline.cpp.o: CXX_COMPILER__native-lib ../../../../src/main/cpp/processor/Bspline.cpp
+  DEFINES = -Dnative_lib_EXPORTS
+  DEP_FILE = CMakeFiles\native-lib.dir\src\main\cpp\processor\Bspline.cpp.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -frtti -fexceptions -Oz -DNDEBUG  -fPIC   -std=gnu++11
+  INCLUDES = -I../../../../src/main/cpp/include
+  IN_ABS = D:\Repositories\stable-camera\app\src\main\cpp\processor\Bspline.cpp
+  OBJECT_DIR = CMakeFiles\native-lib.dir
+  OBJECT_FILE_DIR = CMakeFiles\native-lib.dir\src\main\cpp\processor
+build CMakeFiles/native-lib.dir/src/main/cpp/processor/Quaternion.cpp.o: CXX_COMPILER__native-lib ../../../../src/main/cpp/processor/Quaternion.cpp
+  DEFINES = -Dnative_lib_EXPORTS
+  DEP_FILE = CMakeFiles\native-lib.dir\src\main\cpp\processor\Quaternion.cpp.o.d
+  FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -frtti -fexceptions -Oz -DNDEBUG  -fPIC   -std=gnu++11
+  INCLUDES = -I../../../../src/main/cpp/include
+  IN_ABS = D:\Repositories\stable-camera\app\src\main\cpp\processor\Quaternion.cpp
+  OBJECT_DIR = CMakeFiles\native-lib.dir
+  OBJECT_FILE_DIR = CMakeFiles\native-lib.dir\src\main\cpp\processor
 
 # =============================================================================
 # Link build statements for SHARED_LIBRARY target native-lib
@@ -120,7 +136,7 @@ build CMakeFiles/native-lib.dir/src/main/cpp/processor/AutoFilter.cpp.o: CXX_COM
 #############################################
 # Link the shared library ..\..\..\..\build\intermediates\cmake\release\obj\armeabi-v7a\libnative-lib.so
 
-build ../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libnative-lib.so: CXX_SHARED_LIBRARY_LINKER__native-lib CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/Filter.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/MySemaphore.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/HomoExtractor.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/AutoFilter.cpp.o | ../../../../src/main/jniLibs/armeabi-v7a/libopencv_java3.so D$:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/21/liblog.so
+build ../../../../build/intermediates/cmake/release/obj/armeabi-v7a/libnative-lib.so: CXX_SHARED_LIBRARY_LINKER__native-lib CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/Filter.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/MySemaphore.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/StableProcessor.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThetaHelper.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadCompensation.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadContext.cc.o CMakeFiles/native-lib.dir/src/main/cpp/processor/ThreadRollingShutter.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/HomoExtractor.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/AutoFilter.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/Bspline.cpp.o CMakeFiles/native-lib.dir/src/main/cpp/processor/Quaternion.cpp.o | ../../../../src/main/jniLibs/armeabi-v7a/libopencv_java3.so D$:/AndroidSdk/ndk/21.0.6113669/toolchains/llvm/prebuilt/windows-x86_64/sysroot/usr/lib/arm-linux-androideabi/21/liblog.so
   LANGUAGE_COMPILE_FLAGS = -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security  -frtti -fexceptions -Oz -DNDEBUG
   LINK_FLAGS = -Wl,--exclude-libs,libgcc_real.a -Wl,--exclude-libs,libatomic.a -static-libstdc++ -Wl,--build-id -Wl,--fatal-warnings -Wl,--exclude-libs,libunwind.a -Wl,--no-undefined -Qunused-arguments
   LINK_LIBRARIES = -landroid -llog ../../../../src/main/jniLibs/armeabi-v7a/libopencv_java3.so -llog -latomic -lm

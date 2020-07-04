@@ -24,6 +24,7 @@ private:
     int point_num[16];
     int statussize;
     cv::Mat H, H_ori, second_H;
+    cv::Mat last_perp=cv::Mat::eye(3, 3, CV_64F), last_shear=cv::Mat::eye(3, 3, CV_64F);
     double sumup_err, sumup_H_err1, sumup_H_err2;
     int addp_frame = 0;
     bool stable_move=true, stable_move2=false;
@@ -57,6 +58,7 @@ private:
     double vec_cos(cv::Point2f s, cv::Point2f e1, cv::Point2f e2);
     void stab_feature_25(cv::Mat img1, cv::Mat img2);
     void stab_feature_25_H(cv::Mat img1, cv::Mat img2);
+    void decomposeHomo(cv::Mat h, Point2f cen, cv::Mat &perp, cv::Mat &sca, cv::Mat &shear, cv::Mat &rot, cv::Mat &trans);
 
 
 public:

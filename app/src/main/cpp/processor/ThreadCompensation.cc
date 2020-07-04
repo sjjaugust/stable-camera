@@ -23,6 +23,8 @@ static FILE* file_after;
 static std::queue<cv::Mat> trans_que;
 static std::queue<cv::Mat> r_temp_queue;
 static cv::Mat tran_cumm = cv::Mat::eye(3, 3, CV_64F);
+static std::ofstream file_angle("/data/data/me.zhehua.gryostable/data/zangle.txt");
+static int angle_frame_count = 0;
 double point_distance(cv::Point2f p1,cv::Point2f p2)
 {
     cv::Point2f d = p1 - p2;
@@ -590,7 +592,8 @@ Mat ThreadCompensation::computeAffine()
     }
     Vec<double, 3> rot = ThreadContext::rTheta.front();//前一帧的旋转矩阵
     ThreadContext::rTheta.pop();
-    Vec<double, 3> er = lastRot-rot;
+    file_angle << angle_frame_count << " " << rot[2] << " ";
+    Vec<double, 3> er = rot;
     lastRot = rot;
     std::string gyro_info = "theta:";
     gyro_info = gyro_info + std::to_string(rot[0]/PI*180)+" "+std::to_string(rot[1]/PI*180)+" "+std::to_string(rot[2]/PI*180);
@@ -642,8 +645,11 @@ void ThreadCompensation::frameCompensate()
     Mat aff = computeAffine();
 
     cv::Point2f center(lastGray.cols/2, lastGray.rows/2);
-//    decomposeHomo(aff, center, perp, sca, shear, rot, trans);
-//    aff = trans * shear * sca * perp;
+
+    cv::Mat perp, sca, shear, rot, trans;
+    decomposeHomo(aff, center, perp, sca, shear, rot, trans);
+    angle_frame_count++;
+    file_angle << asin(-rot.at<double>(0, 1)) << std::endl;
 
     cv::Mat old_r_mat = threads::ThreadContext::r_convert_que.front();
     threads::ThreadContext::r_convert_que.pop();
@@ -654,20 +660,11 @@ void ThreadCompensation::frameCompensate()
     cv::Mat r_temp;
     cv::Mat temp = cv::Mat::eye(3, 3, CV_64F);
     if(!is_stable_ ){
-
-        temp =  old_r_mat * threads::ThreadContext::last_old_Rotation_.inv();
-
-        cv::Mat perp, sca, shear, rot, trans;
-        decomposeHomo(inmat * temp * inmat.inv(), center, perp, sca, shear, rot, trans);
-
-//        LOGI("trans by decompose:%f ,%f, %f", transbb.at<double>(0, 2), transbb.at<double>(1, 2), acos(rot.at<double>(0, 0)));
-//        transbb.at<double>(0, 2) = -transbb.at<double>(0, 2);
-//        transbb.at<double>(1, 2) = -transbb.at<double>(1, 2);
+        temp = old_r_mat;//old_r_mat是从上一帧到这一帧的变化
         auto T = CalTranslationByR(temp);
         LOGI("trans by decompose:%f, ty:%f， %f, %f", T[0], T[1], aff.at<double>(0, 2), aff.at<double>(1, 2));
         cv::Mat trans_by_r = (cv::Mat_<double>(3, 3) << 1, 0, -T[0], 0, 1, -T[1], 0, 0, 1);
         new_aff = aff;
-//        new_aff = new_aff  *  shear * sca * perp;
         new_aff = new_aff * trans_by_r ;
 
         r_temp = inmat * temp * inmat.inv();
@@ -677,7 +674,7 @@ void ThreadCompensation::frameCompensate()
     threads::ThreadContext::last_old_Rotation_ = old_r_mat;
 
     LOGI("new_aff Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", new_aff.at<double>(0,0), new_aff.at<double>(0,1), new_aff.at<double>(0,2), new_aff.at<double>(1,0), new_aff.at<double>(1,1), new_aff.at<double>(1,2), new_aff.at<double>(2,0), new_aff.at<double>(2,1), new_aff.at<double>(2,2));
-    LOGI("r_temp Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", r_temp.at<double>(0,0), r_temp.at<double>(0,1), r_temp.at<double>(0,2), r_temp.at<double>(1,0), r_temp.at<double>(1,1), r_temp.at<double>(1,2), r_temp.at<double>(2,0), r_temp.at<double>(2,1), r_temp.at<double>(2,2));
+    LOGI("r_temp Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", old_r_mat.at<double>(0,0), old_r_mat.at<double>(0,1), old_r_mat.at<double>(0,2), old_r_mat.at<double>(1,0), old_r_mat.at<double>(1,1), old_r_mat.at<double>(1,2), old_r_mat.at<double>(2,0), old_r_mat.at<double>(2,1), old_r_mat.at<double>(2,2));
 
     new_aff =  new_aff * r_temp;
 
@@ -689,20 +686,9 @@ void ThreadCompensation::frameCompensate()
 
 //    aff = aff * r_temp;
     trans_que.push(new_aff);
-    bool readyToPull = filter1.push(new_aff.clone());
+    bool readyToPull = filter.push(new_aff.clone());
     if (readyToPull) {
-        cv::Mat gooda = filter1.pop();
-
-        //LOGI("gooda after_Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", gooda.at<double>(0,0), gooda.at<double>(0,1), gooda.at<double>(0,2), gooda.at<double>(1,0), gooda.at<double>(1,1), gooda.at<double>(1,2), gooda.at<double>(2,0), gooda.at<double>(2,1), gooda.at<double>(2,2));
-
-//        cv::Mat goodar = gooda * ThreadContext::stableRVec[out_index_];
-        ////*************测试***********************////
-//        cv::Mat new_r_mat = threads::ThreadContext::r_convert_new_que.front();
-//        threads::ThreadContext::r_convert_new_que.pop();
-        ////*************测试***********************////
-//        cv::Mat goodar = ThreadContext::stableRVec[out_index_];
-//        cv::Mat goodar = gooda;
-
+        cv::Mat gooda = filter.pop();
         cv::Mat goodar = gooda;
 //        goodar = ThreadContext::stableRVec[out_index_];
 

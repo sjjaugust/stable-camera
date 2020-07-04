@@ -106,9 +106,9 @@ bool AutoFilter::putIntoWindow(int target, int offset) {
         sum_weight += weight_vec_[i + offset];
     }
     ret_mat /= sum_weight;
+    ex_count++;
     processCrop(ret_mat, size_);
     if(ex_count < predict_num_){
-        ex_count++;
         return false;
     }
     return true;
@@ -198,6 +198,10 @@ void AutoFilter::processCrop(const cv::Mat &comp, const cv::Size &size) {
     y_m = cur_y;
     double x_d = xmax - xmin;
     double y_d = ymax - ymin;
+    if(ex_count % 30 == 0){
+        cur_x = 0;
+        cur_y = 0;
+    }
     if(x_m < xmin){
         x_m = xmin + x_d /4;
         cur_x = x_m;
@@ -279,8 +283,49 @@ void AutoFilter::processCrop(const cv::Mat &comp, const cv::Size &size) {
             cv::Mat news = (comp2 * temp).inv();
             if(flag){
                 cv::Mat I = cv::Mat::eye(3, 3, CV_64F);
-                LOGI("not compensation!");
-                output_buffer_.push(I.clone());
+                cv::Mat stable_vec = temp.clone().inv();
+                cv::Mat newvertex = stable_vec * vertex_;
+                newvertex.at<double>(0, 0) = newvertex.at<double>(0, 0) / newvertex.at<double>(2, 0);
+                newvertex.at<double>(1, 0) = newvertex.at<double>(1, 0) / newvertex.at<double>(2, 0);
+
+                newvertex.at<double>(0, 1) = newvertex.at<double>(0, 1) / newvertex.at<double>(2, 1);
+                newvertex.at<double>(1, 1) = newvertex.at<double>(1, 1) / newvertex.at<double>(2, 1);
+
+                newvertex.at<double>(0, 2) = newvertex.at<double>(0, 2) / newvertex.at<double>(2, 2);
+                newvertex.at<double>(1, 2) = newvertex.at<double>(1, 2) / newvertex.at<double>(2, 2);
+
+                newvertex.at<double>(0, 3) = newvertex.at<double>(0, 3) / newvertex.at<double>(2, 3);
+                newvertex.at<double>(1, 3) = newvertex.at<double>(1, 3) / newvertex.at<double>(2, 3);
+                bool all_inside = false;
+                double r = 1.0;
+                cv::Mat result_vec;
+                while ((!all_inside) && (r > 0.001)){
+                    double transdet= cv::determinant(stable_vec);//求行列式
+                    cv::Mat transtemp = stable_vec/pow(transdet, 1.0/3);
+                    r = r - 0.05;
+                    result_vec = I * (1-r) + transtemp * r;
+                    cv::Mat test_res = (comp2 * result_vec.inv()).inv();
+                    newvertex = test_res * vertex_;
+                    newvertex.at<double>(0,0)=newvertex.at<double>(0,0)/newvertex.at<double>(2,0);
+                    newvertex.at<double>(1,0)=newvertex.at<double>(1,0)/newvertex.at<double>(2,0);
+
+                    newvertex.at<double>(0,1)=newvertex.at<double>(0,1)/newvertex.at<double>(2,1);
+                    newvertex.at<double>(1,1)=newvertex.at<double>(1,1)/newvertex.at<double>(2,1);
+
+                    newvertex.at<double>(0,2)=newvertex.at<double>(0,2)/newvertex.at<double>(2,2);
+                    newvertex.at<double>(1,2)=newvertex.at<double>(1,2)/newvertex.at<double>(2,2);
+
+                    newvertex.at<double>(0,3)=newvertex.at<double>(0,3)/newvertex.at<double>(2,3);
+                    newvertex.at<double>(1,3)=newvertex.at<double>(1,3)/newvertex.at<double>(2,3);
+
+                    all_inside = isInside(cropvertex_,newvertex);
+                }
+                LOGI("not compensation!  %f", r);
+                news = (comp2 * result_vec.inv()).inv();
+                if(r < 0.04){
+                    news = I;
+                }
+                output_buffer_.push(news.clone());
             } else {
                 output_buffer_.push(news.clone());
             }

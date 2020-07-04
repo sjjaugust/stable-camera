@@ -44,6 +44,7 @@ add_library( # Sets the name of the library.
         src/main/cpp/processor/HomoExtractor.cpp
         src/main/cpp/processor/AutoFilter.cpp
         src/main/cpp/processor/Bspline.cpp
+        src/main/cpp/processor/Quaternion.cpp
         )
 
 # Searches for a specified prebuilt library and stores the path as a

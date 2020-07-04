@@ -23,7 +23,7 @@ private:
     std::deque<cv::Mat> input_buffer_;
     std::queue<cv::Mat> output_buffer_;
     std::vector<cv::Mat> window_;
-    double crop_rate_ = 0.75;
+    double crop_rate_ = 0.7;
     int max_size_;
     double sigma_;
     int delay_num_ = 10;
@@ -37,7 +37,7 @@ private:
     double que_x_[5], que_y_[5];
     int num_que_ = 0;
     double f_num_[5];
-    double ex_count = 0;
+    int ex_count = 0;
     double cur_x = 0, cur_y = 0;
     bool need_fit_x_ = false;
     bool need_fit_y_ = false;

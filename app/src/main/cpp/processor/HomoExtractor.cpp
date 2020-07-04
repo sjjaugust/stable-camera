@@ -7,109 +7,6 @@
 #define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
-void decomposeHomo2(cv::Mat h, cv::Point2f cen, cv::Mat &perp, cv::Mat &sca, cv::Mat &shear, cv::Mat &rot, cv::Mat &trans)
-{
-    double hm[3][3];
-    double fax, fay, tx, ty, sh, theta, lamx, lamy;
-    double cx = cen.x;
-    double cy = cen.y;
-    for(int i=0;i<3;i++)
-    {
-        for(int j=0;j<3;j++)
-        {
-            hm[i][j] = h.at<double>(i,j)/h.at<double>(2,2);
-        }
-    }
-
-    fax = hm[2][0]/(cx*hm[2][0] + cy*hm[2][1] + 1);
-    fay = hm[2][1]/(cx*hm[2][0] + cy*hm[2][1] + 1);
-    std::cout << "fax: " << fax << " fay: " << fay << std::endl;
-
-    double n = 1 - cx*fax - cy*fay;
-
-    double ctx = n*hm[0][2] + cx*n*hm[0][0] + cy*n*hm[0][1];
-    double cty = n*hm[1][2] + cx*n*hm[1][0] + cy*n*hm[1][1];
-    std::cout << "n: " << n << " ctx: " << ctx << " cty: " << cty << std::endl;
-
-    tx = ctx - cx;
-    ty = cty - cy;
-
-    double xc = n*hm[0][0] - fax*n*hm[0][2] - cx*fax*n*hm[0][0] - cy*fax*n*hm[0][1];
-    double xs = n*hm[1][0] - fax*n*hm[1][2] - cx*fax*n*hm[1][0] - cy*fax*n*hm[1][1];
-    double ysmc = - n*hm[0][1] + fay*n*hm[0][2] + cx*fay*n*hm[0][0] + cy*fay*n*hm[0][1];
-    double ycps = n*hm[1][1] - fay*n*hm[1][2] - cx*fay*n*hm[1][0] - cy*fay*n*hm[1][1];
-    std::cout << "xc: " << xc << " xs: " << xs << " ysmc: " << ysmc << " ycps: " << ycps << std::endl;
-    if(xs == 0)
-        xs=1e-8;
-
-    sh = -(xc*ysmc - xs*ycps)/(xc*ycps + xs*ysmc);
-    double z = xc*xc + xs*xs;
-    double theta1 = -2*atan( (xc+sqrt(z)) / xs );
-    double theta2 = -2*atan( (xc-sqrt(z)) / xs );
-    if(xs == 0)
-    {
-        theta1 = 0;
-        theta2 = 0;
-    }
-    if(abs(theta1)<abs(theta2))
-    {
-        theta = theta1;
-        lamx = -sqrt(z);
-        lamy = (xc*xc*ycps - xc*ycps*(xc+sqrt(z)) - xs*ysmc*(xc+sqrt(z)) + xc*xs*ysmc) / z;
-    }
-    else
-    {
-        theta = theta2;
-        lamx = sqrt(z);
-        lamy = (xc*xc*ycps - xc*ycps*(xc-sqrt(z)) - xs*ysmc*(xc-sqrt(z)) + xc*xs*ysmc) / z;
-    }
-
-    std::cout << "theta: " << theta << " lamx: " << lamx << " lamy: " << lamy << std::endl;
-
-    cv::Mat M1=(cv::Mat_<double>(3, 3) <<
-                                       1.0, 0.0, -cx,
-            0.0, 1.0, -cy,
-            0.0, 0.0, 1.0);
-
-    cv::Mat M2=(cv::Mat_<double>(3, 3) <<
-                                       1.0, 0.0, cx,
-            0.0, 1.0, cy,
-            0.0, 0.0, 1.0);
-
-    cv::Mat PE=(cv::Mat_<double>(3, 3) <<
-                                       1.0, 0.0, 0.0,
-            0.0, 1.0, 0.0,
-            fax, fay, 1.0);
-
-    cv::Mat SC=(cv::Mat_<double>(3, 3) <<
-                                       lamx, 0.0, 0.0,
-            0.0, lamy, 0.0,
-            0.0, 0.0, 1.0);
-
-    cv::Mat SH=(cv::Mat_<double>(3, 3) <<
-                                       1.0, sh, 0.0,
-            0.0, 1.0, 0.0,
-            0.0, 0.0, 1.0);
-
-    cv::Mat RO=(cv::Mat_<double>(3, 3) <<
-                                       cos(theta), -sin(theta), 0.0,
-            sin(theta), cos(theta), 0.0,
-            0.0, 0.0, 1.0);
-
-    cv::Mat TR=(cv::Mat_<double>(3, 3) <<
-                                       1.0, 0.0, tx,
-            0.0, 1.0, ty,
-            0.0, 0.0, 1.0);
-
-    perp = M2 * PE * M1;
-    perp = perp / perp.at<double>(2,2);
-    sca = M2 * SC * M1;
-    shear = M2 * SH * M1;
-    rot = M2 * RO * M1;
-    trans = TR.clone();
-
-}
-
 double HomoExtractor::point_distance(cv::Point2f p1, cv::Point2f p2) {
     cv::Point2f d = p1 - p2;
     double d_mu;
@@ -1020,21 +917,17 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
     double h_err = calcul_H_error(height/2, width/2);
     LOGI("H Matinthread h_err:%f", h_err);
 
-    if(h_err > 15 || re2) {
+    cv::Mat perp, sca, shear, rot, trans;
+    cv::Point2f center(width/2, height/2);
+    decomposeHomo(H, center, perp, sca, shear, rot, trans);
+    cv::Mat M1 = (cv::Mat_<double>(3, 3) << 1, 0, -center.x, 0, 1, -center.y, 0, 0, 1);
+    cv::Mat M2 = (cv::Mat_<double>(3, 3) << 1, 0, center.x, 0, 1, center.y, 0, 0, 1);
 
-        if (h_err < 150) {
-            if (h_err > 30)
-                stab_feature_25(img1, img2);
-            else
-                stab_feature_25_H(img1, img2);
-
-            calcul_Homo(ifselect, 2000, 0);
-        } else
-        {
-            H = cv::Mat::eye(3, 3, CV_64F);
-        }
-        LOGI("Point size : %d; recal_H Matinthread: %f, %f, %f, %f, %f, %f, %f, %f, %f", lastFeaturesTmp.size(), H.at<double>(0,0), H.at<double>(0,1), H.at<double>(0,2), H.at<double>(1,0), H.at<double>(1,1), H.at<double>(1,2), H.at<double>(2,0), H.at<double>(2,1), H.at<double>(2,2));
-
+    if(h_err > 30 || re2) {
+        H = trans * rot * last_shear * sca * last_perp;
+    } else{
+        last_perp = perp.clone();
+        last_shear = shear.clone();
     }
 
     if(ex_index_ < ThreadContext::SEGSIZE/2)
@@ -1104,4 +997,106 @@ cv::Mat HomoExtractor::extractHomo(cv::Mat &img1, cv::Mat &img2) {
 
 void HomoExtractor::setDrawStatus(bool is_draw) {
     draw_information = is_draw;
+}
+
+void HomoExtractor::decomposeHomo(cv::Mat h, Point2f cen, cv::Mat &perp, cv::Mat &sca,
+                                  cv::Mat &shear, cv::Mat &rot, cv::Mat &trans) {
+    double hm[3][3];
+    double fax, fay, tx, ty, sh, theta, lamx, lamy;
+    double cx = cen.x;
+    double cy = cen.y;
+    for(int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            hm[i][j] = h.at<double>(i,j)/h.at<double>(2,2);
+        }
+    }
+
+    fax = hm[2][0]/(cx*hm[2][0] + cy*hm[2][1] + 1);
+    fay = hm[2][1]/(cx*hm[2][0] + cy*hm[2][1] + 1);
+    cout << "fax: " << fax << " fay: " << fay << endl;
+
+    double n = 1 - cx*fax - cy*fay;
+
+    double ctx = n*hm[0][2] + cx*n*hm[0][0] + cy*n*hm[0][1];
+    double cty = n*hm[1][2] + cx*n*hm[1][0] + cy*n*hm[1][1];
+    cout << "n: " << n << " ctx: " << ctx << " cty: " << cty << endl;
+
+    tx = ctx - cx;
+    ty = cty - cy;
+
+    double xc = n*hm[0][0] - fax*n*hm[0][2] - cx*fax*n*hm[0][0] - cy*fax*n*hm[0][1];
+    double xs = n*hm[1][0] - fax*n*hm[1][2] - cx*fax*n*hm[1][0] - cy*fax*n*hm[1][1];
+    double ysmc = - n*hm[0][1] + fay*n*hm[0][2] + cx*fay*n*hm[0][0] + cy*fay*n*hm[0][1];
+    double ycps = n*hm[1][1] - fay*n*hm[1][2] - cx*fay*n*hm[1][0] - cy*fay*n*hm[1][1];
+    cout << "xc: " << xc << " xs: " << xs << " ysmc: " << ysmc << " ycps: " << ycps << endl;
+    if(xs == 0)
+        xs=1e-8;
+
+    sh = -(xc*ysmc - xs*ycps)/(xc*ycps + xs*ysmc);
+    double z = xc*xc + xs*xs;
+    double theta1 = -2*atan( (xc+sqrt(z)) / xs );
+    double theta2 = -2*atan( (xc-sqrt(z)) / xs );
+    if(xs == 0)
+    {
+        theta1 = 0;
+        theta2 = 0;
+    }
+    if(abs(theta1)<abs(theta2))
+    {
+        theta = theta1;
+        lamx = -sqrt(z);
+        lamy = (xc*xc*ycps - xc*ycps*(xc+sqrt(z)) - xs*ysmc*(xc+sqrt(z)) + xc*xs*ysmc) / z;
+    }
+    else
+    {
+        theta = theta2;
+        lamx = sqrt(z);
+        lamy = (xc*xc*ycps - xc*ycps*(xc-sqrt(z)) - xs*ysmc*(xc-sqrt(z)) + xc*xs*ysmc) / z;
+    }
+
+    cout << "theta: " << theta << " lamx: " << lamx << " lamy: " << lamy << endl;
+
+    Mat M1=(cv::Mat_<double>(3, 3) <<
+                                   1.0, 0.0, -cx,
+            0.0, 1.0, -cy,
+            0.0, 0.0, 1.0);
+
+    Mat M2=(cv::Mat_<double>(3, 3) <<
+                                   1.0, 0.0, cx,
+            0.0, 1.0, cy,
+            0.0, 0.0, 1.0);
+
+    Mat PE=(cv::Mat_<double>(3, 3) <<
+                                   1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            fax, fay, 1.0);
+
+    Mat SC=(cv::Mat_<double>(3, 3) <<
+                                   lamx, 0.0, 0.0,
+            0.0, lamy, 0.0,
+            0.0, 0.0, 1.0);
+
+    Mat SH=(cv::Mat_<double>(3, 3) <<
+                                   1.0, sh, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0);
+
+    Mat RO=(cv::Mat_<double>(3, 3) <<
+                                   cos(theta), -sin(theta), 0.0,
+            sin(theta), cos(theta), 0.0,
+            0.0, 0.0, 1.0);
+
+    Mat TR=(cv::Mat_<double>(3, 3) <<
+                                   1.0, 0.0, tx,
+            0.0, 1.0, ty,
+            0.0, 0.0, 1.0);
+
+    perp = M2 * PE * M1;
+    perp = perp / perp.at<double>(2,2);
+    sca = M2 * SC * M1;
+    shear = M2 * SH * M1;
+    rot = M2 * RO * M1;
+    trans = TR.clone();
 }

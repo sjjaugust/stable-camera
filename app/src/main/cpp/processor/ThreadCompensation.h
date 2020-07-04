@@ -17,6 +17,7 @@
 #include "HomoExtractor.h"
 #include <string>
 #include "AutoFilter.h"
+#include <fstream>
 
 namespace threads {
     class ThreadCompensation {
