@@ -111,7 +111,7 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
     Mat e = Mat::eye(3, 3, CV_64F);
     Mat orgMat(3, 3, CV_64F);
 
-//    gyroInfoInFrameX[0] = 0;
+    gyroInfoInFrameX[0] = 0;
     gyroInfoInFrameY[0] = gyroInfoInFrameY[0];
     gyroInfoInFrameZ[0] = 0;
 //    计算第一条旋转矩阵
@@ -128,7 +128,7 @@ void ThreadRollingShutter::getMatInFrame(Mat *rsOutTheta, vector<double> gyroInf
     std::vector<double> temp_z = gyroInfoInFrameZ;
     for(int i = 0; i < gyroInfoInFrameX.size(); i++){
         if(i != 0){
-//            gyroInfoInFrameX[i] = 0;
+            gyroInfoInFrameX[i] = 0;
             gyroInfoInFrameY[i] = gyroInfoInFrameY[i];
             gyroInfoInFrameZ[i] = 0;
         }

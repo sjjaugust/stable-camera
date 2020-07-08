@@ -233,7 +233,7 @@ public class BaseFilter {
         GLES30.glUseProgram(mProgramId);
         //传入顶点
         if(isOpenRollingShutter){
-            changeVertex(rsMat);
+//            changeVertex(rsMat);
         }
         mGlVertexBuffer.put(VERTEX);
         mGlVertexBuffer.position(0);

@@ -16,6 +16,7 @@ static int frame_count = 0;
 static FILE* file;
 static cv::Mat last_mat = cv::Mat::eye(3, 3, CV_64F);
 static cv::Mat cur_mat = cv::Mat::eye(3, 3, CV_64F);
+static std::queue<cv::Vec<double, 3>> last_tt_que;
 static double point_distance(cv::Point2f p1,cv::Point2f p2)
 {
     cv::Point2f d = p1 - p2;
@@ -41,9 +42,11 @@ Mat ThetaHelper::getRR(Mat oldRotation, Mat newRotation)
 }
 
 
-cv::Vec<double, 3> ThetaHelper::getTheta()
+std::vector<cv::Vec<double, 3>>ThetaHelper::getTheta()
 {
+    std::vector<cv::Vec<double, 3>> ret;
     cv::Vec<double, 3> theta;
+    cv::Vec<double, 3> theta1;
     for(int i=0; i<theta.rows;i++)
         theta[i] = 0;
 
@@ -56,9 +59,14 @@ cv::Vec<double, 3> ThetaHelper::getTheta()
 //        theta[0]=lastx*(gtime-lastftime)+lastt[0];
 //        theta[1]=lasty*(gtime-lastftime)+lastt[1];
 //        theta[2]=lastz*(gtime-lastftime)+lastt[2];
+
         theta[0]=lastx*(gtime-lastftime);
         theta[1]=lasty*(gtime-lastftime);
         theta[2]=lastz*(gtime-lastftime);
+
+        theta1[0]=lastx*(gtime-lastftime)+lastt[0];
+        theta1[1]=lasty*(gtime-lastftime)+lastt[1];
+        theta1[2]=lastz*(gtime-lastftime)+lastt[2];
 
         // NSLog(@"frame:%f",lastftime);
         //NSLog(@"gyro:%f",gtime);
@@ -79,16 +87,24 @@ cv::Vec<double, 3> ThetaHelper::getTheta()
             theta[0]=theta[0]+(anglevx)*(gtimenext-gtime);
             theta[1]=theta[1]+(anglevy)*(gtimenext-gtime);
             theta[2]=theta[2]+(anglevz)*(gtimenext-gtime);
+
+            theta1[0]=theta1[0]+(anglevx)*(gtimenext-gtime);
+            theta1[1]=theta1[1]+(anglevy)*(gtimenext-gtime);
+            theta1[2]=theta1[2]+(anglevz)*(gtimenext-gtime);
+
             gtime=gtimenext;
             gyindex++;
         }
         else
         {
             theta[0]=theta[0]+(anglevx)*(ftime-gtime);
+            theta1[0]=theta1[0]+(anglevx)*(ftime-gtime);
             lastx=anglevx;
             theta[1]=theta[1]+(anglevy)*(ftime-gtime);
+            theta1[1]=theta1[1]+(anglevy)*(ftime-gtime);
             lasty=anglevy;
             theta[2]=theta[2]+(anglevz)*(ftime-gtime);
+            theta1[2]=theta1[2]+(anglevy)*(ftime-gtime);
             lastz=anglevz;
             gyindex++;
             break;
@@ -97,9 +113,11 @@ cv::Vec<double, 3> ThetaHelper::getTheta()
 
 
     findex++;
-    lastt=theta;
+    lastt=theta1;
 //    LOGD("old  x:%f,y:%f,z:%f,",theta[0],theta[1],theta[2]);
-    return theta;
+    ret.push_back(theta);
+    ret.push_back(theta1);
+    return ret;
 
 }
 
@@ -301,7 +319,13 @@ void ThetaHelper::cropControl(Mat& transVec) {
 void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
 
     Timeframe.push_back(timestamp);
-    cv::Vec<double, 3> oldtheta=getTheta();
+    std::vector<cv::Vec<double, 3>> old_theta_vec = getTheta();
+    cv::Vec<double, 3> oldtheta = old_theta_vec[0];
+
+    cv::Vec<double, 3> oldtheta1 = old_theta_vec[1];
+    Quaternion q1 = Quaternion::EulerToQuaternion(oldtheta1[0], oldtheta1[1], oldtheta1[2]);
+    cv::Mat oldRotation1 = Quaternion::QuaternionToR(q1);
+    threads::ThreadContext::r_convert_que1.push(oldRotation1);
     LOGD("angle11111:%f, %f, %f", oldtheta[0], oldtheta[1], oldtheta[2]);
 //    WriteToFile(file, oldtheta[0], oldtheta[1], oldtheta[2], frame_count);
     threads::ThreadContext::rTheta.push(oldtheta);

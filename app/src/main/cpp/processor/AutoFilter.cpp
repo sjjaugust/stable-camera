@@ -8,9 +8,9 @@
 #define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
-static std::ofstream file_w("window.txt");
+static std::ofstream file_w("/data/data/me.zhehua.gryostable/data/window.txt");
 static int frame_count = 1;
-static std::ofstream file_w1("middle.txt");
+static std::ofstream file_w1("/data/data/me.zhehua.gryostable/data/middle.txt");
 static int frame_count_m = 1;
 static bool is_first = true;
 int AutoFilter::predict_num_ = 5;
@@ -216,9 +216,12 @@ void AutoFilter::processCrop(const cv::Mat &comp, const cv::Size &size) {
         y_m = ymax - y_d/4;
         cur_y = y_m;
     }
-    file_w << frame_count <<" " << xmin << " " << xmax << " " << ymin << " " << ymax << " "
-    << x_m << " " << y_m <<std::endl;
-    frame_count++;
+    if(write_status_){
+        file_w << frame_count <<" " << xmin << " " << xmax << " " << ymin << " " << ymax << " "
+               << x_m << " " << y_m <<std::endl;
+        frame_count++;
+    }
+
     queue_in(que_x_, num_que_ - 1, x_m);
     queue_in(que_y_, num_que_ - 1, y_m);
     if(num_que_ < predict_num_){
@@ -327,11 +330,31 @@ void AutoFilter::processCrop(const cv::Mat &comp, const cv::Size &size) {
                 }
                 output_buffer_.push(news.clone());
             } else {
+                cv::Mat I = cv::Mat::eye(3, 3, CV_64F);
+                cv::Mat stable_vec = news.clone();
+                cv::Mat newvertex = stable_vec * vertex_;
+                newvertex.at<double>(0, 0) = newvertex.at<double>(0, 0) / newvertex.at<double>(2, 0);
+                newvertex.at<double>(1, 0) = newvertex.at<double>(1, 0) / newvertex.at<double>(2, 0);
+
+                newvertex.at<double>(0, 1) = newvertex.at<double>(0, 1) / newvertex.at<double>(2, 1);
+                newvertex.at<double>(1, 1) = newvertex.at<double>(1, 1) / newvertex.at<double>(2, 1);
+
+                newvertex.at<double>(0, 2) = newvertex.at<double>(0, 2) / newvertex.at<double>(2, 2);
+                newvertex.at<double>(1, 2) = newvertex.at<double>(1, 2) / newvertex.at<double>(2, 2);
+
+                newvertex.at<double>(0, 3) = newvertex.at<double>(0, 3) / newvertex.at<double>(2, 3);
+                newvertex.at<double>(1, 3) = newvertex.at<double>(1, 3) / newvertex.at<double>(2, 3);
+                if(!isInside(cropvertex_, newvertex)){
+                    news = I;
+                }
                 output_buffer_.push(news.clone());
             }
             num_que_ = predict_num_/2 + 1;
-            file_w1 << frame_count_m << " " << trans_x[i] << " " << trans_y[i] << std::endl;
-            frame_count_m++;
+            if(write_status_){
+                file_w1 << frame_count_m << " " << trans_x[i] << " " << trans_y[i] << " "<< flag <<std::endl;
+                frame_count_m++;
+            }
+
         }
 
     }

@@ -50,7 +50,7 @@ namespace threads {
 ////************************测试**********************////
     public:
         static std::queue<cv::Mat> r_convert_que;
-        static std::queue<cv::Mat> r_convert_new_que;
+        static std::queue<cv::Mat> r_convert_que1;
         static cv::Mat last_old_Rotation_;
     };
 }

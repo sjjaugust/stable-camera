@@ -23,7 +23,7 @@ private:
     std::deque<cv::Mat> input_buffer_;
     std::queue<cv::Mat> output_buffer_;
     std::vector<cv::Mat> window_;
-    double crop_rate_ = 0.7;
+    double crop_rate_ = 0.71;
     int max_size_;
     double sigma_;
     int delay_num_ = 10;
@@ -47,6 +47,7 @@ private:
     std::queue<limit> limit_que_;
 
 
+
     void queue_in(double q[], int m, double x);
     void polyfit(double arrX[], double arrY[], int num, int n, double* result);
     double calError(double* ori, double* aft, int n);
@@ -55,6 +56,8 @@ private:
     bool isInside(cv::Mat cropvertex ,cv::Mat newvertex);
     void processCrop(const cv::Mat& comp, const cv::Size& size);
 public:
+    bool write_status_ = false;
+
     explicit AutoFilter(int max_size = 30, double sigma = 40);
     bool push(cv::Mat goodar);
     cv::Mat pop();

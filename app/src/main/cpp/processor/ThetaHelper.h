@@ -9,6 +9,7 @@
 #include "ThreadContext.h"
 #include "Filter.h"
 #include "Quaternion.h"
+#include <queue>
 using namespace cv;
 using namespace std;
 
@@ -64,7 +65,7 @@ private:
 public:
     void init();
     Mat getRR(Mat oldRotation, Mat newRotation);
-    cv::Vec<double, 3> getTheta();
+    std::vector<cv::Vec<double, 3>> getTheta();
     cv::Vec<double, 3> getNewTheta(cv::Vec<double, 3> oldtheta);
     cv::Mat getRotationMat(cv::Vec<double, 3> theta);
     void getR(double timestamp, Mat *matR, bool isCrop);

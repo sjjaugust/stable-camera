@@ -23,7 +23,8 @@ static FILE* file_after;
 static std::queue<cv::Mat> trans_que;
 static std::queue<cv::Mat> r_temp_queue;
 static cv::Mat tran_cumm = cv::Mat::eye(3, 3, CV_64F);
-static std::ofstream file_angle("/data/data/me.zhehua.gryostable/data/zangle.txt");
+static std::ofstream r_temp_file("/data/data/me.zhehua.gryostable/data/r_temp.txt");
+static std::ofstream r_temp1_file("/data/data/me.zhehua.gryostable/data/r_temp1.txt");
 static int angle_frame_count = 0;
 double point_distance(cv::Point2f p1,cv::Point2f p2)
 {
@@ -43,9 +44,10 @@ ThreadCompensation::~ThreadCompensation() {
 }
 
 void ThreadCompensation::start() {
-    file = fopen("/data/data/me.zhehua.gryostable/data/rotatemat.txt", "a");
+//    file = fopen("/data/data/me.zhehua.gryostable/data/rotatemat.txt", "a");
 //    file_after = fopen("/data/data/me.zhehua.gryostable/data/track_after.txt", "a");
-    filter = Filter(20, 40, Filter::delta_T);
+    filter = Filter(30, 40, Filter::delta_T);
+    filter1 = AutoFilter(20, 40);
     last_homography_ = cv::Mat::eye(3, 3, CV_64F);
     worker_thread_ = thread(&ThreadCompensation::worker, this);
 }
@@ -567,7 +569,7 @@ Mat ThreadCompensation::computeAffine()
     }
     Vec<double, 3> rot = ThreadContext::rTheta.front();//前一帧的旋转矩阵
     ThreadContext::rTheta.pop();
-//    file_angle << angle_frame_count << " " << rot[2] << " ";
+
     Vec<double, 3> er = rot;
     lastRot = rot;
     std::string gyro_info = "theta:";
@@ -623,10 +625,11 @@ void ThreadCompensation::frameCompensate()
 
     cv::Mat perp, sca, shear, rot, trans;
     decomposeHomo(aff, center, perp, sca, shear, rot, trans);
-    angle_frame_count++;
-//    file_angle << asin(-rot.at<double>(0, 1)) << std::endl;
+
 
     cv::Mat old_r_mat = threads::ThreadContext::r_convert_que.front();
+    cv::Mat old_r_mat1 = threads::ThreadContext::r_convert_que1.front();
+    threads::ThreadContext::r_convert_que1.pop();
     threads::ThreadContext::r_convert_que.pop();
 
     auto new_aff = aff;
@@ -634,8 +637,11 @@ void ThreadCompensation::frameCompensate()
 
     cv::Mat r_temp;
     cv::Mat temp = cv::Mat::eye(3, 3, CV_64F);
+    cv::Mat temp1 = cv::Mat::eye(3, 3, CV_64F);
     if(!is_stable_ ){
         temp = old_r_mat;//old_r_mat是从上一帧到这一帧的变化
+        temp1 = old_r_mat1 * threads::ThreadContext::last_old_Rotation_.inv();
+//        temp = old_r_mat * threads::ThreadContext::last_old_Rotation_.inv();
         auto T = CalTranslationByR(temp);
         LOGI("trans by decompose:%f, ty:%f， %f, %f", T[0], T[1], aff.at<double>(0, 2), aff.at<double>(1, 2));
         cv::Mat trans_by_r = (cv::Mat_<double>(3, 3) << 1, 0, -T[0], 0, 1, -T[1], 0, 0, 1);
@@ -646,21 +652,30 @@ void ThreadCompensation::frameCompensate()
     } else {
         r_temp = cv::Mat::eye(3, 3, CV_64F);
     }
-    threads::ThreadContext::last_old_Rotation_ = old_r_mat;
+    threads::ThreadContext::last_old_Rotation_ = old_r_mat1;
 
     LOGI("new_aff Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", new_aff.at<double>(0,0), new_aff.at<double>(0,1), new_aff.at<double>(0,2), new_aff.at<double>(1,0), new_aff.at<double>(1,1), new_aff.at<double>(1,2), new_aff.at<double>(2,0), new_aff.at<double>(2,1), new_aff.at<double>(2,2));
-    LOGI("r_temp Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", old_r_mat.at<double>(0,0), old_r_mat.at<double>(0,1), old_r_mat.at<double>(0,2), old_r_mat.at<double>(1,0), old_r_mat.at<double>(1,1), old_r_mat.at<double>(1,2), old_r_mat.at<double>(2,0), old_r_mat.at<double>(2,1), old_r_mat.at<double>(2,2));
+    LOGI("r_temp Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", temp.at<double>(0,0), temp.at<double>(0,1), temp.at<double>(0,2), temp.at<double>(1,0), temp.at<double>(1,1), temp.at<double>(1,2), temp.at<double>(2,0), temp.at<double>(2,1), temp.at<double>(2,2));
+    LOGI("r_temp1 Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", temp1.at<double>(0,0), temp1.at<double>(0,1), temp1.at<double>(0,2), temp1.at<double>(1,0), temp1.at<double>(1,1), temp1.at<double>(1,2), temp1.at<double>(2,0), temp1.at<double>(2,1), temp1.at<double>(2,2));
 
     new_aff =  new_aff * r_temp;
 
     LOGI("new_aff after_Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", new_aff.at<double>(0,0), new_aff.at<double>(0,1), new_aff.at<double>(0,2), new_aff.at<double>(1,0), new_aff.at<double>(1,1), new_aff.at<double>(1,2), new_aff.at<double>(2,0), new_aff.at<double>(2,1), new_aff.at<double>(2,2));
 
     if(is_write_to_file_){
-        WriteToFile(file, temp);
+//        WriteToFile(file, temp);
+//        r_temp_file << angle_frame_count << " " << temp.at<double>(0,0) << " " << temp.at<double>(0,1) << " " << temp.at<double>(0,2)
+//                << " " << temp.at<double>(1,0) << " " << temp.at<double>(1,1) << " " << temp.at<double>(1,2)
+//                << " " << temp.at<double>(2,0) << " " << temp.at<double>(2,1) << " " << temp.at<double>(2,2) << std::endl;
+//        r_temp1_file << angle_frame_count << " " << temp1.at<double>(0,0) << " " << temp1.at<double>(0,1) << " " << temp1.at<double>(0,2)
+//                    << " " << temp1.at<double>(1,0) << " " << temp1.at<double>(1,1) << " " << temp1.at<double>(1,2)
+//                    << " " << temp1.at<double>(2,0) << " " << temp1.at<double>(2,1) << " " << temp1.at<double>(2,2) << std::endl;
+        angle_frame_count++;
     }
 
 //    aff = aff * r_temp;
     trans_que.push(new_aff);
+    filter1.write_status_ = is_write_to_file_;
     bool readyToPull = filter.push(new_aff.clone());
     if (readyToPull) {
         cv::Mat gooda = filter.pop();
