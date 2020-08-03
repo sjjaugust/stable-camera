@@ -676,9 +676,9 @@ void ThreadCompensation::frameCompensate()
 //    aff = aff * r_temp;
     trans_que.push(new_aff);
     filter1.write_status_ = is_write_to_file_;
-    bool readyToPull = filter.push(new_aff.clone());
+    bool readyToPull = filter1.push(new_aff.clone());
     if (readyToPull) {
-        cv::Mat gooda = filter.pop();
+        cv::Mat gooda = filter1.pop();
         cv::Mat goodar = gooda;
 //        goodar = ThreadContext::stableRVec[out_index_];
 
