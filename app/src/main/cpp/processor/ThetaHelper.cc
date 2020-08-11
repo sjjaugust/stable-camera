@@ -329,6 +329,7 @@ void ThetaHelper::getR(double timestamp, Mat *matR, bool isCrop) {
     LOGD("angle11111:%f, %f, %f", oldtheta[0], oldtheta[1], oldtheta[2]);
 //    WriteToFile(file, oldtheta[0], oldtheta[1], oldtheta[2], frame_count);
     threads::ThreadContext::rTheta.push(oldtheta);
+    threads::ThreadContext::gyro_z_theta_que.push(oldtheta[2]);
     oldtheta[2] = 0;
     oldx.push_back(oldtheta[0]);//[oldx addObject:[NSNumber numberWithDouble: oldtheta[0]]];
     oldy.push_back(oldtheta[1]);//[oldy addObject:[NSNumber numberWithDouble: oldtheta[1]]];

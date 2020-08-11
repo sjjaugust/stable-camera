@@ -25,6 +25,8 @@ static std::queue<cv::Mat> r_temp_queue;
 static cv::Mat tran_cumm = cv::Mat::eye(3, 3, CV_64F);
 static std::ofstream r_temp_file("/data/data/me.zhehua.gryostable/data/r_temp.txt");
 static std::ofstream r_temp1_file("/data/data/me.zhehua.gryostable/data/r_temp1.txt");
+static std::ofstream z_angle_file("/data/data/me.zhehua.gryostable/data/zangle.txt");
+
 static int angle_frame_count = 0;
 double point_distance(cv::Point2f p1,cv::Point2f p2)
 {
@@ -670,8 +672,11 @@ void ThreadCompensation::frameCompensate()
 //        r_temp1_file << angle_frame_count << " " << temp1.at<double>(0,0) << " " << temp1.at<double>(0,1) << " " << temp1.at<double>(0,2)
 //                    << " " << temp1.at<double>(1,0) << " " << temp1.at<double>(1,1) << " " << temp1.at<double>(1,2)
 //                    << " " << temp1.at<double>(2,0) << " " << temp1.at<double>(2,1) << " " << temp1.at<double>(2,2) << std::endl;
+        z_angle_file << angle_frame_count << " " << threads::ThreadContext::gyro_z_theta_que.front()
+        << " " << asin(rot.at<double>(1, 0)) << std::endl;
         angle_frame_count++;
     }
+    threads::ThreadContext::gyro_z_theta_que.pop();
 
 //    aff = aff * r_temp;
     trans_que.push(new_aff);

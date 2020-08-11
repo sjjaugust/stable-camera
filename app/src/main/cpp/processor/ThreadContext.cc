@@ -26,6 +26,7 @@ std::queue<std::vector<cv::Point2f>> ThreadContext::feature_by_r_;
 std::queue<cv::Mat> ThreadContext::r_convert_que;
 std::queue<cv::Mat> ThreadContext::r_convert_que1;
 cv::Mat ThreadContext::last_old_Rotation_ = cv::Mat::eye(3, 3, CV_64F);
+std::queue<double> ThreadContext::gyro_z_theta_que;
 void ThreadContext::Init() {
     Release();
     klt_semaphore = new MySemaphore(0);
