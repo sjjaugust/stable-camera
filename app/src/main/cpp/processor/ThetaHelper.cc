@@ -17,6 +17,7 @@ static FILE* file;
 static cv::Mat last_mat = cv::Mat::eye(3, 3, CV_64F);
 static cv::Mat cur_mat = cv::Mat::eye(3, 3, CV_64F);
 static std::queue<cv::Vec<double, 3>> last_tt_que;
+static std::ofstream gyro_info_file("/data/data/me.zhehua.gryostable/data/gyro_info.txt");
 static double point_distance(cv::Point2f p1,cv::Point2f p2)
 {
     cv::Point2f d = p1 - p2;
@@ -52,6 +53,8 @@ std::vector<cv::Vec<double, 3>>ThetaHelper::getTheta()
 
     double gtime= Timeg[gyindex];
     double ftime= Timeframe[findex];
+    threads::ThreadContext::frame_time_que.push(ftime * 1000000000 - 12000000);
+    LOGD("ftime111: %f", ftime * 1000000000);
 
     if(findex>0)
     {
@@ -71,11 +74,8 @@ std::vector<cv::Vec<double, 3>>ThetaHelper::getTheta()
         // NSLog(@"frame:%f",lastftime);
         //NSLog(@"gyro:%f",gtime);
     }
-
-
     while(gtime<ftime)
     {
-
         double anglevx= roxl[gyindex];
         double anglevy= royl[gyindex];
         double anglevz= rozl[gyindex];
@@ -87,6 +87,7 @@ std::vector<cv::Vec<double, 3>>ThetaHelper::getTheta()
             theta[0]=theta[0]+(anglevx)*(gtimenext-gtime);
             theta[1]=theta[1]+(anglevy)*(gtimenext-gtime);
             theta[2]=theta[2]+(anglevz)*(gtimenext-gtime);
+            gyro_info_file << (long)(gtimenext * 1000000000) << " " <<(anglevz) * (gtimenext - gtime) << std::endl;
 
             theta1[0]=theta1[0]+(anglevx)*(gtimenext-gtime);
             theta1[1]=theta1[1]+(anglevy)*(gtimenext-gtime);
@@ -105,6 +106,7 @@ std::vector<cv::Vec<double, 3>>ThetaHelper::getTheta()
             lasty=anglevy;
             theta[2]=theta[2]+(anglevz)*(ftime-gtime);
             theta1[2]=theta1[2]+(anglevy)*(ftime-gtime);
+            gyro_info_file << (long)(gtimenext * 1000000000) << " " << (anglevz) * (gtimenext - gtime) << std::endl;
             lastz=anglevz;
             gyindex++;
             break;

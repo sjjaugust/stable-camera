@@ -53,6 +53,7 @@ namespace threads {
         static std::queue<cv::Mat> r_convert_que1;
         static cv::Mat last_old_Rotation_;
         static std::queue<double> gyro_z_theta_que;
+        static std::queue<double> frame_time_que;
     };
 }
 

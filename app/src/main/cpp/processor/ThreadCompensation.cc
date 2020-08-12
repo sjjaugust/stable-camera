@@ -26,6 +26,7 @@ static cv::Mat tran_cumm = cv::Mat::eye(3, 3, CV_64F);
 static std::ofstream r_temp_file("/data/data/me.zhehua.gryostable/data/r_temp.txt");
 static std::ofstream r_temp1_file("/data/data/me.zhehua.gryostable/data/r_temp1.txt");
 static std::ofstream z_angle_file("/data/data/me.zhehua.gryostable/data/zangle.txt");
+static std::ofstream frame_info_file("/data/data/me.zhehua.gryostable/data/frame_info.txt");
 
 static int angle_frame_count = 0;
 double point_distance(cv::Point2f p1,cv::Point2f p2)
@@ -628,7 +629,12 @@ void ThreadCompensation::frameCompensate()
     cv::Mat perp, sca, shear, rot, trans;
     decomposeHomo(aff, center, perp, sca, shear, rot, trans);
 
-
+    if(is_first_cal){
+        threads::ThreadContext::r_convert_que.pop();
+        threads::ThreadContext::r_convert_que1.pop();
+        threads::ThreadContext::gyro_z_theta_que.pop();
+        is_first_cal = false;
+    }
     cv::Mat old_r_mat = threads::ThreadContext::r_convert_que.front();
     cv::Mat old_r_mat1 = threads::ThreadContext::r_convert_que1.front();
     threads::ThreadContext::r_convert_que1.pop();
@@ -664,6 +670,8 @@ void ThreadCompensation::frameCompensate()
 
     LOGI("new_aff after_Matinthreads: %f, %f, %f, %f, %f, %f, %f, %f, %f", new_aff.at<double>(0,0), new_aff.at<double>(0,1), new_aff.at<double>(0,2), new_aff.at<double>(1,0), new_aff.at<double>(1,1), new_aff.at<double>(1,2), new_aff.at<double>(2,0), new_aff.at<double>(2,1), new_aff.at<double>(2,2));
 
+    frame_info_file << (long)threads::ThreadContext::frame_time_que.front() << " " << asin(rot.at<double>(1, 0)) << std::endl;
+    threads::ThreadContext::frame_time_que.pop();
     if(is_write_to_file_){
 //        WriteToFile(file, temp);
 //        r_temp_file << angle_frame_count << " " << temp.at<double>(0,0) << " " << temp.at<double>(0,1) << " " << temp.at<double>(0,2)

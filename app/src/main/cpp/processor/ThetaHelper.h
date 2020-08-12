@@ -10,6 +10,7 @@
 #include "Filter.h"
 #include "Quaternion.h"
 #include <queue>
+#include <fstream>
 using namespace cv;
 using namespace std;
 

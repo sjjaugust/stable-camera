@@ -48,6 +48,7 @@ namespace threads {
         bool is_first_cal_features = true;
         cv::Mat last_homography_;
         AutoFilter filter1;
+        bool is_first_cal = true;
 
 
 
